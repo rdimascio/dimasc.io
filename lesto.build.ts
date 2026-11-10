@@ -3,18 +3,39 @@ import { defineStaticSite } from "@lesto/sites";
 
 import { SITE_URL } from "./src/app";
 import { ogImage } from "./src/og";
+import { outputPathFor, PERSONAL_PAGES, personalPageHtml } from "./src/personal";
 
 const FAVICON = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="14" fill="#111113"/><text x="32" y="43" font-family="system-ui, sans-serif" font-size="30" font-weight="700" text-anchor="middle" fill="#fff">RD</text></svg>`;
+
+async function bundle(entry: string): Promise<string> {
+  const result = await Bun.build({
+    entrypoints: [entry],
+    target: "browser",
+    minify: true,
+    define: { "process.env.NODE_ENV": JSON.stringify("production") },
+  });
+  const output = result.outputs[0];
+  if (!result.success || output === undefined) {
+    throw new Error(`bundle failed for ${entry}: ${result.logs.map((log) => log.message).join("; ")}`);
+  }
+  return output.text();
+}
 
 const onBuilt: BuildHook = async ({ sites }) => {
   const site = sites.find((candidate) => candidate.name === "www");
   if (site === undefined) return;
+
   await defineStaticSite({
     siteUrl: SITE_URL,
     routes: site.routes,
     og: ogImage(),
     favicon: FAVICON,
   }).emit(site.sink);
+
+  for (const page of PERSONAL_PAGES) {
+    await site.sink(page.script.slice(1), await bundle(page.entry));
+    await site.sink(outputPathFor(page.route), personalPageHtml(page));
+  }
 };
 
 export default onBuilt;

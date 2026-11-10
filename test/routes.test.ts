@@ -5,6 +5,7 @@ import type { App } from "@lesto/kernel";
 
 import appConfig from "../lesto.app";
 import { loadCaseStudies, loadProcess } from "../src/content";
+import { PERSONAL_PAGES, personalPageHtml } from "../src/personal";
 
 async function text(response: { body: unknown }): Promise<string> {
   return new Response(response.body as BodyInit).text();
@@ -58,6 +59,24 @@ describe("site routes", () => {
     const html = await text(await app.handle("GET", "/"));
     expect(html).toContain('rel="canonical"');
     expect(html).toContain("https://dimasc.io/og.svg");
+  });
+
+  it("keeps the personal pages unlinked, out of search and off the studio pages", async () => {
+    const home = await text(await app.handle("GET", "/"));
+    for (const page of PERSONAL_PAGES) {
+      const html = personalPageHtml(page);
+      expect(html).toContain('content="noindex"');
+      expect(html).toContain(`src="${page.script}"`);
+      expect(home).not.toContain(`href="${page.route}"`);
+      expect(home).not.toContain(page.script);
+      expect((await app.handle("GET", page.route)).status).toBe(404);
+    }
+  });
+
+  it("ships no client script on the studio pages", async () => {
+    for (const route of ["/", "/work", "/process"]) {
+      expect(await text(await app.handle("GET", route))).not.toContain("<script");
+    }
   });
 
   it("returns 404 for an unknown path", async () => {
