@@ -2,73 +2,98 @@ import type { ReactElement } from "react";
 
 import type { CaseStudy, ProcessStep } from "../content";
 import { CONTACT_EMAIL } from "../site";
+import { Eyebrow, SectionHead, WIDTH } from "./layout";
+import { ProcessRows } from "./process";
 import { CaseStudyList } from "./work";
 
-const SERVICES = [
+const CAPABILITIES = [
   {
-    title: "Websites and stores",
-    body: "Fast marketing sites and Shopify stores your staff can edit without calling me.",
+    title: "Web and commerce",
+    items: ["Marketing sites", "Shopify stores", "Pages your staff can edit", "Speed and search basics"],
   },
   {
-    title: "Booking, payments and integrations",
-    body: "Connect the tools you already pay for, or replace the one that keeps getting in the way.",
+    title: "Systems",
+    items: ["Booking and payments", "Integrations between tools", "Moving off old software", "Reports you can trust"],
   },
   {
-    title: "Internal tools and AI workflows",
-    body: "Dashboards, automations and AI assistants built around how your business actually runs.",
+    title: "AI and internal tools",
+    items: ["Dashboards and admin tools", "AI assistants and automations", "Workflows that remove busywork", "Monitoring and alerts"],
   },
+] as const;
+
+const PROMISES = [
+  { figure: "Flat", detail: "A fixed price per step, agreed before work starts. No hourly billing." },
+  { figure: "Small steps", detail: "Something working at the end of every step. Stop after any of them." },
+  { figure: "Yours", detail: "You own every account and every line of code from day one." },
 ] as const;
 
 export function Home({ studies, steps }: { studies: readonly CaseStudy[]; steps: readonly ProcessStep[] }): ReactElement {
   return (
     <main>
-      <section className="max-w-[1040px] mx-auto px-6 pt-24 pb-16">
-        <h1 className="text-[clamp(2.4rem,6vw,4rem)] leading-[1.04] tracking-[-0.04em] font-semibold max-w-[16ch] mb-6">
-          Software that fixes the thing that's slowing you down.
+      <section className={`${WIDTH} pt-20 sm:pt-32 pb-20`}>
+        <Eyebrow>Independent software studio</Eyebrow>
+        <h1 className="mt-8 mb-0 text-[clamp(2.8rem,8.5vw,7rem)] leading-[0.94] tracking-[-0.05em] font-medium max-w-[13ch]">
+          Software that fixes what's slowing you down.
         </h1>
-        <p className="text-muted text-[1.2rem] leading-relaxed max-w-[38rem] mb-8">
-          I'm Ryan, a software engineer with more than ten years of experience. I build websites, stores, integrations and AI tools for small businesses, in small steps, at a flat price.
-        </p>
-        <div className="flex flex-wrap gap-3">
-          <a className="rounded-full bg-ink text-bg px-5 py-2.5 font-medium" href={`mailto:${CONTACT_EMAIL}`}>
-            Start a project
-          </a>
-          <a className="rounded-full border border-line px-5 py-2.5 font-medium" href="/process">
-            How I work
-          </a>
+        <div className="mt-14 grid gap-8 md:grid-cols-[minmax(0,1fr)_minmax(0,2fr)] border-t border-line pt-8">
+          <div className="flex flex-wrap gap-3 items-start">
+            <a
+              className="inline-flex items-center gap-2 rounded-full bg-ink text-bg px-5 py-3 font-medium hover:opacity-90"
+              href={`mailto:${CONTACT_EMAIL}`}
+            >
+              Start a project <span aria-hidden="true">→</span>
+            </a>
+            <a className="inline-flex rounded-full border border-line px-5 py-3 font-medium hover:border-ink" href="/process">
+              How I work
+            </a>
+          </div>
+          <p className="m-0 text-[clamp(1.15rem,1.8vw,1.45rem)] leading-[1.4] tracking-[-0.015em] text-ink-2 max-w-[34rem]">
+            I'm Ryan, a software engineer with more than ten years of experience. I build websites, stores, integrations and AI tools for small businesses, in small steps, at a flat price.
+          </p>
         </div>
       </section>
 
-      <section className="max-w-[1040px] mx-auto px-6 py-12 grid gap-6 md:grid-cols-3">
-        {SERVICES.map((service) => (
-          <div className="border border-line rounded-2xl p-6" key={service.title}>
-            <h2 className="text-[1.05rem] font-semibold mb-2">{service.title}</h2>
-            <p className="text-muted m-0">{service.body}</p>
-          </div>
-        ))}
+      <section className={`${WIDTH} py-16`}>
+        <SectionHead label="What I build" title="Practical software for businesses without a tech team." />
+        <div className="grid gap-10 sm:grid-cols-3 md:ml-[calc(33.333%+0.33rem)]">
+          {CAPABILITIES.map((group) => (
+            <div key={group.title}>
+              <h3 className="m-0 mb-4 text-[1rem] font-medium">{group.title}</h3>
+              <ul className="m-0 p-0 list-none flex flex-col gap-2 text-muted">
+                {group.items.map((item) => (
+                  <li key={item}>{item}</li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </div>
       </section>
 
-      <section className="max-w-[1040px] mx-auto px-6 py-12">
-        <h2 className="text-[1.6rem] font-semibold tracking-[-0.02em] mb-6">Work</h2>
+      <section className={`${WIDTH} py-16`}>
+        <SectionHead label="Selected work" />
         <CaseStudyList studies={studies} />
       </section>
 
-      <section className="max-w-[1040px] mx-auto px-6 py-12">
-        <h2 className="text-[1.6rem] font-semibold tracking-[-0.02em] mb-6">How a project runs</h2>
-        <ol className="list-none p-0 m-0 grid gap-4 md:grid-cols-2">
-          {steps.map((step) => (
-            <li className="border border-line rounded-2xl p-6" key={step.slug}>
-              <span className="text-faint text-[0.85rem]">Step {step.step}</span>
-              <h3 className="text-[1.05rem] font-semibold my-1">{step.title}</h3>
-              <p className="text-muted m-0">{step.summary}</p>
-            </li>
-          ))}
-        </ol>
-        <p className="mt-6">
-          <a className="font-medium" href="/process">
-            Read the full process →
+      <section className={`${WIDTH} py-16`}>
+        <SectionHead label="How a project runs" title="You see the research behind every decision and a price before any work." />
+        <ProcessRows steps={steps} />
+        <p className="mt-8 mb-0">
+          <a className="font-medium underline underline-offset-4 decoration-line hover:decoration-ink" href="/process">
+            Read the full process
           </a>
         </p>
+      </section>
+
+      <section className={`${WIDTH} py-16`}>
+        <SectionHead label="Working together" />
+        <div className="grid gap-px bg-line sm:grid-cols-3 border border-line rounded-2xl overflow-hidden">
+          {PROMISES.map((promise) => (
+            <div className="bg-bg p-7" key={promise.figure}>
+              <p className="m-0 text-[2rem] tracking-[-0.04em] font-medium">{promise.figure}</p>
+              <p className="mt-3 mb-0 text-muted">{promise.detail}</p>
+            </div>
+          ))}
+        </div>
       </section>
     </main>
   );

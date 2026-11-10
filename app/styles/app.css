@@ -9,6 +9,7 @@
   --muted: #6b6b74;
   --faint: #a1a1aa;
   --line: #e7e7ea;
+  --accent: #e5532d;
 }
 @media (prefers-color-scheme: dark) {
   :root {
@@ -19,6 +20,7 @@
     --muted: #a1a1aa;
     --faint: #71717a;
     --line: #232328;
+    --accent: #ff7a50;
   }
 }
 
@@ -30,6 +32,7 @@
   --color-muted: var(--muted);
   --color-faint: var(--faint);
   --color-line: var(--line);
+  --color-accent: var(--accent);
   --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 }
@@ -71,6 +74,14 @@
 .prose li {
   font-size: 1.02rem;
   line-height: 1.7;
+}
+.prose p,
+.prose ul,
+.prose ol {
+  margin: 0 0 1.1rem;
+}
+.prose > :last-child {
+  margin-bottom: 0;
 }
 .prose a {
   font-weight: 500;
