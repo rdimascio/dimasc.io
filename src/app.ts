@@ -6,7 +6,7 @@ import { lesto } from "@lesto/web";
 import { loadCaseStudies, loadFaq, loadPlans, loadProcess } from "./content";
 import { canonicalUrl, SITE_NAME, SITE_URL } from "./site";
 import { makeHome } from "./ui/home";
-import { SiteLayout } from "./ui/layout";
+import { makeSiteLayout } from "./ui/layout";
 import { makeProcess } from "./ui/process";
 import { makeCaseStudy, makeWorkIndex } from "./ui/work";
 
@@ -49,7 +49,7 @@ export async function buildAppConfig(): Promise<LestoAppConfig> {
 
   let app = lesto()
     .styles("/styles.css")
-    .layout(SiteLayout)
+    .layout(makeSiteLayout(studies.length > 0))
     .page("/", {
       static: true,
       component: makeHome(studies, plans, faq),
@@ -57,19 +57,8 @@ export async function buildAppConfig(): Promise<LestoAppConfig> {
         seoMetadata({
           title: `${SITE_NAME} · Software subscriptions for small businesses`,
           description:
-            "A software engineer on call for one flat monthly price: websites, stores, integrations and AI tools, delivered in about two business days. Pause or cancel anytime.",
+            "A software engineer on subscription for one flat monthly price: websites, stores, integrations and AI tools. Most small requests back in two business days. Pause or cancel anytime.",
           route: "/",
-          type: "website",
-        }),
-    })
-    .page("/work", {
-      static: true,
-      component: makeWorkIndex(studies),
-      metadata: () =>
-        seoMetadata({
-          title: `Work · ${SITE_NAME}`,
-          description: "Case studies: what I built, why, and how it turned out.",
-          route: "/work",
           type: "website",
         }),
     })
@@ -84,6 +73,20 @@ export async function buildAppConfig(): Promise<LestoAppConfig> {
           type: "website",
         }),
     });
+
+  if (studies.length > 0) {
+    app = app.page("/work", {
+      static: true,
+      component: makeWorkIndex(studies),
+      metadata: () =>
+        seoMetadata({
+          title: `Work · ${SITE_NAME}`,
+          description: "Case studies: what I built, why, and how it turned out.",
+          route: "/work",
+          type: "website",
+        }),
+    });
+  }
 
   for (const study of studies) {
     app = app.page(study.route, {

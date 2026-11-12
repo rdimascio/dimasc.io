@@ -1,15 +1,15 @@
 ---
 name: "Pro"
 price: 5000
-summary: "Twice the pace, for businesses with more to build."
+summary: "For a bigger backlog. Two requests run at once."
 features:
   - "Two requests at a time"
-  - "Average 48-hour delivery"
   - "Everything in Standard"
-  - "Booking, payments and integrations"
-  - "AI tools and automations"
+  - "Most small requests back in two business days"
+  - "A reply within one business day"
+  - "Private request board"
   - "Pause or cancel anytime"
-cta: "Start with Pro"
+cta: "Ask about Pro"
 featured: true
 order: 2
 ---

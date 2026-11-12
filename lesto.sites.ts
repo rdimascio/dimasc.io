@@ -9,7 +9,8 @@ export default defineSites([
     basePath: "/",
     pages: async () => {
       const studies = await loadCaseStudies();
-      return ["/", "/work", "/process", ...studies.map((study) => study.route)];
+      const work = studies.length > 0 ? ["/work", ...studies.map((study) => study.route)] : [];
+      return ["/", "/process", ...work];
     },
   },
 ]);

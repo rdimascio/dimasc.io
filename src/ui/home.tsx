@@ -1,23 +1,33 @@
 import type { ReactElement } from "react";
 
 import type { CaseStudy, FaqItem, Plan } from "../content";
-import { introCallHref, planHref } from "../site";
+import { GITHUB_URL, introCallHref, introCallLabel, MAX_SUBSCRIPTION_CLIENTS, planHref } from "../site";
 import { Eyebrow, SectionHead, WIDTH } from "./layout";
 import { CaseStudyList } from "./work";
 
+export const REFUND_RULE = "Cancel within 7 days of your first payment and get 75% back, even after work is delivered.";
+
 const STEPS = [
-  { title: "Subscribe", body: "Pick a plan. You get a private request board the same day." },
-  { title: "Request", body: "Add anything to the board: a fix, a page, an integration, an AI tool." },
-  { title: "Receive", body: "Work back in about two business days on average, until it's right." },
+  { title: "Subscribe", body: "Pick a plan. You get a private request board to add work to." },
+  { title: "Request", body: "Add what's slowing you down: a fix, a page, an integration, an AI tool." },
+  { title: "Receive", body: "Most small requests come back in two business days, and we revise until it's right." },
 ] as const;
 
 const BENEFITS = [
   { title: "Private request board", body: "Every request, decision and status in one place. No chasing." },
-  { title: "Fixed monthly price", body: "No hourly billing, no surprise invoices. The price doesn't change." },
-  { title: "Fast delivery", body: "Two business days on average. Big requests ship in pieces." },
+  { title: "Fixed monthly price", body: "No hourly billing, no surprise invoices." },
+  { title: "Reply within one business day", body: "Every request gets an answer by the next business day." },
   { title: "Pause anytime", body: "Quiet month? Pause, and keep the days you haven't used." },
-  { title: "You own everything", body: "Your accounts, domains and code are yours from day one." },
-  { title: "Reviewed before you see it", body: "Plans and changes are checked by two independent reviewers first." },
+  { title: "You own everything", body: "It all runs in your accounts, so you're never locked in." },
+  { title: "Work directly with me", body: "No account managers and no handoffs. I build and test every change." },
+] as const;
+
+export const EXAMPLES = [
+  { request: "Fix a broken checkout or booking link", time: "1 to 3 business days" },
+  { request: "A new page your staff can edit", time: "About 2 business days" },
+  { request: "Connect two tools so data stops being typed twice", time: "1 to 2 weeks" },
+  { request: "An AI assistant that answers common customer questions", time: "About 2 weeks" },
+  { request: "A new Shopify store with your products loaded", time: "4 to 6 weeks" },
 ] as const;
 
 const CAPABILITIES = [
@@ -36,14 +46,7 @@ function PlanCard({ plan }: { plan: Plan }): ReactElement {
   const button = plan.featured ? "bg-bg text-ink" : "bg-ink text-bg";
   return (
     <div className={`flex flex-col rounded-3xl border p-7 sm:p-8 ${tone}`}>
-      <div className="flex items-center justify-between gap-3">
-        <h3 className="m-0 text-[1.2rem] font-medium">{plan.name}</h3>
-        {plan.featured ? (
-          <span className="font-mono text-[0.68rem] uppercase tracking-[0.12em] rounded-full border border-current px-2.5 py-1 opacity-80">
-            Most popular
-          </span>
-        ) : null}
-      </div>
+      <h3 className="m-0 text-[1.2rem] font-medium">{plan.name}</h3>
       <p className={`mt-2 mb-0 ${muted}`}>{plan.summary}</p>
       <p className="mt-8 mb-0 flex items-baseline gap-1">
         <span className="text-[clamp(2.4rem,4vw,3.2rem)] leading-none tracking-[-0.045em] font-medium">
@@ -71,6 +74,35 @@ function PlanCard({ plan }: { plan: Plan }): ReactElement {
   );
 }
 
+function About(): ReactElement {
+  return (
+    <section className={`${WIDTH} py-16`}>
+      <SectionHead label="Who you work with" />
+      <div className="grid gap-10 md:grid-cols-[minmax(0,1fr)_minmax(0,2fr)] items-start">
+        <div
+          className="w-28 h-28 rounded-full bg-ink text-bg grid place-items-center text-[2rem] font-medium tracking-[-0.04em]"
+          aria-hidden="true"
+        >
+          RD
+        </div>
+        <div className="max-w-[38rem]">
+          <p className="m-0 text-[clamp(1.3rem,2.2vw,1.7rem)] leading-[1.35] tracking-[-0.02em] [text-wrap:pretty]">
+            I'm Ryan DiMascio. I've built websites, stores and software for more than ten years, at agencies, startups and product companies.
+          </p>
+          <p className="mt-5 mb-0 text-muted">
+            I also work full time as a software engineer, so I keep this to a small number of clients and reply to every request within one business day. You always deal with me, not a team you've never met.
+          </p>
+          <p className="mt-6 mb-0">
+            <a className="font-medium underline underline-offset-4" href={GITHUB_URL}>
+              GitHub
+            </a>
+          </p>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 export function Home({
   studies,
   plans,
@@ -83,9 +115,9 @@ export function Home({
   return (
     <main>
       <section className={`${WIDTH} pt-20 sm:pt-32 pb-20`}>
-        <Eyebrow>Software subscriptions</Eyebrow>
-        <h1 className="mt-8 mb-0 text-[clamp(2.8rem,8.5vw,7rem)] leading-[0.94] tracking-[-0.05em] font-medium max-w-[13ch]">
-          A software engineer on call, for one flat price.
+        <Eyebrow>For gyms, studios, clinics, shops and local businesses</Eyebrow>
+        <h1 className="mt-8 mb-0 text-[clamp(2.8rem,8.5vw,7rem)] leading-[0.94] tracking-[-0.05em] font-medium max-w-[13ch] [text-wrap:balance]">
+          A software engineer on subscription.
         </h1>
         <div className="mt-14 grid gap-8 md:grid-cols-[minmax(0,1fr)_minmax(0,2fr)] border-t border-line pt-8">
           <div className="flex flex-wrap gap-3 items-start">
@@ -93,11 +125,11 @@ export function Home({
               See plans <span aria-hidden="true">→</span>
             </a>
             <a className="inline-flex rounded-full border border-line px-5 py-3 font-medium hover:border-ink" href={introCallHref()}>
-              Book an intro call
+              {introCallLabel()}
             </a>
           </div>
           <p className="m-0 text-[clamp(1.15rem,1.8vw,1.45rem)] leading-[1.4] tracking-[-0.015em] text-ink-2 max-w-[34rem]">
-            I'm Ryan, a software engineer with more than ten years of experience. Subscribe, request anything from a site fix to an AI tool, and get it back in about two business days. Pause or cancel anytime.
+            Your website, store, booking and the tools behind them, fixed and improved every week for one flat monthly price. Most small requests come back in two business days. Pause or cancel anytime.
           </p>
         </div>
       </section>
@@ -116,7 +148,19 @@ export function Home({
       </section>
 
       <section className={`${WIDTH} py-16`}>
-        <SectionHead label="Membership" title="Everything a small tech team gives you, without hiring one." />
+        <SectionHead label="What a request looks like" title="Real examples, with honest time ranges." />
+        <ul className="m-0 p-0 list-none border-b border-line md:ml-[calc(33.333%+0.33rem)]">
+          {EXAMPLES.map((example) => (
+            <li className="flex flex-wrap justify-between gap-x-6 gap-y-1 border-t border-line py-4" key={example.request}>
+              <span>{example.request}</span>
+              <span className="font-mono text-[0.85rem] text-muted">{example.time}</span>
+            </li>
+          ))}
+        </ul>
+      </section>
+
+      <section className={`${WIDTH} py-16`}>
+        <SectionHead label="Membership" title="What a small tech team gives you, without hiring one." />
         <div className="grid gap-x-10 gap-y-10 sm:grid-cols-2 lg:grid-cols-3">
           {BENEFITS.map((benefit) => (
             <div className="border-t border-line pt-5" key={benefit.title}>
@@ -151,14 +195,21 @@ export function Home({
           ))}
         </div>
         <p className="mt-8 mb-0 text-center text-muted">
-          <span className="text-ink font-medium">Try it for a week.</span> Not happy after the first week? Get 75% back.
+          <span className="text-ink font-medium">Try it for a week.</span> {REFUND_RULE}
         </p>
+        {MAX_SUBSCRIPTION_CLIENTS === null ? null : (
+          <p className="mt-2 mb-0 text-center text-muted">I take at most {MAX_SUBSCRIPTION_CLIENTS} subscription clients at a time.</p>
+        )}
       </section>
 
-      <section className={`${WIDTH} py-16`}>
-        <SectionHead label="Selected work" />
-        <CaseStudyList studies={studies} />
-      </section>
+      <About />
+
+      {studies.length === 0 ? null : (
+        <section className={`${WIDTH} py-16`}>
+          <SectionHead label="Selected work" />
+          <CaseStudyList studies={studies} />
+        </section>
+      )}
 
       <section className={`${WIDTH} py-16`}>
         <SectionHead label="Questions" title="Frequently asked." />

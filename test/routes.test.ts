@@ -5,11 +5,16 @@ import type { App } from "@lesto/kernel";
 
 import appConfig from "../lesto.app";
 import { loadCaseStudies, loadFaq, loadPlans, loadProcess } from "../src/content";
-import { formatPrice } from "../src/ui/home";
+import { BOOKING_URL, introCallHref, introCallLabel } from "../src/site";
+import { formatPrice, REFUND_RULE } from "../src/ui/home";
 import { PERSONAL_PAGES, personalPageHtml } from "../src/personal";
 
 async function text(response: { body: unknown }): Promise<string> {
   return new Response(response.body as BodyInit).text();
+}
+
+function decodeEntities(html: string): string {
+  return html.replaceAll("&#x27;", "'").replaceAll("&amp;", "&");
 }
 
 let app: App;
@@ -34,10 +39,31 @@ describe("site routes", () => {
     for (const item of await loadFaq()) expect(decoded).toContain(item.question);
   });
 
-  it("links every call to action to a mail draft with a subject", async () => {
-    const html = await text(await app.handle("GET", "/"));
-    expect(html).toContain("mailto:ryan@dimasc.io?subject=Intro%20call");
+  it("labels the call button honestly for where it leads", async () => {
+    const html = decodeEntities(await text(await app.handle("GET", "/")));
+    expect(html).toContain(introCallHref());
+    expect(html).toContain(introCallLabel());
+    if (BOOKING_URL === null) expect(html).not.toContain("Book a");
     expect(html).toContain("mailto:ryan@dimasc.io?subject=Pro%20plan");
+  });
+
+  it("makes no claim the review flagged as unprovable", async () => {
+    const html = (await text(await app.handle("GET", "/"))).replaceAll("&#x27;", "'");
+    for (const phrase of ["Most popular", "on call", "48-hour", "twice the pace", "independent reviewers"]) {
+      expect(html.toLowerCase()).not.toContain(phrase.toLowerCase());
+    }
+  });
+
+  it("states one refund rule that covers delivered work", async () => {
+    const html = (await text(await app.handle("GET", "/"))).replaceAll("&#x27;", "'");
+    expect(html).toContain(REFUND_RULE);
+    expect(html).not.toContain("no refunds for finished work");
+  });
+
+  it("offers the same capabilities on both subscription plans", async () => {
+    const [standard, pro] = await loadPlans();
+    expect(standard?.features).toContain("Everything on the What I build list");
+    expect(pro?.features).toContain("Everything in Standard");
   });
 
   it("renders the process page with every step in order", async () => {
@@ -51,11 +77,15 @@ describe("site routes", () => {
     expect(positions).toEqual(positions.toSorted((a, b) => a - b));
   });
 
-  it("renders the work index and every published case study", async () => {
+  it("shows Work only when a case study is published", async () => {
+    const studies = await loadCaseStudies();
+    const home = await text(await app.handle("GET", "/"));
     const index = await app.handle("GET", "/work");
-    expect(index.status).toBe(200);
 
-    for (const study of await loadCaseStudies()) {
+    expect(index.status).toBe(studies.length > 0 ? 200 : 404);
+    expect(home.includes('href="/work"')).toBe(studies.length > 0);
+
+    for (const study of studies) {
       const response = await app.handle("GET", study.route);
       expect(response.status).toBe(200);
       expect(await text(response)).toContain(study.title);
@@ -87,7 +117,7 @@ describe("site routes", () => {
   });
 
   it("ships no client script on the studio pages", async () => {
-    for (const route of ["/", "/work", "/process"]) {
+    for (const route of ["/", "/process"]) {
       expect(await text(await app.handle("GET", route))).not.toContain("<script");
     }
   });
