@@ -1,26 +1,49 @@
 @import "tailwindcss";
 @source "../pixel";
 
+@font-face {
+  font-family: "Geist";
+  src: url("/fonts/Geist-Variable.woff2") format("woff2");
+  font-weight: 100 900;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Geist Mono";
+  src: url("/fonts/GeistMono-Variable.woff2") format("woff2");
+  font-weight: 100 900;
+  font-display: swap;
+}
+
 :root {
-  --bg: #ffffff;
-  --bg-soft: #f7f7f8;
-  --ink: #111113;
-  --ink-2: #3f3f46;
-  --muted: #6b6b74;
-  --faint: #a1a1aa;
-  --line: #e7e7ea;
-  --accent: #e5532d;
+  --bg: #f6f3ee;
+  --bg-soft: #efebe4;
+  --card: #ffffff;
+  --ink: #161513;
+  --ink-2: #3d3a35;
+  --muted: #6e6a63;
+  --faint: #a29d94;
+  --line: #e2ddd4;
+  --accent: #f04e1f;
+  --sage: #e3ecdc;
+  --butter: #f8ecc9;
+  --blush: #f4e1e6;
+  --sky: #dde9f5;
 }
 @media (prefers-color-scheme: dark) {
   :root {
-    --bg: #0b0b0d;
-    --bg-soft: #121215;
-    --ink: #f4f4f5;
-    --ink-2: #d4d4d8;
-    --muted: #a1a1aa;
-    --faint: #71717a;
-    --line: #232328;
-    --accent: #ff7a50;
+    --bg: #0f0e0d;
+    --bg-soft: #171614;
+    --card: #1b1a17;
+    --ink: #f3f1ec;
+    --ink-2: #d6d2ca;
+    --muted: #a39e95;
+    --faint: #6f6a62;
+    --line: #2a2825;
+    --accent: #ff7148;
+    --sage: #1f2a1c;
+    --butter: #2e2716;
+    --blush: #2e1f24;
+    --sky: #1a2531;
   }
 }
 
@@ -33,8 +56,13 @@
   --color-faint: var(--faint);
   --color-line: var(--line);
   --color-accent: var(--accent);
-  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-  --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --color-card: var(--card);
+  --color-sage: var(--sage);
+  --color-butter: var(--butter);
+  --color-blush: var(--blush);
+  --color-sky: var(--sky);
+  --font-sans: "Geist", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --font-mono: "Geist Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 }
 
 @layer base {

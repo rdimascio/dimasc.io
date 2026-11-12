@@ -80,7 +80,7 @@ function SiteLayout({ children, showWork }: { children: ReactNode; showWork: boo
             <a className="text-muted hover:text-ink max-[420px]:hidden" href="/process">
               Process
             </a>
-            <a className="rounded-full bg-ink text-bg px-4 py-2 font-medium hover:opacity-90" href="/#pricing">
+            <a className="rounded-full bg-accent text-white px-4 py-2 font-medium hover:opacity-90" href="/#pricing">
               See plans
             </a>
           </nav>

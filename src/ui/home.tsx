@@ -41,9 +41,10 @@ export function formatPrice(price: number): string {
 }
 
 function PlanCard({ plan }: { plan: Plan }): ReactElement {
-  const tone = plan.featured ? "bg-ink text-bg border-ink" : "bg-bg border-line";
+  const quietTone = plan.price === null ? "bg-sage border-transparent" : "bg-card border-line";
+  const tone = plan.featured ? "bg-ink text-bg border-ink" : quietTone;
   const muted = plan.featured ? "opacity-70" : "text-muted";
-  const button = plan.featured ? "bg-bg text-ink" : "bg-ink text-bg";
+  const button = plan.featured ? "bg-accent text-white" : "bg-ink text-bg";
   return (
     <div className={`flex flex-col rounded-3xl border p-7 sm:p-8 ${tone}`}>
       <h3 className="m-0 text-[1.2rem] font-medium">{plan.name}</h3>
@@ -74,9 +75,38 @@ function PlanCard({ plan }: { plan: Plan }): ReactElement {
   );
 }
 
+const BOARD = [
+  { title: "Fix the broken booking link on the homepage", status: "Done", tone: "bg-sage", meta: "2 days" },
+  { title: "New summer camp page staff can edit", status: "In review", tone: "bg-sky", meta: "Today" },
+  { title: "Send new members to the email list automatically", status: "In progress", tone: "bg-butter", meta: "Started Tue" },
+  { title: "AI assistant for common parent questions", status: "Queued", tone: "bg-blush", meta: "Next up" },
+] as const;
+
+function ExampleBoard(): ReactElement {
+  return (
+    <figure className="m-0 rounded-[28px] bg-card border border-line p-4 sm:p-5 shadow-[0_30px_60px_-30px_rgba(40,30,20,0.25)]">
+      <figcaption className="flex items-center justify-between px-2 pb-4">
+        <span className="font-medium">Your request board</span>
+        <span className="font-mono text-[0.7rem] uppercase tracking-[0.1em] text-muted">Example</span>
+      </figcaption>
+      <ul className="m-0 p-0 list-none flex flex-col gap-2.5">
+        {BOARD.map((item) => (
+          <li className="rounded-2xl border border-line bg-bg px-4 py-3.5 flex items-start justify-between gap-4" key={item.title}>
+            <span className="text-[0.95rem] leading-snug">{item.title}</span>
+            <span className="flex flex-col items-end gap-1 shrink-0">
+              <span className={`rounded-full px-2.5 py-1 text-[0.72rem] font-medium text-ink ${item.tone}`}>{item.status}</span>
+              <span className="font-mono text-[0.68rem] text-muted">{item.meta}</span>
+            </span>
+          </li>
+        ))}
+      </ul>
+    </figure>
+  );
+}
+
 function About(): ReactElement {
   return (
-    <section className={`${WIDTH} py-16`}>
+    <section className={`${WIDTH} py-12 sm:py-20`}>
       <SectionHead label="Who you work with" />
       <div className="grid gap-10 md:grid-cols-[minmax(0,1fr)_minmax(0,2fr)] items-start">
         <div
@@ -114,31 +144,33 @@ export function Home({
 }): ReactElement {
   return (
     <main>
-      <section className={`${WIDTH} pt-20 sm:pt-32 pb-20`}>
-        <Eyebrow>For gyms, studios, clinics, shops and local businesses</Eyebrow>
-        <h1 className="mt-8 mb-0 text-[clamp(2.8rem,8.5vw,7rem)] leading-[0.94] tracking-[-0.05em] font-medium max-w-[13ch] [text-wrap:balance]">
-          A software engineer on subscription.
-        </h1>
-        <div className="mt-14 grid gap-8 md:grid-cols-[minmax(0,1fr)_minmax(0,2fr)] border-t border-line pt-8">
-          <div className="flex flex-wrap gap-3 items-start">
-            <a className="inline-flex items-center gap-2 rounded-full bg-ink text-bg px-5 py-3 font-medium hover:opacity-90" href="#pricing">
+      <section className={`${WIDTH} pt-14 sm:pt-24 pb-14 sm:pb-20 grid gap-12 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)] items-center`}>
+        <div>
+          <Eyebrow>For gyms, studios, clinics, shops and local businesses</Eyebrow>
+          <h1 className="mt-7 mb-0 text-[clamp(2.7rem,6.4vw,5.6rem)] leading-[0.98] tracking-[-0.045em] font-semibold [text-wrap:balance]">
+            A software engineer on subscription.
+          </h1>
+          <p className="mt-7 mb-0 text-[clamp(1.1rem,1.6vw,1.3rem)] leading-[1.5] text-ink-2 max-w-[33rem]">
+            Your website, store, booking and the tools behind them, fixed and improved every week for one flat monthly price. Most small requests come back in two business days.
+          </p>
+          <div className="mt-9 flex flex-wrap gap-3">
+            <a className="inline-flex items-center gap-2 rounded-full bg-accent text-white px-6 py-3.5 font-medium hover:opacity-90" href="#pricing">
               See plans <span aria-hidden="true">→</span>
             </a>
-            <a className="inline-flex rounded-full border border-line px-5 py-3 font-medium hover:border-ink" href={introCallHref()}>
+            <a className="inline-flex rounded-full bg-card border border-line px-6 py-3.5 font-medium hover:border-ink" href={introCallHref()}>
               {introCallLabel()}
             </a>
           </div>
-          <p className="m-0 text-[clamp(1.15rem,1.8vw,1.45rem)] leading-[1.4] tracking-[-0.015em] text-ink-2 max-w-[34rem]">
-            Your website, store, booking and the tools behind them, fixed and improved every week for one flat monthly price. Most small requests come back in two business days. Pause or cancel anytime.
-          </p>
+          <p className="mt-6 mb-0 text-[0.9rem] text-muted">Pause or cancel anytime · 75% back in the first week</p>
         </div>
+        <ExampleBoard />
       </section>
 
-      <section className={`${WIDTH} py-16`}>
+      <section className={`${WIDTH} py-12 sm:py-20`}>
         <SectionHead label="How it works" title="Subscribe. Request. Receive." />
         <ol className="m-0 p-0 list-none grid gap-px bg-line sm:grid-cols-3 border border-line rounded-3xl overflow-hidden">
           {STEPS.map((step, index) => (
-            <li className="bg-bg p-7 sm:p-8" key={step.title}>
+            <li className="bg-card p-7 sm:p-8" key={step.title}>
               <span className="font-mono text-[0.85rem] text-accent">{String(index + 1).padStart(2, "0")}</span>
               <h3 className="mt-6 mb-2 text-[1.6rem] tracking-[-0.035em] font-medium">{step.title}</h3>
               <p className="m-0 text-muted">{step.body}</p>
@@ -147,7 +179,7 @@ export function Home({
         </ol>
       </section>
 
-      <section className={`${WIDTH} py-16`}>
+      <section className={`${WIDTH} py-12 sm:py-20`}>
         <SectionHead label="What a request looks like" title="Real examples, with honest time ranges." />
         <ul className="m-0 p-0 list-none border-b border-line md:ml-[calc(33.333%+0.33rem)]">
           {EXAMPLES.map((example) => (
@@ -159,7 +191,7 @@ export function Home({
         </ul>
       </section>
 
-      <section className={`${WIDTH} py-16`}>
+      <section className={`${WIDTH} py-12 sm:py-20`}>
         <SectionHead label="Membership" title="What a small tech team gives you, without hiring one." />
         <div className="grid gap-x-10 gap-y-10 sm:grid-cols-2 lg:grid-cols-3">
           {BENEFITS.map((benefit) => (
@@ -171,7 +203,7 @@ export function Home({
         </div>
       </section>
 
-      <section className={`${WIDTH} py-16`}>
+      <section className={`${WIDTH} py-12 sm:py-20`}>
         <SectionHead label="What I build" title="Practical software for businesses without a tech team." />
         <div className="grid gap-10 sm:grid-cols-3 md:ml-[calc(33.333%+0.33rem)]">
           {CAPABILITIES.map((group) => (
@@ -187,7 +219,7 @@ export function Home({
         </div>
       </section>
 
-      <section className={`${WIDTH} py-16 scroll-mt-20`} id="pricing">
+      <section className={`${WIDTH} py-12 sm:py-20 scroll-mt-20`} id="pricing">
         <SectionHead label="Plans" title="One flat monthly price. Pause or cancel anytime." />
         <div className="grid gap-5 lg:grid-cols-3">
           {plans.map((plan) => (
@@ -205,13 +237,13 @@ export function Home({
       <About />
 
       {studies.length === 0 ? null : (
-        <section className={`${WIDTH} py-16`}>
+        <section className={`${WIDTH} py-12 sm:py-20`}>
           <SectionHead label="Selected work" />
           <CaseStudyList studies={studies} />
         </section>
       )}
 
-      <section className={`${WIDTH} py-16`}>
+      <section className={`${WIDTH} py-12 sm:py-20`}>
         <SectionHead label="Questions" title="Frequently asked." />
         <div className="md:ml-[calc(33.333%+0.33rem)] border-b border-line">
           {faq.map((item) => (
