@@ -28,7 +28,6 @@ I led frontend development and served as tech lead on Stanford eCorner while I w
 
 ## Open questions
 
-- TODO(ryan): Do I have permission to name Stanford eCorner and STVP here?
 - TODO(ryan): Which months between Jan 2021 and Apr 2022 did this project run?
 
 ## The problem

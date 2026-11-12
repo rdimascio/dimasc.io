@@ -28,7 +28,6 @@ Listing: [wordpress.org/plugins/yext-ai-search](https://wordpress.org/plugins/ye
 
 ## Open questions
 
-- TODO(ryan): Do I have permission to name Yext here?
 - TODO(ryan): What was my role on the plugin, and which parts did I write?
 - TODO(ryan): Which services should be listed (for example plugin build, block editor work, sync jobs)?
 - TODO(ryan): When did I do this work, and for how long?

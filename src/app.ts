@@ -82,7 +82,7 @@ export async function buildAppConfig(
       metadata: () =>
         seoMetadata({
           title: `About · ${SITE_NAME}`,
-          description: "Ryan DiMascio: more than ten years of building websites, stores and software, at agencies, startups and product companies.",
+          description: "Ryan DiMascio: building websites, stores and software since 2017, at agencies, startups and product companies.",
           route: ABOUT_ROUTE,
           type: "website",
         }),

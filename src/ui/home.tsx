@@ -306,7 +306,7 @@ function ExperienceSection({ experience }: { experience: readonly Experience[] }
         label="Experience"
         title={
           <>
-            More than ten years of building for the web, <span className="serif text-muted">at agencies, startups and product companies.</span>
+            Building for the web since 2017, <span className="serif text-muted">at agencies, startups and product companies.</span>
           </>
         }
       />

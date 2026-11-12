@@ -28,7 +28,6 @@ I led frontend development and served as tech lead on Blackstone while I was a S
 
 ## Open questions
 
-- TODO(ryan): Do I have permission to name Blackstone here?
 - TODO(ryan): Is WordPress the stack I worked on, or did the site change after my work?
 - TODO(ryan): Which months between Jan 2021 and Apr 2022 did this project run?
 

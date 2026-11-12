@@ -31,7 +31,6 @@ Later, as a Senior Software Engineer, I built and scaled the multi-tenant Next.j
 
 ## Open questions
 
-- TODO(ryan): Do I have permission to name SERHANT. here?
 
 ## The problem
 

@@ -22,7 +22,7 @@ function AboutPage({ experience }: { experience: readonly Experience[] }): React
           </div>
           <div className="md:col-span-8 max-w-[42rem]">
             <p className="m-0 text-[clamp(1.35rem,2.4vw,1.9rem)] leading-[1.3] tracking-[-0.025em] [text-wrap:pretty]">
-              I'm Ryan DiMascio. I've built websites, stores and software for more than ten years, at agencies, startups and product companies.
+              I'm Ryan DiMascio. I've built websites, stores and software since 2017, at agencies, startups and product companies.
             </p>
             <p className="mt-6 mb-0 text-muted text-[1.1rem] leading-relaxed">
               At Luxury Presence I built a multi-tenant Next.js platform that serves 30K+ sites and 10M+ requests/day. Before that I led frontend work at 10up for Blackstone, Stanford eCorner and Holt International.

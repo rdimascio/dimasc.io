@@ -24,7 +24,6 @@ Live site: [r-selectric.com](https://r-selectric.com/)
 
 ## Open questions
 
-- TODO(ryan): Do I have permission to name R & S Electric here?
 - TODO(ryan): What was my role (design, build, content, hosting)?
 - TODO(ryan): Which services should be listed?
 - TODO(ryan): What did the old site look like, if there was one?
