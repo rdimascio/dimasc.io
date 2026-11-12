@@ -3,12 +3,13 @@ import { openSqlite } from "@lesto/runtime";
 import type { PageMetadata } from "@lesto/web";
 import { lesto } from "@lesto/web";
 
-import { loadCaseStudies, loadFaq, loadPlans, loadProcess } from "./content";
+import { loadAllCaseStudies, loadFaq, loadPlans, loadProcess } from "./content";
 import { canonicalUrl, SITE_NAME, SITE_URL } from "./site";
 import { makeHome } from "./ui/home";
 import { makeSiteLayout } from "./ui/layout";
 import { makeProcess } from "./ui/process";
-import { makeCaseStudy, makeWorkIndex } from "./ui/work";
+import { makeCaseStudy, makeWorkIndex, makeWorkRequest } from "./ui/work";
+import { previewCaseStudiesFromEnv, WORK_REQUEST_ROUTE, WORK_ROUTE } from "./work";
 
 export { canonicalUrl, SITE_URL };
 
@@ -43,9 +44,15 @@ export function seoMetadata(input: {
   };
 }
 
-export async function buildAppConfig(): Promise<LestoAppConfig> {
+export interface BuildOptions {
+  readonly previewCaseStudies: boolean;
+}
+
+export async function buildAppConfig(
+  options: BuildOptions = { previewCaseStudies: previewCaseStudiesFromEnv() },
+): Promise<LestoAppConfig> {
   const { db } = await openSqlite(":memory:");
-  const [studies, steps, plans, faq] = await Promise.all([loadCaseStudies(), loadProcess(), loadPlans(), loadFaq()]);
+  const [studies, steps, plans, faq] = await Promise.all([loadAllCaseStudies(), loadProcess(), loadPlans(), loadFaq()]);
 
   let app = lesto()
     .styles("/styles.css")
@@ -75,30 +82,45 @@ export async function buildAppConfig(): Promise<LestoAppConfig> {
     });
 
   if (studies.length > 0) {
-    app = app.page("/work", {
-      static: true,
-      component: makeWorkIndex(studies),
-      metadata: () =>
-        seoMetadata({
-          title: `Work · ${SITE_NAME}`,
-          description: "Case studies: what I built, why, and how it turned out.",
-          route: "/work",
-          type: "website",
-        }),
-    });
+    app = app
+      .page(WORK_ROUTE, {
+        static: true,
+        component: makeWorkIndex(studies),
+        metadata: () =>
+          seoMetadata({
+            title: `Work · ${SITE_NAME}`,
+            description: "Selected work. Full case studies are shared on request.",
+            route: WORK_ROUTE,
+            type: "website",
+          }),
+      })
+      .page(WORK_REQUEST_ROUTE, {
+        static: true,
+        component: makeWorkRequest(studies),
+        metadata: () =>
+          seoMetadata({
+            title: `Request a case study · ${SITE_NAME}`,
+            description: "Full case studies are shared on request. Email me with the project you want to read about.",
+            route: WORK_REQUEST_ROUTE,
+            type: "website",
+          }),
+      });
   }
 
-  for (const study of studies) {
+  const fullStudies = options.previewCaseStudies ? studies : [];
+  for (const study of fullStudies) {
     app = app.page(study.route, {
       static: true,
       component: makeCaseStudy(study),
-      metadata: () =>
-        seoMetadata({
+      metadata: () => {
+        const base = seoMetadata({
           title: `${study.title} · ${SITE_NAME}`,
           description: study.summary,
           route: study.route,
           type: "article",
-        }),
+        });
+        return { ...base, meta: [...(base.meta ?? []), { name: "robots", content: "noindex" }] };
+      },
     });
   }
 

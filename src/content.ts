@@ -52,8 +52,11 @@ export interface CaseStudy {
   readonly services: readonly string[];
   readonly stack: readonly string[];
   readonly order: number;
+  readonly draft: boolean;
   readonly html: string;
 }
+
+export const OPEN_QUESTION_MARKER = "TODO(ryan)";
 
 export interface ProcessStep {
   readonly slug: string;
@@ -85,17 +88,30 @@ function toCaseStudy(entry: RawCaseStudy): CaseStudy {
     services: entry.services,
     stack: entry.stack,
     order: entry.order,
+    draft: entry.draft,
     html: entry.rendered?.html ?? "",
   };
 }
 
-export async function loadCaseStudies(): Promise<CaseStudy[]> {
+function assertNoOpenQuestions(study: CaseStudy): CaseStudy {
+  if (!study.draft && study.html.includes(OPEN_QUESTION_MARKER)) {
+    throw new Error(`case study "${study.slug}" is not a draft but still has ${OPEN_QUESTION_MARKER} lines`);
+  }
+  return study;
+}
+
+export async function loadAllCaseStudies(): Promise<CaseStudy[]> {
   const entries = await loadEntries();
   return entries
     .filter((entry): entry is RawCaseStudy => entry.collection === "caseStudies")
-    .filter((entry) => !entry.draft)
+    .filter((entry) => entry.file.pathSegments.at(-1)?.startsWith("_") !== true)
     .map(toCaseStudy)
+    .map(assertNoOpenQuestions)
     .toSorted((a, b) => a.order - b.order || b.year - a.year || a.title.localeCompare(b.title));
+}
+
+export async function loadCaseStudies(): Promise<CaseStudy[]> {
+  return (await loadAllCaseStudies()).filter((study) => !study.draft);
 }
 
 export async function loadProcess(): Promise<ProcessStep[]> {

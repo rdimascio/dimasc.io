@@ -3,7 +3,7 @@ import type { ReactElement } from "react";
 import type { CaseStudy, FaqItem, Plan } from "../content";
 import { GITHUB_URL, introCallHref, introCallLabel, MAX_SUBSCRIPTION_CLIENTS, planHref } from "../site";
 import { Eyebrow, SectionHead, WIDTH } from "./layout";
-import { CaseStudyList } from "./work";
+import { CaseStudyGrid, REQUEST_LINE } from "./work";
 
 export const REFUND_RULE = "Cancel within 7 days of your first payment and get 75% back, even after work is delivered.";
 
@@ -237,9 +237,10 @@ export function Home({
       <About />
 
       {studies.length === 0 ? null : (
-        <section className={`${WIDTH} py-12 sm:py-20`}>
-          <SectionHead label="Selected work" />
-          <CaseStudyList studies={studies} />
+        <section className={`${WIDTH} py-12 sm:py-20 scroll-mt-20`} id="work">
+          <SectionHead label="Selected work" title="Sites and products I have worked on." />
+          <CaseStudyGrid studies={studies} />
+          <p className="mt-8 mb-0 text-muted">{REQUEST_LINE}</p>
         </section>
       )}
 

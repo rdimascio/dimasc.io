@@ -4,10 +4,25 @@ import { createApp } from "@lesto/kernel";
 import type { App } from "@lesto/kernel";
 
 import appConfig from "../lesto.app";
-import { loadCaseStudies, loadFaq, loadPlans, loadProcess } from "../src/content";
-import { BOOKING_URL, introCallHref, introCallLabel } from "../src/site";
+import { buildAppConfig } from "../src/app";
+import { loadAllCaseStudies, loadCaseStudies, loadFaq, loadPlans, loadProcess, OPEN_QUESTION_MARKER } from "../src/content";
+import { BOOKING_URL, CONTACT_EMAIL, introCallHref, introCallLabel } from "../src/site";
 import { formatPrice, REFUND_RULE } from "../src/ui/home";
+import { REQUEST_LINE } from "../src/ui/work";
 import { PERSONAL_PAGES, personalPageHtml } from "../src/personal";
+import {
+  projectName,
+  requestAnchor,
+  requestMailto,
+  SCREENSHOT_SOURCE_DIR,
+  screenshotSrc,
+  WORK_REQUEST_ROUTE,
+  WORK_ROUTE,
+  workRoutes,
+} from "../src/work";
+
+const CASE_STUDY_SLUGS = ["stanford-ecorner", "blackstone", "holt-international", "yext-ai-search", "serhant", "r-selectric"];
+const MAX_SCREENSHOT_BYTES = 300 * 1024;
 
 async function text(response: { body: unknown }): Promise<string> {
   return new Response(response.body as BodyInit).text();
@@ -77,25 +92,78 @@ describe("site routes", () => {
     expect(positions).toEqual(positions.toSorted((a, b) => a - b));
   });
 
-  it("shows Work only when a case study is published", async () => {
-    const studies = await loadCaseStudies();
+  it("shows Work in the nav whenever a case study card exists", async () => {
+    const studies = await loadAllCaseStudies();
     const home = await text(await app.handle("GET", "/"));
-    const index = await app.handle("GET", "/work");
 
-    expect(index.status).toBe(studies.length > 0 ? 200 : 404);
-    expect(home.includes('href="/work"')).toBe(studies.length > 0);
+    expect((await app.handle("GET", WORK_ROUTE)).status).toBe(studies.length > 0 ? 200 : 404);
+    expect(home.includes(`href="${WORK_ROUTE}"`)).toBe(studies.length > 0);
+  });
 
+  it("lists every case study on the home page as a card that links to the request page", async () => {
+    const studies = await loadAllCaseStudies();
+    const home = decodeEntities(await text(await app.handle("GET", "/")));
+
+    expect(studies.map((study) => study.slug).toSorted()).toEqual(CASE_STUDY_SLUGS.toSorted());
+    expect(home).toContain("Selected work");
+    expect(home).toContain(REQUEST_LINE);
     for (const study of studies) {
-      const response = await app.handle("GET", study.route);
-      expect(response.status).toBe(200);
-      expect(await text(response)).toContain(study.title);
+      expect(home).toContain(projectName(study));
+      expect(home).toContain(`href="${requestAnchor(study)}"`);
+      expect(home).toContain(`src="${screenshotSrc(study, "desktop")}"`);
+      expect(home).not.toContain(`href="${study.route}"`);
     }
   });
 
-  it("never publishes a draft case study", async () => {
-    const studies = await loadCaseStudies();
-    expect(studies.some((study) => study.slug === "_template")).toBe(false);
+  it("offers a prefilled email for each case study on the request page", async () => {
+    const response = await app.handle("GET", WORK_REQUEST_ROUTE);
+    const html = decodeEntities(await text(response));
+
+    expect(response.status).toBe(200);
+    expect(html).toContain(REQUEST_LINE);
+    for (const study of await loadAllCaseStudies()) {
+      expect(html).toContain(`id="${study.slug}"`);
+      expect(html).toContain(requestMailto(study));
+      expect(requestMailto(study)).toStartWith(`mailto:${CONTACT_EMAIL}?subject=`);
+      expect(decodeURIComponent(requestMailto(study))).toContain(projectName(study));
+    }
+  });
+
+  it("keeps full case studies off the public site", async () => {
+    for (const study of await loadAllCaseStudies()) {
+      expect((await app.handle("GET", study.route)).status).toBe(404);
+    }
     expect((await app.handle("GET", "/work/_template")).status).toBe(404);
+    expect(workRoutes(await loadAllCaseStudies(), false)).toEqual([WORK_ROUTE, WORK_REQUEST_ROUTE]);
+  });
+
+  it("renders every full case study in preview, marked noindex", async () => {
+    const preview = await createApp(await buildAppConfig({ previewCaseStudies: true }));
+    for (const study of await loadAllCaseStudies()) {
+      const response = await preview.handle("GET", study.route);
+      const html = decodeEntities(await text(response));
+      expect(response.status).toBe(200);
+      expect(html).toContain(study.title);
+      expect(html).toContain(screenshotSrc(study, "mobile"));
+      expect(html).toContain('content="noindex"');
+    }
+    expect((await preview.handle("GET", "/work/_template")).status).toBe(404);
+  });
+
+  it("ships a screenshot pair for every case study", async () => {
+    for (const study of await loadAllCaseStudies()) {
+      for (const view of ["desktop", "mobile"] as const) {
+        const file = Bun.file(`${SCREENSHOT_SOURCE_DIR}/${study.slug}-${view}.webp`);
+        expect(await file.exists()).toBe(true);
+        expect(file.size).toBeLessThan(MAX_SCREENSHOT_BYTES);
+      }
+    }
+  });
+
+  it("keeps open questions out of published case studies", async () => {
+    for (const study of await loadCaseStudies()) {
+      expect(study.html).not.toContain(OPEN_QUESTION_MARKER);
+    }
   });
 
   it("sets canonical and social metadata", async () => {

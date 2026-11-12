@@ -1,9 +1,13 @@
+import { readdir } from "node:fs/promises";
+import path from "node:path";
+
 import type { BuildHook } from "@lesto/cli";
 import { defineStaticSite } from "@lesto/sites";
 
 import { SITE_URL } from "./src/app";
 import { ogImage } from "./src/og";
 import { outputPathFor, PERSONAL_PAGES, personalPageHtml } from "./src/personal";
+import { SCREENSHOT_SOURCE_DIR, screenshotOutputPath } from "./src/work";
 
 const FAVICON = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="14" fill="#111113"/><text x="32" y="43" font-family="system-ui, sans-serif" font-size="30" font-weight="700" text-anchor="middle" fill="#fff">RD</text></svg>`;
 
@@ -40,6 +44,12 @@ const onBuilt: BuildHook = async ({ sites }) => {
 
   for (const font of FONT_FILES) {
     await site.sink(font.to, new Uint8Array(await Bun.file(font.from).arrayBuffer()));
+  }
+
+  for (const fileName of await readdir(SCREENSHOT_SOURCE_DIR)) {
+    if (!fileName.endsWith(".webp")) continue;
+    const bytes = await Bun.file(path.join(SCREENSHOT_SOURCE_DIR, fileName)).arrayBuffer();
+    await site.sink(screenshotOutputPath(fileName), new Uint8Array(bytes));
   }
 
   for (const page of PERSONAL_PAGES) {
