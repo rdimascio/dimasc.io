@@ -3,8 +3,8 @@ title: "Sponsorship, adoption and giving for Holt International"
 summary: "Child sponsorship, adoption and giving for a Christian organization that supports vulnerable children and families."
 client: "Holt International"
 industry: "Nonprofit"
-year: 2026 # TODO(ryan): Which year did I do this work?
-services: []
+year: 2021
+services: ["Frontend development", "Technical leadership"]
 stack: ["WordPress", "Kinsta", "Cloudflare"]
 order: 30
 draft: true
@@ -22,12 +22,14 @@ holtinternational.org is the website of Holt International. Holt describes itsel
 
 Live site: [holtinternational.org](https://www.holtinternational.org/)
 
+## My role
+
+I led frontend development and served as tech lead on Holt International while I was a Senior Frontend Engineer at 10up, between January 2021 and April 2022.
+
 ## Open questions
 
 - TODO(ryan): Do I have permission to name Holt International here?
-- TODO(ryan): What was my role, and was I hired directly or through an agency?
-- TODO(ryan): Which services should be listed (for example donation flow, sponsorship, child profiles)?
-- TODO(ryan): When did I do this work, and for how long?
+- TODO(ryan): Which months between Jan 2021 and Apr 2022 did this project run?
 
 ## The problem
 

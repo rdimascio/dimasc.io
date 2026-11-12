@@ -3,8 +3,8 @@ title: "The public website for Blackstone"
 summary: "The corporate site of an alternative asset manager, for investors, shareholders and financial advisors."
 client: "Blackstone"
 industry: "Financial services"
-year: 2026 # TODO(ryan): Which year did I do this work?
-services: []
+year: 2021
+services: ["Frontend development", "Technical leadership"]
 stack: ["WordPress", "Cloudflare"]
 order: 20
 draft: true
@@ -22,13 +22,15 @@ blackstone.com is the public website of Blackstone. The site describes the firm 
 
 Live site: [blackstone.com](https://www.blackstone.com/)
 
+## My role
+
+I led frontend development and served as tech lead on Blackstone while I was a Senior Frontend Engineer at 10up, between January 2021 and April 2022.
+
 ## Open questions
 
 - TODO(ryan): Do I have permission to name Blackstone here?
-- TODO(ryan): What was my role, and was I hired directly or through an agency?
-- TODO(ryan): Which services should be listed?
 - TODO(ryan): Is WordPress the stack I worked on, or did the site change after my work?
-- TODO(ryan): When did I do this work, and for how long?
+- TODO(ryan): Which months between Jan 2021 and Apr 2022 did this project run?
 
 ## The problem
 

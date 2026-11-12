@@ -8,6 +8,7 @@ import config, {
   type DemoFrontmatter,
   type ExperienceFrontmatter,
   type FaqFrontmatter,
+  type RoleFrontmatter,
   type PlanFrontmatter,
   type ProcessStepFrontmatter,
 } from "../lesto.content";
@@ -149,16 +150,19 @@ export async function loadPlans(): Promise<Plan[]> {
 }
 
 export type Demo = DemoFrontmatter;
+export type Role = RoleFrontmatter;
 
 export interface Experience {
   readonly slug: string;
   readonly company: string;
-  readonly url: string;
+  readonly url: string | undefined;
   readonly description: string;
   readonly role: string | undefined;
   readonly period: string | undefined;
   readonly current: boolean;
+  readonly compact: boolean;
   readonly order: number;
+  readonly roles: readonly Role[];
   readonly demos: readonly Demo[];
   readonly html: string;
 }
@@ -175,7 +179,9 @@ export async function loadExperience(): Promise<Experience[]> {
       role: entry.role,
       period: entry.period,
       current: entry.current,
+      compact: entry.compact,
       order: entry.order,
+      roles: entry.roles,
       demos: entry.demos,
       html: entry.rendered?.html ?? "",
     }))

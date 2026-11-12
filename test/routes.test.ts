@@ -16,6 +16,7 @@ import {
 } from "../src/content";
 import { ABOUT_ROUTE, BOOKING_URL, CONTACT_EMAIL, introCallHref, introCallLabel } from "../src/site";
 import { formatPrice, REFUND_RULE } from "../src/ui/home";
+import { SKILLS } from "../src/ui/experience";
 import { REQUEST_LINE } from "../src/ui/work";
 import { PERSONAL_PAGES, personalPageHtml } from "../src/personal";
 import {
@@ -33,6 +34,7 @@ import {
 
 const CASE_STUDY_SLUGS = ["stanford-ecorner", "blackstone", "holt-international", "yext-ai-search", "serhant", "r-selectric"];
 const MAX_SCREENSHOT_BYTES = 300 * 1024;
+const PHONE_NUMBER = /\(?\d{3}\)?[\s.-]\d{3}[\s.-]\d{4}/;
 const MAX_CLIP_BYTES = 4 * 1024 * 1024;
 const MAX_WORKER_ASSET_BYTES = 25 * 1024 * 1024;
 
@@ -42,6 +44,10 @@ async function text(response: { body: unknown }): Promise<string> {
 
 function decodeEntities(html: string): string {
   return html.replaceAll("&#x27;", "'").replaceAll("&amp;", "&");
+}
+
+function luxuryPresenceRoles(experience: Awaited<ReturnType<typeof loadExperience>>): readonly unknown[] {
+  return experience.find((item) => item.company === "Luxury Presence")?.roles ?? [];
 }
 
 let app: App;
@@ -174,7 +180,8 @@ describe("site routes", () => {
 
   it("shows the work history on the home and about pages, with the demos under Luxury Presence", async () => {
     const experience = await loadExperience();
-    expect(experience.map((item) => item.company)).toEqual(["Every", "Luxury Presence", "10up"]);
+    expect(experience.map((item) => item.company)).toEqual(["Every", "Luxury Presence", "10up", "Channel Bakers", "Lender Homepage"]);
+    expect(luxuryPresenceRoles(experience)).toHaveLength(4);
     const luxuryPresence = experience.find((item) => item.company === "Luxury Presence");
     expect(luxuryPresence?.demos.map((demo) => demo.slug)).toEqual(["natural-language-search", "local-dev-app"]);
 
@@ -208,9 +215,19 @@ describe("site routes", () => {
     }
   });
 
-  it("never shows an open question on a public page", async () => {
+  it("never shows an open question or a phone number on a public page", async () => {
     for (const route of ["/", ABOUT_ROUTE, "/process", WORK_ROUTE, WORK_REQUEST_ROUTE]) {
-      expect(await text(await app.handle("GET", route))).not.toContain("TODO");
+      const html = await text(await app.handle("GET", route));
+      expect(html).not.toContain("TODO");
+      expect(html).not.toMatch(PHONE_NUMBER);
+    }
+  });
+
+  it("lists the resume skills on the about page", async () => {
+    const html = decodeEntities(await text(await app.handle("GET", ABOUT_ROUTE)));
+    for (const skill of SKILLS) {
+      expect(html).toContain(skill.group);
+      for (const item of skill.items) expect(html).toContain(item);
     }
   });
 

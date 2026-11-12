@@ -3,8 +3,8 @@ title: "A library of entrepreneurship talks for Stanford eCorner"
 summary: "Free videos, podcasts and articles on entrepreneurship from the Stanford Technology Ventures Program."
 client: "Stanford eCorner"
 industry: "Higher education"
-year: 2026 # TODO(ryan): Which year did I do this work?
-services: []
+year: 2021
+services: ["Frontend development", "Technical leadership"]
 stack: ["Drupal 11"]
 order: 10
 draft: true
@@ -22,12 +22,14 @@ eCorner is the media library of the Stanford Technology Ventures Program (STVP).
 
 Live site: [stvp.stanford.edu/ecorner](https://stvp.stanford.edu/ecorner/)
 
+## My role
+
+I led frontend development and served as tech lead on Stanford eCorner while I was a Senior Frontend Engineer at 10up, between January 2021 and April 2022.
+
 ## Open questions
 
 - TODO(ryan): Do I have permission to name Stanford eCorner and STVP here?
-- TODO(ryan): What was my role, and was I hired directly or through an agency?
-- TODO(ryan): Which services should be listed (for example design, Drupal build, migration)?
-- TODO(ryan): When did I do this work, and for how long?
+- TODO(ryan): Which months between Jan 2021 and Apr 2022 did this project run?
 
 ## The problem
 

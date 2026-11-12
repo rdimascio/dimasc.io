@@ -2,7 +2,7 @@ import type { ReactElement } from "react";
 
 import type { Experience } from "../content";
 import { CONTACT_EMAIL, GITHUB_URL } from "../site";
-import { ExperienceTimeline } from "./experience";
+import { ExperienceTimeline, SkillsRow } from "./experience";
 import { ArrowLink, Eyebrow, HEADING, PAGE, SectionHead, WIDTH } from "./layout";
 
 function AboutPage({ experience }: { experience: readonly Experience[] }): ReactElement {
@@ -25,6 +25,9 @@ function AboutPage({ experience }: { experience: readonly Experience[] }): React
               I'm Ryan DiMascio. I've built websites, stores and software for more than ten years, at agencies, startups and product companies.
             </p>
             <p className="mt-6 mb-0 text-muted text-[1.1rem] leading-relaxed">
+              At Luxury Presence I built a multi-tenant Next.js platform that serves 30K+ sites and 10M+ requests/day. Before that I led frontend work at 10up for Blackstone, Stanford eCorner and Holt International.
+            </p>
+            <p className="mt-6 mb-0 text-muted text-[1.1rem] leading-relaxed">
               I also work full time as a software engineer, so I keep this to a small number of clients and reply to every request within one business day. You always deal with me, not a team you've never met.
             </p>
             <div className="mt-10 flex flex-wrap gap-3">
@@ -41,6 +44,9 @@ function AboutPage({ experience }: { experience: readonly Experience[] }): React
       <section className={`${WIDTH} pt-28 sm:pt-36 pb-28`}>
         <SectionHead label="Experience" title="Where I have worked." />
         <ExperienceTimeline items={experience} />
+        <div className="mt-20">
+          <SkillsRow />
+        </div>
       </section>
     </main>
   );

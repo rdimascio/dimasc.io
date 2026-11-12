@@ -3,8 +3,8 @@ title: "Listing search for SERHANT."
 summary: "Home search for a real estate brokerage, with homes for sale and rent across many US regions."
 client: "SERHANT."
 industry: "Real estate"
-year: 2026 # TODO(ryan): Which year did I do this work?
-services: []
+year: 2022 # TODO(ryan): Was the SERHANT. template delivered in 2022?
+services: ["Website template", "Technical leadership"]
 stack: ["Luxury Presence", "Cloudflare"]
 order: 50
 draft: true
@@ -23,13 +23,15 @@ serhant.com is the website of SERHANT., a real estate brokerage. The listings pa
 
 Live site: [serhant.com](https://serhant.com/home-search/listings/). The listings URL now opens the Buy page.
 
+## My role
+
+I was a Senior UI Engineer and tech lead at Luxury Presence, which I joined in May 2022. I delivered a production-ready website template for the Ryan Serhant partnership within 30 days.
+
+Later, as a Senior Software Engineer, I built and scaled the multi-tenant Next.js platform behind Luxury Presence sites. It serves 30K+ websites, for clients that include Ryan Serhant.
+
 ## Open questions
 
 - TODO(ryan): Do I have permission to name SERHANT. here?
-- TODO(ryan): What was my role, and was I hired directly or through an agency?
-- TODO(ryan): Was the listing search I worked on built on Luxury Presence, or on another stack?
-- TODO(ryan): Which services should be listed?
-- TODO(ryan): When did I do this work, and for how long?
 
 ## The problem
 

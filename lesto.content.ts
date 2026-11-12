@@ -50,14 +50,23 @@ export const demoFrontmatter = z.object({
 
 export type DemoFrontmatter = z.infer<typeof demoFrontmatter>;
 
+export const roleFrontmatter = z.object({
+  title: z.string(),
+  points: z.array(z.string()).default([]),
+});
+
+export type RoleFrontmatter = z.infer<typeof roleFrontmatter>;
+
 export const experienceFrontmatter = z.object({
   company: z.string(),
-  url: z.url(),
+  url: z.url().optional(),
   description: z.string(),
   role: z.string().optional(),
   period: z.string().optional(),
   current: z.boolean().default(false),
+  compact: z.boolean().default(false),
   order: z.number().int(),
+  roles: z.array(roleFrontmatter).default([]),
   demos: z.array(demoFrontmatter).default([]),
 });
 
