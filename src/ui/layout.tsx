@@ -1,6 +1,6 @@
 import type { ReactElement, ReactNode } from "react";
 
-import { CONTACT_EMAIL, SITE_NAME } from "../site";
+import { CONTACT_EMAIL, introCallHref, SITE_NAME } from "../site";
 
 export const WIDTH = "max-w-[1200px] mx-auto px-5 sm:px-8";
 
@@ -31,21 +31,24 @@ export function ContactBand(): ReactElement {
     <section className="bg-ink text-bg mt-28">
       <div className={`${WIDTH} py-20 grid gap-10 md:grid-cols-[minmax(0,2fr)_minmax(0,1fr)] items-end`}>
         <div>
-          <p className="m-0 mb-5 font-mono text-[0.72rem] uppercase tracking-[0.12em] opacity-60">Start a project</p>
+          <p className="m-0 mb-5 font-mono text-[0.72rem] uppercase tracking-[0.12em] opacity-60">Not sure yet?</p>
           <h2 className="m-0 text-[clamp(2rem,5vw,3.6rem)] leading-[1.02] tracking-[-0.04em] font-medium max-w-[16ch]">
-            Tell me what's slowing you down.
+            Book a 15-minute intro call.
           </h2>
         </div>
         <div className="flex flex-col gap-4 md:items-end">
           <p className="m-0 opacity-70 md:text-right max-w-[22rem]">
-            A short note is enough. I reply with the questions I need answered and a time to talk.
+            Tell me what's slowing you down. I'll tell you which plan fits, or whether you need one at all.
           </p>
           <a
             className="inline-flex items-center gap-2 rounded-full bg-bg text-ink px-6 py-3 font-medium hover:opacity-90"
-            href={`mailto:${CONTACT_EMAIL}`}
+            href={introCallHref()}
           >
-            {CONTACT_EMAIL}
+            Book an intro call
             <span aria-hidden="true">→</span>
+          </a>
+          <a className="opacity-70 hover:opacity-100 text-[0.9rem]" href={`mailto:${CONTACT_EMAIL}`}>
+            or email {CONTACT_EMAIL}
           </a>
         </div>
       </div>
@@ -58,22 +61,19 @@ export function SiteLayout({ children }: { children: ReactNode }): ReactElement 
     <>
       <header className="sticky top-0 z-30 bg-[color-mix(in_srgb,var(--bg)_86%,transparent)] backdrop-blur-md border-b border-line">
         <div className={`${WIDTH} flex items-center gap-6 h-16`}>
-          <a className="font-medium tracking-[-0.02em] text-ink" href="/">
+          <a className="font-medium tracking-[-0.02em] text-ink whitespace-nowrap" href="/">
             {SITE_NAME}
           </a>
           <span className="flex-1" />
-          <nav className="flex items-center gap-5 sm:gap-7 text-[0.92rem]">
+          <nav className="flex items-center gap-4 sm:gap-7 text-[0.92rem] whitespace-nowrap">
             <a className="text-muted hover:text-ink" href="/work">
               Work
             </a>
-            <a className="text-muted hover:text-ink" href="/process">
+            <a className="text-muted hover:text-ink max-[420px]:hidden" href="/process">
               Process
             </a>
-            <a
-              className="rounded-full bg-ink text-bg px-4 py-2 font-medium hover:opacity-90 max-sm:hidden"
-              href={`mailto:${CONTACT_EMAIL}`}
-            >
-              Start a project
+            <a className="rounded-full bg-ink text-bg px-4 py-2 font-medium hover:opacity-90" href="/#pricing">
+              See plans
             </a>
           </nav>
         </div>
@@ -83,7 +83,7 @@ export function SiteLayout({ children }: { children: ReactNode }): ReactElement 
       <footer className="bg-ink text-bg">
         <div className={`${WIDTH} py-8 border-t border-[color-mix(in_srgb,var(--bg)_18%,transparent)] flex flex-wrap justify-between gap-3 text-[0.85rem] opacity-60`}>
           <span>© {SITE_NAME}</span>
-          <span>Software, web and AI builds for small businesses</span>
+          <span>Software subscriptions for small businesses</span>
         </div>
       </footer>
     </>

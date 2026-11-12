@@ -28,9 +28,9 @@ function ProcessPage({ steps }: { steps: readonly ProcessStep[] }): ReactElement
   return (
     <main className={PAGE}>
       <Eyebrow>Process</Eyebrow>
-      <h1 className={`${HEADING} mt-8`}>How I work</h1>
+      <h1 className={`${HEADING} mt-8`}>How custom projects run</h1>
       <p className={`${LEDE} mt-8`}>
-        Every project follows the same steps. You see the research behind each decision, a flat price before work starts, and something working at the end of each step.
+        Bigger builds with a fixed scope follow these steps. You see the research behind each decision, a flat price before work starts, and something working at the end of each step.
       </p>
       <ol className="mt-20 m-0 p-0 list-none">
         {steps.map((step) => (

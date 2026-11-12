@@ -4,7 +4,8 @@ import { createApp } from "@lesto/kernel";
 import type { App } from "@lesto/kernel";
 
 import appConfig from "../lesto.app";
-import { loadCaseStudies, loadProcess } from "../src/content";
+import { loadCaseStudies, loadFaq, loadPlans, loadProcess } from "../src/content";
+import { formatPrice } from "../src/ui/home";
 import { PERSONAL_PAGES, personalPageHtml } from "../src/personal";
 
 async function text(response: { body: unknown }): Promise<string> {
@@ -18,13 +19,25 @@ beforeAll(async () => {
 });
 
 describe("site routes", () => {
-  it("renders the home page with the contact link and the process steps", async () => {
+  it("renders every plan with its price, the trial offer and the FAQ", async () => {
     const html = await text(await app.handle("GET", "/"));
-    const steps = await loadProcess();
+    const plans = await loadPlans();
 
-    expect(html).toContain("Start a project");
-    expect(html).toContain("mailto:");
-    for (const step of steps) expect(html).toContain(step.title);
+    expect(plans.map((plan) => plan.price)).toEqual([2500, 5000, null]);
+    for (const plan of plans) {
+      expect(html).toContain(plan.name);
+      if (plan.price !== null) expect(html).toContain(formatPrice(plan.price));
+    }
+    expect(html).toContain('id="pricing"');
+    expect(html).toContain("75% back");
+    const decoded = html.replaceAll("&#x27;", "'");
+    for (const item of await loadFaq()) expect(decoded).toContain(item.question);
+  });
+
+  it("links every call to action to a mail draft with a subject", async () => {
+    const html = await text(await app.handle("GET", "/"));
+    expect(html).toContain("mailto:ryan@dimasc.io?subject=Intro%20call");
+    expect(html).toContain("mailto:ryan@dimasc.io?subject=Pro%20plan");
   });
 
   it("renders the process page with every step in order", async () => {

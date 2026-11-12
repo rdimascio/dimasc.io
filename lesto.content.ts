@@ -23,6 +23,41 @@ export const processStepFrontmatter = z.object({
 
 export type ProcessStepFrontmatter = z.infer<typeof processStepFrontmatter>;
 
+export const planFrontmatter = z.object({
+  name: z.string(),
+  price: z.number().int().positive().nullable(),
+  summary: z.string(),
+  features: z.array(z.string()).min(1),
+  cta: z.string(),
+  featured: z.boolean().default(false),
+  order: z.number().int(),
+});
+
+export type PlanFrontmatter = z.infer<typeof planFrontmatter>;
+
+export const faqFrontmatter = z.object({
+  question: z.string(),
+  order: z.number().int(),
+});
+
+export type FaqFrontmatter = z.infer<typeof faqFrontmatter>;
+
+const plans = defineCollection({
+  name: "plans",
+  directory: "content/plans",
+  include: "**/*.md",
+  schema: planFrontmatter,
+  render: { syntaxHighlighting: false },
+});
+
+const faq = defineCollection({
+  name: "faq",
+  directory: "content/faq",
+  include: "**/*.md",
+  schema: faqFrontmatter,
+  render: { syntaxHighlighting: false },
+});
+
 const caseStudies = defineCollection({
   name: "caseStudies",
   directory: "content/case-studies",
@@ -39,4 +74,4 @@ const process = defineCollection({
   render: { syntaxHighlighting: false },
 });
 
-export default defineConfig({ collections: [caseStudies, process] });
+export default defineConfig({ collections: [caseStudies, process, plans, faq] });

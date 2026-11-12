@@ -3,7 +3,12 @@ import { fileURLToPath } from "node:url";
 
 import { runPipeline } from "@lesto/content-core/build";
 
-import config, { type CaseStudyFrontmatter, type ProcessStepFrontmatter } from "../lesto.content";
+import config, {
+  type CaseStudyFrontmatter,
+  type FaqFrontmatter,
+  type PlanFrontmatter,
+  type ProcessStepFrontmatter,
+} from "../lesto.content";
 
 const SITE_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 
@@ -15,6 +20,26 @@ interface RawBase {
 
 type RawCaseStudy = RawBase & CaseStudyFrontmatter;
 type RawProcessStep = RawBase & ProcessStepFrontmatter;
+type RawPlan = RawBase & PlanFrontmatter;
+type RawFaq = RawBase & FaqFrontmatter;
+
+export interface Plan {
+  readonly slug: string;
+  readonly name: string;
+  readonly price: number | null;
+  readonly summary: string;
+  readonly features: readonly string[];
+  readonly cta: string;
+  readonly featured: boolean;
+  readonly order: number;
+}
+
+export interface FaqItem {
+  readonly slug: string;
+  readonly question: string;
+  readonly order: number;
+  readonly html: string;
+}
 
 export interface CaseStudy {
   readonly route: string;
@@ -85,4 +110,29 @@ export async function loadProcess(): Promise<ProcessStep[]> {
       html: entry.rendered?.html ?? "",
     }))
     .toSorted((a, b) => a.step - b.step);
+}
+
+export async function loadPlans(): Promise<Plan[]> {
+  const entries = await loadEntries();
+  return entries
+    .filter((entry): entry is RawPlan => entry.collection === "plans")
+    .map((entry) => ({
+      slug: slugOf(entry),
+      name: entry.name,
+      price: entry.price,
+      summary: entry.summary,
+      features: entry.features,
+      cta: entry.cta,
+      featured: entry.featured,
+      order: entry.order,
+    }))
+    .toSorted((a, b) => a.order - b.order);
+}
+
+export async function loadFaq(): Promise<FaqItem[]> {
+  const entries = await loadEntries();
+  return entries
+    .filter((entry): entry is RawFaq => entry.collection === "faq")
+    .map((entry) => ({ slug: slugOf(entry), question: entry.question, order: entry.order, html: entry.rendered?.html ?? "" }))
+    .toSorted((a, b) => a.order - b.order);
 }

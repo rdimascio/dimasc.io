@@ -3,7 +3,7 @@ import { openSqlite } from "@lesto/runtime";
 import type { PageMetadata } from "@lesto/web";
 import { lesto } from "@lesto/web";
 
-import { loadCaseStudies, loadProcess } from "./content";
+import { loadCaseStudies, loadFaq, loadPlans, loadProcess } from "./content";
 import { canonicalUrl, SITE_NAME, SITE_URL } from "./site";
 import { makeHome } from "./ui/home";
 import { SiteLayout } from "./ui/layout";
@@ -45,19 +45,19 @@ export function seoMetadata(input: {
 
 export async function buildAppConfig(): Promise<LestoAppConfig> {
   const { db } = await openSqlite(":memory:");
-  const [studies, steps] = await Promise.all([loadCaseStudies(), loadProcess()]);
+  const [studies, steps, plans, faq] = await Promise.all([loadCaseStudies(), loadProcess(), loadPlans(), loadFaq()]);
 
   let app = lesto()
     .styles("/styles.css")
     .layout(SiteLayout)
     .page("/", {
       static: true,
-      component: makeHome(studies, steps),
+      component: makeHome(studies, plans, faq),
       metadata: () =>
         seoMetadata({
-          title: `${SITE_NAME} · Software, web and AI builds for small businesses`,
+          title: `${SITE_NAME} · Software subscriptions for small businesses`,
           description:
-            "Websites, stores, integrations and AI tools for small businesses, built in small steps at a flat price.",
+            "A software engineer on call for one flat monthly price: websites, stores, integrations and AI tools, delivered in about two business days. Pause or cancel anytime.",
           route: "/",
           type: "website",
         }),
@@ -78,8 +78,8 @@ export async function buildAppConfig(): Promise<LestoAppConfig> {
       component: makeProcess(steps),
       metadata: () =>
         seoMetadata({
-          title: `How I work · ${SITE_NAME}`,
-          description: "Discovery, research, a recommendation, a reviewed flat quote, then small steps that each ship.",
+          title: `How custom projects run · ${SITE_NAME}`,
+          description: "Custom projects: discovery, research, a recommendation, a reviewed flat quote, then small steps that each ship.",
           route: "/process",
           type: "website",
         }),
