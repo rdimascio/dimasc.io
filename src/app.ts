@@ -3,10 +3,11 @@ import { openSqlite } from "@lesto/runtime";
 import type { PageMetadata } from "@lesto/web";
 import { lesto } from "@lesto/web";
 
-import { loadAllCaseStudies, loadFaq, loadPlans, loadProcess } from "./content";
+import { loadAllCaseStudies, loadExperience, loadFaq, loadPlans, loadProcess } from "./content";
 import { canonicalUrl, SITE_NAME, SITE_URL } from "./site";
+import { makeAbout } from "./ui/about";
 import { makeHome } from "./ui/home";
-import { makeSiteLayout } from "./ui/layout";
+import { ABOUT_ROUTE, makeSiteLayout } from "./ui/layout";
 import { makeProcess } from "./ui/process";
 import { makeCaseStudy, makeWorkIndex, makeWorkRequest } from "./ui/work";
 import { previewCaseStudiesFromEnv, WORK_REQUEST_ROUTE, WORK_ROUTE } from "./work";
@@ -52,20 +53,37 @@ export async function buildAppConfig(
   options: BuildOptions = { previewCaseStudies: previewCaseStudiesFromEnv() },
 ): Promise<LestoAppConfig> {
   const { db } = await openSqlite(":memory:");
-  const [studies, steps, plans, faq] = await Promise.all([loadAllCaseStudies(), loadProcess(), loadPlans(), loadFaq()]);
+  const [studies, steps, plans, faq, experience] = await Promise.all([
+    loadAllCaseStudies(),
+    loadProcess(),
+    loadPlans(),
+    loadFaq(),
+    loadExperience(),
+  ]);
 
   let app = lesto()
     .styles("/styles.css")
     .layout(makeSiteLayout(studies.length > 0))
     .page("/", {
       static: true,
-      component: makeHome(studies, plans, faq),
+      component: makeHome(studies, plans, faq, experience),
       metadata: () =>
         seoMetadata({
           title: `${SITE_NAME} · Software subscriptions for small businesses`,
           description:
             "A software engineer on subscription for one flat monthly price: websites, stores, integrations and AI tools. Most small requests back in two business days. Pause or cancel anytime.",
           route: "/",
+          type: "website",
+        }),
+    })
+    .page(ABOUT_ROUTE, {
+      static: true,
+      component: makeAbout(experience),
+      metadata: () =>
+        seoMetadata({
+          title: `About · ${SITE_NAME}`,
+          description: "Ryan DiMascio: more than ten years of building websites, stores and software, at agencies, startups and product companies.",
+          route: ABOUT_ROUTE,
           type: "website",
         }),
     })

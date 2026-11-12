@@ -12,6 +12,7 @@
     "deploy": "bun run build && wrangler deploy"
   },
   "dependencies": {
+    "@fontsource/instrument-serif": "^5.3.0",
     "@lesto/cli": "^0.2.0",
     "@lesto/cloudflare": "^0.2.0",
     "@lesto/content-core": "^0.2.0",

@@ -8,6 +8,18 @@ export const PREVIEW_ENV_VAR = "PREVIEW_CASE_STUDIES";
 const SCREENSHOT_DIR = "images/work";
 export const SCREENSHOT_SOURCE_DIR = "assets/work";
 
+const DEMO_DIR = "media/demos";
+export const DEMO_SOURCE_DIR = "assets/demos";
+
+export const STATIC_ASSET_DIRS = [
+  { from: SCREENSHOT_SOURCE_DIR, to: SCREENSHOT_DIR, extensions: [".webp"] },
+  { from: DEMO_SOURCE_DIR, to: DEMO_DIR, extensions: [".mp4", ".webp"] },
+] as const;
+
+export function demoSrc(fileName: string): string {
+  return `/${DEMO_DIR}/${fileName}`;
+}
+
 export type ScreenshotView = "desktop" | "mobile";
 
 export function previewCaseStudiesFromEnv(): boolean {
@@ -16,10 +28,6 @@ export function previewCaseStudiesFromEnv(): boolean {
 
 export function screenshotSrc(study: Pick<CaseStudy, "slug">, view: ScreenshotView): string {
   return `/${SCREENSHOT_DIR}/${study.slug}-${view}.webp`;
-}
-
-export function screenshotOutputPath(fileName: string): string {
-  return `${SCREENSHOT_DIR}/${fileName}`;
 }
 
 export function projectName(study: Pick<CaseStudy, "client" | "title">): string {

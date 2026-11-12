@@ -5,12 +5,22 @@ import type { App } from "@lesto/kernel";
 
 import appConfig from "../lesto.app";
 import { buildAppConfig } from "../src/app";
-import { loadAllCaseStudies, loadCaseStudies, loadFaq, loadPlans, loadProcess, OPEN_QUESTION_MARKER } from "../src/content";
-import { BOOKING_URL, CONTACT_EMAIL, introCallHref, introCallLabel } from "../src/site";
+import {
+  loadAllCaseStudies,
+  loadCaseStudies,
+  loadExperience,
+  loadFaq,
+  loadPlans,
+  loadProcess,
+  OPEN_QUESTION_MARKER,
+} from "../src/content";
+import { ABOUT_ROUTE, BOOKING_URL, CONTACT_EMAIL, introCallHref, introCallLabel } from "../src/site";
 import { formatPrice, REFUND_RULE } from "../src/ui/home";
 import { REQUEST_LINE } from "../src/ui/work";
 import { PERSONAL_PAGES, personalPageHtml } from "../src/personal";
 import {
+  DEMO_SOURCE_DIR,
+  demoSrc,
   projectName,
   requestAnchor,
   requestMailto,
@@ -23,6 +33,8 @@ import {
 
 const CASE_STUDY_SLUGS = ["stanford-ecorner", "blackstone", "holt-international", "yext-ai-search", "serhant", "r-selectric"];
 const MAX_SCREENSHOT_BYTES = 300 * 1024;
+const MAX_CLIP_BYTES = 4 * 1024 * 1024;
+const MAX_WORKER_ASSET_BYTES = 25 * 1024 * 1024;
 
 async function text(response: { body: unknown }): Promise<string> {
   return new Response(response.body as BodyInit).text();
@@ -160,6 +172,48 @@ describe("site routes", () => {
     }
   });
 
+  it("shows the work history on the home and about pages, with the demos under Luxury Presence", async () => {
+    const experience = await loadExperience();
+    expect(experience.map((item) => item.company)).toEqual(["Every", "Luxury Presence", "10up"]);
+    const luxuryPresence = experience.find((item) => item.company === "Luxury Presence");
+    expect(luxuryPresence?.demos.map((demo) => demo.slug)).toEqual(["natural-language-search", "local-dev-app"]);
+
+    for (const route of ["/", ABOUT_ROUTE]) {
+      const response = await app.handle("GET", route);
+      const html = decodeEntities(await text(response));
+      expect(response.status).toBe(200);
+      for (const item of experience) expect(html).toContain(item.company);
+      for (const demo of luxuryPresence?.demos ?? []) {
+        expect(html).toContain(`src="${demoSrc(demo.clip)}"`);
+        expect(html).toContain(`poster="${demoSrc(demo.poster)}"`);
+      }
+    }
+    expect(await text(await app.handle("GET", "/"))).toContain(`href="${ABOUT_ROUTE}"`);
+  });
+
+  it("ships every demo file at web size", async () => {
+    for (const item of await loadExperience()) {
+      for (const demo of item.demos) {
+        const files = [
+          [demo.clip, MAX_CLIP_BYTES],
+          [demo.poster, MAX_SCREENSHOT_BYTES],
+          ...(demo.full === undefined ? [] : [[demo.full, MAX_WORKER_ASSET_BYTES] as const]),
+        ] as const;
+        for (const [name, limit] of files) {
+          const file = Bun.file(`${DEMO_SOURCE_DIR}/${name}`);
+          expect(await file.exists()).toBe(true);
+          expect(file.size).toBeLessThan(limit);
+        }
+      }
+    }
+  });
+
+  it("never shows an open question on a public page", async () => {
+    for (const route of ["/", ABOUT_ROUTE, "/process", WORK_ROUTE, WORK_REQUEST_ROUTE]) {
+      expect(await text(await app.handle("GET", route))).not.toContain("TODO");
+    }
+  });
+
   it("keeps open questions out of published case studies", async () => {
     for (const study of await loadCaseStudies()) {
       expect(study.html).not.toContain(OPEN_QUESTION_MARKER);
@@ -185,7 +239,7 @@ describe("site routes", () => {
   });
 
   it("ships no client script on the studio pages", async () => {
-    for (const route of ["/", "/process"]) {
+    for (const route of ["/", ABOUT_ROUTE, "/process"]) {
       expect(await text(await app.handle("GET", route))).not.toContain("<script");
     }
   });

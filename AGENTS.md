@@ -18,6 +18,8 @@ Ryan DiMascio's studio site: a static Lesto 0.2 app on Cloudflare Workers. Every
 - Full case study pages (`/work/<slug>`) are not public. They build only with `PREVIEW_CASE_STUDIES=1`, marked noindex. Preview: `PREVIEW_CASE_STUDIES=1 bun run build`, then `bunx wrangler dev`.
 - `TODO(ryan):` marks a question only Ryan can answer. A case study with such a line must stay `draft: true`, or the build fails.
 - Process steps: `content/process/NN-name.md`, ordered by `step`.
+- Work history: `content/experience/NN-company.md`, shown on `/` and `/about`. Unknown facts stay as `# TODO(ryan):` YAML comments and are never rendered. Demo videos live in `assets/demos` (clip under 4 MB, full video under 25 MB) and are served at `/media/demos`.
+- Studio pages ship no script. Motion is CSS only (view transitions, scroll-driven reveals) and is off under `prefers-reduced-motion`.
 - Frontmatter schemas live in `lesto.content.ts`. A file that fails its schema fails the build.
 
 ## Rules

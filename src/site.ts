@@ -2,6 +2,7 @@ export const SITE_URL = "https://dimasc.io";
 export const SITE_NAME = "Ryan DiMascio";
 export const CONTACT_EMAIL = "ryan@dimasc.io";
 export const GITHUB_URL = "https://github.com/rdimascio";
+export const ABOUT_ROUTE = "/about";
 
 export const BOOKING_URL: string | null = null;
 export const MAX_SUBSCRIPTION_CLIENTS: number | null = null;

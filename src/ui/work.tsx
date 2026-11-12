@@ -2,30 +2,49 @@ import type { ReactElement } from "react";
 
 import type { CaseStudy } from "../content";
 import { CONTACT_EMAIL } from "../site";
-import { projectName, requestAnchor, requestMailto, screenshotSrc, WORK_ROUTE } from "../work";
-import { Eyebrow, HEADING, LEDE, PAGE } from "./layout";
+import { projectName, requestAnchor, requestMailto, screenshotSrc, WORK_REQUEST_ROUTE, WORK_ROUTE } from "../work";
+import { ArrowLink, Eyebrow, HEADING, LEDE, PAGE } from "./layout";
 
 export const REQUEST_LINE = "Full case studies are shared on request.";
 
-function CaseStudyCard({ study }: { study: CaseStudy }): ReactElement {
+function indexLabel(position: number): string {
+  return String(position + 1).padStart(2, "0");
+}
+
+function CaseStudyCard({ study, position }: { study: CaseStudy; position: number }): ReactElement {
   return (
-    <li>
-      <a className="group flex flex-col h-full rounded-3xl border border-line bg-card overflow-hidden hover:border-ink" href={requestAnchor(study)}>
-        <img
-          alt={`${projectName(study)} home page`}
-          className="block w-full aspect-[16/10] object-cover object-top border-b border-line bg-bg-soft"
-          height={900}
-          loading="lazy"
-          src={screenshotSrc(study, "desktop")}
-          width={1440}
-        />
-        <span className="flex flex-col gap-2 p-6">
-          <span className="font-mono text-[0.72rem] uppercase tracking-[0.12em] text-muted">{study.industry}</span>
-          <h3 className="m-0 text-[1.25rem] leading-tight tracking-[-0.025em] font-medium group-hover:underline underline-offset-4">
-            {projectName(study)}
-          </h3>
-          <p className="m-0 text-muted">{study.summary}</p>
-        </span>
+    <li className="reveal md:[&:nth-child(even)]:mt-32">
+      <a className="work-card block rounded-[26px]" href={requestAnchor(study)}>
+        <div className="relative overflow-hidden rounded-[22px] border border-line bg-bg-soft aspect-[16/11]">
+          <img
+            alt={`${projectName(study)} home page on a desktop screen`}
+            className="shot-desktop absolute inset-0 w-full h-full object-cover object-top"
+            height={900}
+            loading="lazy"
+            src={screenshotSrc(study, "desktop")}
+            width={1440}
+          />
+          <img
+            alt=""
+            className="shot-mobile absolute right-[6%] top-[18%] w-[23%] h-auto rounded-[14px] border border-[color-mix(in_srgb,var(--ink)_14%,transparent)] shadow-[0_30px_60px_-20px_rgba(0,0,0,0.55)]"
+            height={844}
+            loading="lazy"
+            src={screenshotSrc(study, "mobile")}
+            width={390}
+          />
+        </div>
+        <div className="mt-6 grid grid-cols-[2.2rem_minmax(0,1fr)_auto] gap-x-3 items-baseline">
+          <span className="font-mono text-[0.75rem] text-muted">{indexLabel(position)}</span>
+          <h3 className="m-0 text-[clamp(1.35rem,2.2vw,1.75rem)] leading-tight tracking-[-0.03em] font-medium">{projectName(study)}</h3>
+          <span className="card-arrow text-[1.2rem] text-muted" aria-hidden="true">
+            ↗
+          </span>
+          <span />
+          <p className="m-0 mt-2 text-muted leading-relaxed max-w-[34rem]">{study.summary}</p>
+          <span />
+          <span />
+          <p className="m-0 mt-4 font-mono text-[0.7rem] uppercase tracking-[0.14em] text-faint">{study.industry}</p>
+        </div>
       </a>
     </li>
   );
@@ -45,21 +64,39 @@ export function CaseStudyGrid({ studies }: { studies: readonly CaseStudy[] }): R
     );
   }
   return (
-    <ul className="m-0 p-0 list-none grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-      {studies.map((study) => (
-        <CaseStudyCard key={study.slug} study={study} />
+    <ul className="m-0 p-0 list-none grid gap-x-8 lg:gap-x-12 gap-y-16 md:grid-cols-2">
+      {studies.map((study, position) => (
+        <CaseStudyCard key={study.slug} position={position} study={study} />
       ))}
     </ul>
   );
 }
 
+export function RequestNote(): ReactElement {
+  return (
+    <div className="mt-20 flex flex-wrap items-center justify-between gap-6 border-t border-line pt-8">
+      <p className="m-0 text-[clamp(1.2rem,2vw,1.5rem)] tracking-[-0.02em]">
+        {REQUEST_LINE} <span className="serif text-muted">Ask for the one you want.</span>
+      </p>
+      <ArrowLink href={WORK_REQUEST_ROUTE} tone="ghost">
+        Request a case study
+      </ArrowLink>
+    </div>
+  );
+}
+
 function WorkIndex({ studies }: { studies: readonly CaseStudy[] }): ReactElement {
   return (
-    <main className={PAGE}>
-      <Eyebrow>Work</Eyebrow>
-      <h1 className={`${HEADING} mt-8`}>Selected work</h1>
-      <p className={`${LEDE} mt-8 mb-16`}>{REQUEST_LINE}</p>
-      <CaseStudyGrid studies={studies} />
+    <main className="night pb-28">
+      <div className={PAGE}>
+        <Eyebrow>Work · {String(studies.length).padStart(2, "0")}</Eyebrow>
+        <h1 className={`${HEADING} mt-8`}>
+          Selected <span className="serif text-accent">work</span>
+        </h1>
+        <p className={`${LEDE} mt-8 mb-20`}>Sites and products I have worked on.</p>
+        <CaseStudyGrid studies={studies} />
+        <RequestNote />
+      </div>
     </main>
   );
 }

@@ -5,6 +5,8 @@ import { runPipeline } from "@lesto/content-core/build";
 
 import config, {
   type CaseStudyFrontmatter,
+  type DemoFrontmatter,
+  type ExperienceFrontmatter,
   type FaqFrontmatter,
   type PlanFrontmatter,
   type ProcessStepFrontmatter,
@@ -22,6 +24,7 @@ type RawCaseStudy = RawBase & CaseStudyFrontmatter;
 type RawProcessStep = RawBase & ProcessStepFrontmatter;
 type RawPlan = RawBase & PlanFrontmatter;
 type RawFaq = RawBase & FaqFrontmatter;
+type RawExperience = RawBase & ExperienceFrontmatter;
 
 export interface Plan {
   readonly slug: string;
@@ -141,6 +144,40 @@ export async function loadPlans(): Promise<Plan[]> {
       cta: entry.cta,
       featured: entry.featured,
       order: entry.order,
+    }))
+    .toSorted((a, b) => a.order - b.order);
+}
+
+export type Demo = DemoFrontmatter;
+
+export interface Experience {
+  readonly slug: string;
+  readonly company: string;
+  readonly url: string;
+  readonly description: string;
+  readonly role: string | undefined;
+  readonly period: string | undefined;
+  readonly current: boolean;
+  readonly order: number;
+  readonly demos: readonly Demo[];
+  readonly html: string;
+}
+
+export async function loadExperience(): Promise<Experience[]> {
+  const entries = await loadEntries();
+  return entries
+    .filter((entry): entry is RawExperience => entry.collection === "experience")
+    .map((entry) => ({
+      slug: slugOf(entry),
+      company: entry.company,
+      url: entry.url,
+      description: entry.description,
+      role: entry.role,
+      period: entry.period,
+      current: entry.current,
+      order: entry.order,
+      demos: entry.demos,
+      html: entry.rendered?.html ?? "",
     }))
     .toSorted((a, b) => a.order - b.order);
 }

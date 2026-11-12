@@ -35,6 +35,34 @@ export const planFrontmatter = z.object({
 
 export type PlanFrontmatter = z.infer<typeof planFrontmatter>;
 
+export const demoFrontmatter = z.object({
+  slug: z.string().regex(/^[a-z0-9-]+$/),
+  title: z.string(),
+  event: z.string(),
+  summary: z.string(),
+  points: z.array(z.string()).default([]),
+  clip: z.string().endsWith(".mp4"),
+  poster: z.string().endsWith(".webp"),
+  full: z.string().endsWith(".mp4").optional(),
+  width: z.number().int().positive(),
+  height: z.number().int().positive(),
+});
+
+export type DemoFrontmatter = z.infer<typeof demoFrontmatter>;
+
+export const experienceFrontmatter = z.object({
+  company: z.string(),
+  url: z.url(),
+  description: z.string(),
+  role: z.string().optional(),
+  period: z.string().optional(),
+  current: z.boolean().default(false),
+  order: z.number().int(),
+  demos: z.array(demoFrontmatter).default([]),
+});
+
+export type ExperienceFrontmatter = z.infer<typeof experienceFrontmatter>;
+
 export const faqFrontmatter = z.object({
   question: z.string(),
   order: z.number().int(),
@@ -74,4 +102,12 @@ const process = defineCollection({
   render: { syntaxHighlighting: false },
 });
 
-export default defineConfig({ collections: [caseStudies, process, plans, faq] });
+const experience = defineCollection({
+  name: "experience",
+  directory: "content/experience",
+  include: "**/*.md",
+  schema: experienceFrontmatter,
+  render: { syntaxHighlighting: false },
+});
+
+export default defineConfig({ collections: [caseStudies, process, plans, faq, experience] });
