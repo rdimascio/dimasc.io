@@ -208,6 +208,19 @@
   }
 }
 
+.pixel-wordmark .pixel-off {
+  fill: color-mix(in srgb, var(--ink) 5%, transparent);
+}
+.pixel-wordmark .pixel {
+  color: var(--ink);
+  fill: currentColor;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+.pixel-wordmark .pixel-accent {
+  fill: var(--accent-bright);
+}
+
 .work-card .shot-desktop {
   transition: transform 0.9s var(--ease-out);
 }
@@ -261,6 +274,37 @@
   .marquee {
     animation: marquee 48s linear infinite;
   }
+
+  .pixel-wordmark .pixel {
+    transition: fill 1.4s var(--ease-out);
+    animation: pixel-shimmer 9s linear infinite;
+    animation-delay: calc(var(--x) * 1.8s + var(--y) * 0.08s);
+  }
+  .pixel-wordmark .pixel:hover {
+    fill: var(--accent-bright);
+    transition: none;
+  }
+  .pixel-wordmark .pixel-accent {
+    animation: none;
+  }
+
+  @supports (animation-timeline: view()) {
+    .pixel-wordmark .pixel {
+      animation:
+        pixel-in linear both,
+        pixel-shimmer 9s linear infinite;
+      animation-timeline: view(), auto;
+      animation-range:
+        entry calc(var(--d) * 55%) entry calc(var(--d) * 55% + 45%),
+        normal;
+      animation-delay: 0s, calc(var(--x) * 1.8s + var(--y) * 0.08s);
+    }
+    .pixel-wordmark .pixel-accent {
+      animation: pixel-in linear both;
+      animation-timeline: view();
+      animation-range: entry 60% entry 100%;
+    }
+  }
   .marquee:hover {
     animation-play-state: paused;
   }
@@ -294,6 +338,22 @@
   }
 }
 
+@keyframes pixel-in {
+  from {
+    opacity: 0;
+    transform: scale(0.15);
+  }
+}
+@keyframes pixel-shimmer {
+  0%,
+  2.6%,
+  100% {
+    color: var(--ink);
+  }
+  1.2% {
+    color: var(--accent-bright);
+  }
+}
 @keyframes fade-out {
   to {
     opacity: 0;

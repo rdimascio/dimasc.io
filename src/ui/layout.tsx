@@ -2,6 +2,7 @@ import type { ReactElement, ReactNode } from "react";
 
 import { ABOUT_ROUTE, CONTACT_EMAIL, GITHUB_URL, introCallHref, introCallLabel, SITE_NAME } from "../site";
 import { WORK_ROUTE } from "../work";
+import { PixelWordmark } from "./pixel-wordmark";
 
 export const WIDTH = "max-w-[1320px] mx-auto px-5 sm:px-8 lg:px-10";
 export { ABOUT_ROUTE };
@@ -108,7 +109,7 @@ function Footer({ showWork }: { showWork: boolean }): ReactElement {
   ];
   return (
     <footer className="night">
-      <div className={`${WIDTH} pt-10 pb-8`}>
+      <div className={`${WIDTH} pt-10`}>
         <div className="border-t border-line pt-8 grid gap-8 md:grid-cols-12">
           <p className="md:col-span-5 m-0 text-muted max-w-[22rem]">Software subscriptions for small businesses. Built and tested by me.</p>
           <ul className="md:col-span-7 m-0 p-0 list-none flex flex-wrap gap-x-8 gap-y-3 md:justify-end">
@@ -121,13 +122,12 @@ function Footer({ showWork }: { showWork: boolean }): ReactElement {
             ))}
           </ul>
         </div>
-        <p
-          className="m-0 mt-16 text-[clamp(4.4rem,20.5vw,19.5rem)] leading-[0.8] tracking-[-0.065em] font-semibold whitespace-nowrap select-none text-[color-mix(in_srgb,var(--ink)_92%,transparent)]"
-          aria-hidden="true"
-        >
-          DiMascio<span className="text-accent">.</span>
-        </p>
-        <div className="mt-8 flex flex-wrap justify-between gap-3 text-[0.82rem] text-muted font-mono uppercase tracking-[0.1em]">
+      </div>
+      <div className="mt-14 sm:mt-20">
+        <PixelWordmark label={SITE_NAME} word="DiMascio." />
+      </div>
+      <div className={`${WIDTH} pt-6 pb-8`}>
+        <div className="flex flex-wrap justify-between gap-3 text-[0.82rem] text-muted font-mono uppercase tracking-[0.1em]">
           <span>© {SITE_NAME}</span>
           <span>dimasc.io</span>
         </div>

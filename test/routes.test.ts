@@ -236,6 +236,14 @@ describe("site routes", () => {
     }
   });
 
+  it("draws the footer wordmark as a labelled pixel grid on every page", async () => {
+    for (const route of ["/", ABOUT_ROUTE, "/process"]) {
+      const html = await text(await app.handle("GET", route));
+      expect(html).toMatch(/<svg aria-label="Ryan DiMascio" class="pixel-wordmark[^"]*" role="img" viewBox="0 0 \d+ 7"/);
+      expect((html.match(/class="pixel( pixel-accent)?"/g) ?? []).length).toBeGreaterThan(80);
+    }
+  });
+
   it("names Stanford without the eCorner suffix on public pages", async () => {
     for (const route of ["/", ABOUT_ROUTE, WORK_ROUTE, WORK_REQUEST_ROUTE]) {
       expect(await text(await app.handle("GET", route))).not.toContain("Stanford eCorner");
