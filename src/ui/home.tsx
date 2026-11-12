@@ -1,8 +1,9 @@
-import type { ReactElement } from "react";
+import type { CSSProperties, ReactElement } from "react";
 
 import type { CaseStudy, Experience, FaqItem, Plan } from "../content";
 import { introCallHref, introCallLabel, MAX_SUBSCRIPTION_CLIENTS, planHref } from "../site";
-import { projectName, WORK_ROUTE } from "../work";
+import { BRAND_LOGOS, logoSrc, opticalScale } from "../logos";
+import { WORK_ROUTE } from "../work";
 import { ExperienceTimeline } from "./experience";
 import { ABOUT_ROUTE, ArrowLink, Eyebrow, SectionHead, WIDTH } from "./layout";
 import { CaseStudyGrid, RequestNote } from "./work";
@@ -154,23 +155,23 @@ function Hero(): ReactElement {
   );
 }
 
-function Marquee({ studies }: { studies: readonly CaseStudy[] }): ReactElement | null {
-  if (studies.length === 0) return null;
-  const names = studies.map(projectName);
+function LogoStrip(): ReactElement {
   const track = (hidden: boolean): ReactElement => (
     <ul className="marquee-track m-0 p-0 list-none" aria-hidden={hidden ? "true" : undefined}>
-      {names.map((name) => (
-        <li className="flex items-center gap-10 pr-10 text-[clamp(1.6rem,3.4vw,2.8rem)] tracking-[-0.04em] font-medium whitespace-nowrap" key={name}>
-          {name}
-          <span className="serif text-accent text-[0.8em]" aria-hidden="true">
-            ✳
-          </span>
+      {BRAND_LOGOS.map((logo) => (
+        <li className="flex items-center px-6 sm:px-12" key={logo.slug}>
+          <span
+            aria-label={hidden ? undefined : logo.name}
+            className="brand-logo"
+            role={hidden ? undefined : "img"}
+            style={{ "--logo": `url(${logoSrc(logo)})`, "--logo-scale": opticalScale(logo), aspectRatio: logo.ratio } as CSSProperties}
+          />
         </li>
       ))}
     </ul>
   );
   return (
-    <section aria-label="Selected clients" className="border-y border-line overflow-hidden py-6">
+    <section aria-label="Brands I have worked with" className="border-y border-line overflow-hidden py-7 sm:py-9">
       <div className="marquee">
         {track(false)}
         {track(true)}
@@ -380,7 +381,7 @@ export function Home({
   return (
     <main>
       <Hero />
-      <Marquee studies={studies} />
+      <LogoStrip />
       <Work studies={studies} />
       <HowItWorks />
       <Examples />

@@ -16,6 +16,7 @@ import {
 } from "../src/content";
 import { ABOUT_ROUTE, BOOKING_URL, CONTACT_EMAIL, introCallHref, introCallLabel } from "../src/site";
 import { formatPrice, REFUND_RULE } from "../src/ui/home";
+import { BRAND_LOGOS, LOGO_SOURCE_DIR, logoSrc } from "../src/logos";
 import { SKILLS } from "../src/ui/experience";
 import { REQUEST_LINE } from "../src/ui/work";
 import { PERSONAL_PAGES, personalPageHtml } from "../src/personal";
@@ -220,6 +221,24 @@ describe("site routes", () => {
       const html = await text(await app.handle("GET", route));
       expect(html).not.toContain("TODO");
       expect(html).not.toMatch(PHONE_NUMBER);
+    }
+  });
+
+  it("shows a labelled logo for every brand in the strip, at the SVG's own aspect ratio", async () => {
+    const home = decodeEntities(await text(await app.handle("GET", "/")));
+    for (const logo of BRAND_LOGOS) {
+      expect(home).toContain(`aria-label="${logo.name}"`);
+      expect(home).toContain(logoSrc(logo));
+      const svg = await Bun.file(`${LOGO_SOURCE_DIR}/${logo.slug}.svg`).text();
+      const viewBox = /viewBox="([^"]+)"/.exec(svg)?.[1]?.split(/[\s,]+/).map(Number) ?? [];
+      const [, , width = 0, height = 1] = viewBox;
+      expect(Math.abs(width / height - logo.ratio)).toBeLessThan(0.01);
+    }
+  });
+
+  it("names Stanford without the eCorner suffix on public pages", async () => {
+    for (const route of ["/", ABOUT_ROUTE, WORK_ROUTE, WORK_REQUEST_ROUTE]) {
+      expect(await text(await app.handle("GET", route))).not.toContain("Stanford eCorner");
     }
   });
 

@@ -1,4 +1,5 @@
 import type { CaseStudy } from "./content";
+import { LOGO_SOURCE_DIR, logoOutputDir } from "./logos";
 import { CONTACT_EMAIL } from "./site";
 
 export const WORK_ROUTE = "/work";
@@ -13,6 +14,7 @@ export const DEMO_SOURCE_DIR = "assets/demos";
 
 export const STATIC_ASSET_DIRS = [
   { from: SCREENSHOT_SOURCE_DIR, to: SCREENSHOT_DIR, extensions: [".webp"] },
+  { from: LOGO_SOURCE_DIR, to: logoOutputDir(), extensions: [".svg"] },
   { from: DEMO_SOURCE_DIR, to: DEMO_DIR, extensions: [".mp4", ".webp"] },
 ] as const;
 

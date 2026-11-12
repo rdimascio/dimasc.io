@@ -25,7 +25,7 @@ function AboutPage({ experience }: { experience: readonly Experience[] }): React
               I'm Ryan DiMascio. I've built websites, stores and software since 2017, at agencies, startups and product companies.
             </p>
             <p className="mt-6 mb-0 text-muted text-[1.1rem] leading-relaxed">
-              At Luxury Presence I built a multi-tenant Next.js platform that serves 30K+ sites and 10M+ requests/day. Before that I led frontend work at 10up for Blackstone, Stanford eCorner and Holt International.
+              At Luxury Presence I built a multi-tenant Next.js platform that serves 30K+ sites and 10M+ requests/day. Before that I led frontend work at 10up for Blackstone, Stanford and Holt International.
             </p>
             <p className="mt-6 mb-0 text-muted text-[1.1rem] leading-relaxed">
               I also work full time as a software engineer, so I keep this to a small number of clients and reply to every request within one business day. You always deal with me, not a team you've never met.

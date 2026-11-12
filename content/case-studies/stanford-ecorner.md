@@ -1,7 +1,7 @@
 ---
-title: "A library of entrepreneurship talks for Stanford eCorner"
+title: "A library of entrepreneurship talks for Stanford"
 summary: "Free videos, podcasts and articles on entrepreneurship from the Stanford Technology Ventures Program."
-client: "Stanford eCorner"
+client: "Stanford"
 industry: "Higher education"
 year: 2021
 services: ["Frontend development", "Technical leadership"]
@@ -24,7 +24,7 @@ Live site: [stvp.stanford.edu/ecorner](https://stvp.stanford.edu/ecorner/)
 
 ## My role
 
-I led frontend development and served as tech lead on Stanford eCorner while I was a Senior Frontend Engineer at 10up, between January 2021 and April 2022.
+I led frontend development and served as tech lead on Stanford eCorner, the media library of the Stanford Technology Ventures Program, while I was a Senior Frontend Engineer at 10up, between January 2021 and April 2022.
 
 ## Open questions
 
