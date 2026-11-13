@@ -9,7 +9,7 @@ export { ABOUT_ROUTE };
 
 export function Eyebrow({ children }: { children: ReactNode }): ReactElement {
   return (
-    <p className="m-0 font-mono text-[0.72rem] tracking-[0.14em] text-muted flex items-center gap-2">
+    <p className="m-0 font-mono text-[0.72rem] tracking-[0.04em] text-muted flex items-center gap-2">
       <span className="inline-block w-1.5 h-1.5 rounded-full bg-accent-bright" aria-hidden="true" />
       {children}
     </p>
@@ -113,10 +113,10 @@ function Footer({ showWork }: { showWork: boolean }): ReactElement {
       <div className={`${WIDTH} pt-10`}>
         <div className="border-t border-line pt-8 grid gap-8 md:grid-cols-12">
           <p className="md:col-span-5 m-0 text-muted max-w-[22rem]">website help for small businesses. built + tested by me.</p>
-          <ul className="md:col-span-7 m-0 p-0 list-none flex flex-wrap gap-x-8 gap-y-3 md:justify-end">
+          <ul className="md:col-span-7 m-0 p-0 list-none flex flex-wrap gap-x-8 gap-y-1 md:justify-end">
             {links.map((link) => (
               <li key={link.label}>
-                <a className="link-underline text-ink" href={link.href}>
+                <a className="link-underline inline-block py-2 text-ink" href={link.href}>
                   {link.label}
                 </a>
               </li>
@@ -163,7 +163,7 @@ function SiteLayout({ children, showWork }: { children: ReactNode; showWork: boo
           <span className="flex-1" />
           <nav aria-label="Main" className="flex items-center gap-5 sm:gap-8 text-[0.92rem] whitespace-nowrap">
             {NAV.filter((item) => showWork || !item.needsWork).map((item) => (
-              <a className={`link-underline text-muted hover:text-ink ${item.hideNarrow ? "max-[520px]:hidden" : ""}`} href={item.href} key={item.label}>
+              <a className={`link-underline inline-block py-3 text-muted hover:text-ink ${item.hideNarrow ? "max-[520px]:hidden" : ""}`} href={item.href} key={item.label}>
                 {item.label}
               </a>
             ))}

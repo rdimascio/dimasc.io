@@ -43,7 +43,7 @@ function CaseStudyCard({ study, position }: { study: CaseStudy; position: number
           <p className="m-0 mt-2 text-muted leading-relaxed max-w-[34rem]">{study.summary}</p>
           <span />
           <span />
-          <p className="m-0 mt-4 font-mono text-[0.7rem] tracking-[0.14em] text-muted">{study.industry}</p>
+          <p className="m-0 mt-4 font-mono text-[0.7rem] tracking-[0.04em] text-muted">{study.industry}</p>
         </div>
       </a>
     </li>
@@ -104,7 +104,7 @@ function WorkIndex({ studies }: { studies: readonly CaseStudy[] }): ReactElement
 function RequestPage({ studies }: { studies: readonly CaseStudy[] }): ReactElement {
   return (
     <main className={PAGE}>
-      <a className="font-mono text-[0.78rem] tracking-[0.1em] text-muted hover:text-ink" href={WORK_ROUTE}>
+      <a className="inline-block py-2 font-mono text-[0.78rem] tracking-[0.04em] text-muted hover:text-ink" href={WORK_ROUTE}>
         ← past work
       </a>
       <h1 className={`${HEADING} mt-8`}>ask about a project</h1>
@@ -152,7 +152,7 @@ function Facts({ study }: { study: CaseStudy }): ReactElement {
     <dl className="m-0 flex flex-col gap-5 text-[0.95rem]">
       {rows.map(([label, value]) => (
         <div className="border-t border-line pt-3" key={label}>
-          <dt className="font-mono text-[0.72rem] tracking-[0.12em] text-muted mb-1">{label}</dt>
+          <dt className="font-mono text-[0.72rem] tracking-[0.04em] text-muted mb-1">{label}</dt>
           <dd className="m-0">{value}</dd>
         </div>
       ))}
@@ -184,7 +184,7 @@ function Screens({ study }: { study: CaseStudy }): ReactElement {
 function CaseStudyPage({ study }: { study: CaseStudy }): ReactElement {
   return (
     <main className={PAGE}>
-      <a className="font-mono text-[0.78rem] tracking-[0.1em] text-muted hover:text-ink" href={WORK_ROUTE}>
+      <a className="inline-block py-2 font-mono text-[0.78rem] tracking-[0.04em] text-muted hover:text-ink" href={WORK_ROUTE}>
         ← past work
       </a>
       <h1 className={`${HEADING} mt-8 max-w-[18ch]`}>{study.title}</h1>
