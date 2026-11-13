@@ -112,7 +112,7 @@ function Footer({ showWork }: { showWork: boolean }): ReactElement {
     <footer className="night">
       <div className={`${WIDTH} pt-10`}>
         <div className="border-t border-line pt-8 grid gap-8 md:grid-cols-12">
-          <p className="md:col-span-5 m-0 text-muted max-w-[22rem]">website help for local businesses. built + tested by me.</p>
+          <p className="md:col-span-5 m-0 text-muted max-w-[22rem]">website help for small businesses. built + tested by me.</p>
           <ul className="md:col-span-7 m-0 p-0 list-none flex flex-wrap gap-x-8 gap-y-3 md:justify-end">
             {links.map((link) => (
               <li key={link.label}>
