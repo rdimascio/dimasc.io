@@ -265,6 +265,10 @@
   .hero-line > span {
     animation: line-rise 1s var(--ease-out) both;
   }
+
+  .signature-draw {
+    animation: signature-draw 1.6s cubic-bezier(0.65, 0, 0.35, 1) 0.2s both;
+  }
   .hero-line:nth-child(2) > span {
     animation-delay: 90ms;
   }
@@ -370,6 +374,14 @@
   from {
     opacity: 0;
     transform: translateY(12px);
+  }
+}
+@keyframes signature-draw {
+  from {
+    clip-path: inset(-10% 100% -10% -2%);
+  }
+  to {
+    clip-path: inset(-10% -2% -10% -2%);
   }
 }
 @keyframes line-rise {

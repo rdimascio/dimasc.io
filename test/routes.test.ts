@@ -29,10 +29,12 @@ import {
   OG_IMAGE_PATH,
   OG_IMAGE_SOURCE,
   OG_IMAGE_WIDTH,
+  SITE_NAME_PROPER,
   SITE_URL,
 } from "../src/site";
 import { formatPrice, REFUND_RULE, SINCE_YEAR, STAFF_LINE } from "../src/ui/home";
 import { BRAND_LOGOS, LOGO_SOURCE_DIR, logoSrc } from "../src/logos";
+import { SIGNATURE } from "../src/signature";
 import { SKILLS } from "../src/ui/experience";
 import { REQUEST_LINE } from "../src/ui/work";
 import { outputPathFor, PERSONAL_PAGES, personalPageHtml } from "../src/personal";
@@ -287,6 +289,15 @@ describe("site routes", () => {
       const html = await text(await app.handle("GET", route));
       expect(html).toMatch(/<svg aria-label="Ryan DiMascio" class="pixel-wordmark[^"]*" role="img" viewBox="0 0 \d+ 7"/);
       expect((html.match(/class="pixel( pixel-accent)?"/g) ?? []).length).toBeGreaterThan(80);
+    }
+  });
+
+  it("uses the signature as the site mark on every page", async () => {
+    for (const route of ["/", ABOUT_ROUTE, "/process"]) {
+      const html = await text(await app.handle("GET", route));
+      const header = html.slice(html.indexOf("<header"), html.indexOf("</header>"));
+      expect(header).toContain(`aria-label="${SITE_NAME_PROPER}"`);
+      expect(header).toContain(`d="${SIGNATURE.d.slice(0, 40)}`);
     }
   });
 

@@ -3,6 +3,7 @@ import type { ReactElement } from "react";
 import type { Experience } from "../content";
 import { CONTACT_EMAIL, GITHUB_URL } from "../site";
 import { ExperienceTimeline, SkillsRow } from "./experience";
+import { Signature } from "./signature";
 import { ArrowLink, Eyebrow, HEADING, PAGE, SectionHead, WIDTH } from "./layout";
 
 function AboutPage({ experience }: { experience: readonly Experience[] }): ReactElement {
@@ -14,11 +15,8 @@ function AboutPage({ experience }: { experience: readonly Experience[] }): React
           i build websites <span className="serif text-accent">for people</span> who run businesses.
         </h1>
         <div className="mt-16 sm:mt-24 grid gap-10 md:grid-cols-12 items-start">
-          <div
-            className="md:col-span-4 w-32 h-32 sm:w-40 sm:h-40 rounded-full bg-ink text-bg grid place-items-center text-[2.4rem] font-medium tracking-[-0.05em]"
-            aria-hidden="true"
-          >
-            rd
+          <div className="md:col-span-4 text-ink">
+            <Signature className="w-[min(100%,320px)] -rotate-3" draw weight={1.1} />
           </div>
           <div className="md:col-span-8 max-w-[42rem]">
             <p className="m-0 text-[clamp(1.35rem,2.4vw,1.9rem)] leading-[1.3] tracking-[-0.025em] [text-wrap:pretty]">

@@ -3,6 +3,7 @@ import type { ReactElement, ReactNode } from "react";
 import { ABOUT_ROUTE, CONTACT_EMAIL, GITHUB_URL, introCallHref, introCallLabel, SITE_NAME, SITE_NAME_PROPER } from "../site";
 import { WORK_ROUTE } from "../work";
 import { PixelWordmark } from "./pixel-wordmark";
+import { Signature } from "./signature";
 
 export const WIDTH = "max-w-[1320px] mx-auto px-5 sm:px-8 lg:px-10";
 export { ABOUT_ROUTE };
@@ -96,7 +97,7 @@ function ContactBand(): ReactElement {
 
 const NAV = [
   { label: "past work", href: WORK_ROUTE, needsWork: true, hideNarrow: true },
-  { label: "how it works", href: "/#how-it-works", needsWork: false, hideNarrow: false },
+  { label: "how it works", href: "/#how-it-works", needsWork: false, hideNarrow: true },
   { label: "about", href: ABOUT_ROUTE, needsWork: false, hideNarrow: false },
 ] as const;
 
@@ -151,14 +152,8 @@ function SiteLayout({ children, showWork }: { children: ReactNode; showWork: boo
       </a>
       <header className="sticky top-0 z-30 bg-[color-mix(in_srgb,var(--bg)_82%,transparent)] backdrop-blur-xl border-b border-[color-mix(in_srgb,var(--line)_70%,transparent)]">
         <div className={`${WIDTH} flex items-center gap-4 h-16`}>
-          <a className="group flex items-center gap-2.5 font-medium tracking-[-0.02em] text-ink whitespace-nowrap" href="/">
-            <span
-              className="grid place-items-center w-7 h-7 rounded-full bg-ink text-bg text-[0.62rem] font-semibold tracking-[0] transition-transform duration-500 group-hover:rotate-[-12deg]"
-              aria-hidden="true"
-            >
-              rd
-            </span>
-            <span className="max-[440px]:sr-only">{SITE_NAME}</span>
+          <a className="group -my-1 py-1 text-ink" href="/">
+            <Signature className="w-[112px] sm:w-[150px] transition-transform duration-500 group-hover:-rotate-2" />
           </a>
           <span className="flex-1" />
           <nav aria-label="Main" className="flex items-center gap-5 sm:gap-8 text-[0.92rem] whitespace-nowrap">

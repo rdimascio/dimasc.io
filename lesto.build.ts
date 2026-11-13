@@ -7,9 +7,20 @@ import { defineStaticSite } from "@lesto/sites";
 import { SITE_URL } from "./src/app";
 import { HEADERS_FILE, OG_IMAGE_PATH, OG_IMAGE_SOURCE } from "./src/site";
 import { outputPathFor, PERSONAL_PAGES, personalPageHtml } from "./src/personal";
+import { SIGNATURE_INITIAL } from "./src/signature";
 import { STATIC_ASSET_DIRS } from "./src/work";
 
-const FAVICON = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="14" fill="#111113"/><text x="32" y="43" font-family="system-ui, sans-serif" font-size="30" font-weight="700" text-anchor="middle" fill="#fff">RD</text></svg>`;
+const FAVICON_SIZE = 64;
+const FAVICON_INSET = 9;
+const FAVICON_STROKE_PX = 2.2;
+
+function faviconSvg(): string {
+  const [minX = 0, minY = 0, width = 1, height = 1] = SIGNATURE_INITIAL.viewBox.split(" ").map(Number);
+  const scale = (FAVICON_SIZE - FAVICON_INSET * 2) / Math.max(width, height);
+  const offsetX = (FAVICON_SIZE - width * scale) / 2 - minX * scale;
+  const offsetY = (FAVICON_SIZE - height * scale) / 2 - minY * scale;
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${FAVICON_SIZE} ${FAVICON_SIZE}"><rect width="${FAVICON_SIZE}" height="${FAVICON_SIZE}" rx="14" fill="#141311"/><path fill="#f3f0ea" stroke="#f3f0ea" stroke-linejoin="round" stroke-width="${(FAVICON_STROKE_PX / scale).toFixed(1)}" transform="translate(${offsetX.toFixed(2)} ${offsetY.toFixed(2)}) scale(${scale.toFixed(5)})" d="${SIGNATURE_INITIAL.d}"/></svg>`;
+}
 
 const FONT_FILES = [
   { from: "node_modules/geist/dist/fonts/geist-sans/Geist-Variable.woff2", to: "fonts/Geist-Variable.woff2" },
@@ -43,7 +54,7 @@ const onBuilt: BuildHook = async ({ sites }) => {
   await defineStaticSite({
     siteUrl: SITE_URL,
     routes: site.routes,
-    favicon: FAVICON,
+    favicon: faviconSvg(),
   }).emit(site.sink);
 
   await site.sink(OG_IMAGE_PATH.slice(1), new Uint8Array(await Bun.file(OG_IMAGE_SOURCE).arrayBuffer()));
