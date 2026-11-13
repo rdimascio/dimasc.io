@@ -1,17 +1,17 @@
 {
-  "files": [],
-  "references": [
-    { "path": "./tsconfig.node.json" },
-    { "path": "./tsconfig.cloudflare.json" }
-  ],
   "compilerOptions": {
-    "checkJs": true,
+    "target": "ES2023",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "lib": ["ES2023", "DOM", "DOM.Iterable"],
+    "types": ["bun"],
+    "jsx": "react-jsx",
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "exactOptionalPropertyTypes": true,
     "verbatimModuleSyntax": true,
     "skipLibCheck": true,
-    "strict": true,
-    "noEmit": true,
-    "types": [
-        "./worker-configuration.d.ts"
-    ]
-  }
+    "noEmit": true
+  },
+  "include": ["src", "test", "lesto.app.ts", "lesto.sites.ts", "lesto.content.ts", "lesto.build.ts", "worker.ts"]
 }

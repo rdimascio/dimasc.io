@@ -1,0 +1,185 @@
+import type { ReactElement, ReactNode } from "react";
+
+import { ABOUT_ROUTE, CONTACT_EMAIL, GITHUB_URL, introCallHref, introCallLabel, SITE_NAME } from "../site";
+import { WORK_ROUTE } from "../work";
+import { PixelWordmark } from "./pixel-wordmark";
+
+export const WIDTH = "max-w-[1320px] mx-auto px-5 sm:px-8 lg:px-10";
+export { ABOUT_ROUTE };
+
+export function Eyebrow({ children }: { children: ReactNode }): ReactElement {
+  return (
+    <p className="m-0 font-mono text-[0.72rem] uppercase tracking-[0.14em] text-muted flex items-center gap-2">
+      <span className="inline-block w-1.5 h-1.5 rounded-full bg-accent-bright" aria-hidden="true" />
+      {children}
+    </p>
+  );
+}
+
+export function SectionHead({
+  index,
+  label,
+  title,
+  aside,
+}: {
+  index?: string;
+  label: string;
+  title?: ReactNode;
+  aside?: ReactNode;
+}): ReactElement {
+  return (
+    <div className="grid gap-6 md:grid-cols-12 border-t border-ink pt-5 mb-12 sm:mb-16">
+      <div className="md:col-span-4 flex items-start gap-4">
+        {index === undefined ? null : <span className="font-mono text-[0.72rem] text-muted pt-[1px]">{index}</span>}
+        <Eyebrow>{label}</Eyebrow>
+      </div>
+      {title === undefined ? null : (
+        <h2 className="md:col-span-6 m-0 text-[clamp(1.9rem,3.6vw,3.1rem)] leading-[1.02] tracking-[-0.035em] font-medium [text-wrap:balance]">
+          {title}
+        </h2>
+      )}
+      {aside === undefined ? null : <div className="md:col-span-2 md:justify-self-end text-muted text-[0.9rem]">{aside}</div>}
+    </div>
+  );
+}
+
+export function ArrowLink({ href, children, tone = "ink" }: { href: string; children: ReactNode; tone?: "ink" | "accent" | "ghost" }): ReactElement {
+  const tones = {
+    ink: "bg-ink text-bg hover:bg-ink-2",
+    accent: "bg-accent text-on-accent hover:opacity-90",
+    ghost: "border border-line text-ink hover:border-ink",
+  } as const;
+  return (
+    <a
+      className={`group inline-flex items-center gap-3 rounded-full pl-6 pr-2 py-2 font-medium transition-colors ${tones[tone]}`}
+      href={href}
+    >
+      {children}
+      <span
+        className="grid place-items-center w-9 h-9 rounded-full bg-[color-mix(in_srgb,currentColor_14%,transparent)] transition-transform duration-500 group-hover:translate-x-0.5"
+        aria-hidden="true"
+      >
+        →
+      </span>
+    </a>
+  );
+}
+
+function ContactBand(): ReactElement {
+  return (
+    <section className="night" aria-labelledby="contact-title">
+      <div className={`${WIDTH} pt-24 sm:pt-32 pb-16`}>
+        <Eyebrow>Not sure yet?</Eyebrow>
+        <h2
+          className="reveal mt-8 mb-0 text-[clamp(2.6rem,8vw,7.4rem)] leading-[0.92] tracking-[-0.055em] font-medium max-w-[14ch]"
+          id="contact-title"
+        >
+          A free 15-minute call, <span className="serif text-accent">one clear</span> next step.
+        </h2>
+        <div className="mt-14 grid gap-8 md:grid-cols-12 items-end">
+          <p className="md:col-span-5 m-0 text-muted text-[1.1rem] leading-relaxed max-w-[28rem]">
+            Tell me what's slowing you down. I'll tell you which plan fits, or whether you need one at all.
+          </p>
+          <div className="md:col-span-7 flex flex-wrap gap-3 md:justify-end">
+            <ArrowLink href={introCallHref()} tone="accent">
+              {introCallLabel()}
+            </ArrowLink>
+            <a className="inline-flex items-center rounded-full border border-line px-6 py-3 font-medium hover:border-ink" href={`mailto:${CONTACT_EMAIL}`}>
+              {CONTACT_EMAIL}
+            </a>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+const NAV = [
+  { label: "Work", href: WORK_ROUTE, needsWork: true, hideNarrow: false },
+  { label: "About", href: ABOUT_ROUTE, needsWork: false, hideNarrow: false },
+  { label: "Process", href: "/process", needsWork: false, hideNarrow: true },
+] as const;
+
+function Footer({ showWork }: { showWork: boolean }): ReactElement {
+  const links = [
+    ...NAV.filter((item) => showWork || !item.needsWork).map((item) => ({ label: item.label, href: item.href })),
+    { label: "Plans", href: "/#pricing" },
+    { label: "GitHub", href: GITHUB_URL },
+    { label: "Email", href: `mailto:${CONTACT_EMAIL}` },
+  ];
+  return (
+    <footer className="night">
+      <div className={`${WIDTH} pt-10`}>
+        <div className="border-t border-line pt-8 grid gap-8 md:grid-cols-12">
+          <p className="md:col-span-5 m-0 text-muted max-w-[22rem]">Software subscriptions for small businesses. Built and tested by me.</p>
+          <ul className="md:col-span-7 m-0 p-0 list-none flex flex-wrap gap-x-8 gap-y-3 md:justify-end">
+            {links.map((link) => (
+              <li key={link.label}>
+                <a className="link-underline text-ink" href={link.href}>
+                  {link.label}
+                </a>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </div>
+      <div className="mt-14 sm:mt-20">
+        <PixelWordmark label={SITE_NAME} word="DiMascio." />
+      </div>
+      <div className={`${WIDTH} pt-6 pb-8`}>
+        <div className="flex flex-wrap justify-between gap-3 text-[0.82rem] text-muted font-mono uppercase tracking-[0.1em]">
+          <span>© {SITE_NAME}</span>
+          <span>dimasc.io</span>
+        </div>
+      </div>
+    </footer>
+  );
+}
+
+export function makeSiteLayout(showWork: boolean): (props: { children: ReactNode }) => ReactElement {
+  return function BoundSiteLayout({ children }: { children: ReactNode }): ReactElement {
+    return <SiteLayout showWork={showWork}>{children}</SiteLayout>;
+  };
+}
+
+function SiteLayout({ children, showWork }: { children: ReactNode; showWork: boolean }): ReactElement {
+  return (
+    <>
+      <a className="skip-link" href="#main">
+        Skip to content
+      </a>
+      <header className="sticky top-0 z-30 bg-[color-mix(in_srgb,var(--bg)_82%,transparent)] backdrop-blur-xl border-b border-[color-mix(in_srgb,var(--line)_70%,transparent)]">
+        <div className={`${WIDTH} flex items-center gap-4 h-16`}>
+          <a className="group flex items-center gap-2.5 font-medium tracking-[-0.02em] text-ink whitespace-nowrap" href="/">
+            <span
+              className="grid place-items-center w-7 h-7 rounded-full bg-ink text-bg text-[0.62rem] font-semibold tracking-[0] transition-transform duration-500 group-hover:rotate-[-12deg]"
+              aria-hidden="true"
+            >
+              RD
+            </span>
+            <span className="max-[440px]:sr-only">{SITE_NAME}</span>
+          </a>
+          <span className="flex-1" />
+          <nav aria-label="Main" className="flex items-center gap-5 sm:gap-8 text-[0.92rem] whitespace-nowrap">
+            {NAV.filter((item) => showWork || !item.needsWork).map((item) => (
+              <a className={`link-underline text-muted hover:text-ink ${item.hideNarrow ? "max-[520px]:hidden" : ""}`} href={item.href} key={item.label}>
+                {item.label}
+              </a>
+            ))}
+            <a className="rounded-full bg-ink text-bg px-4 py-2 font-medium hover:bg-accent hover:text-on-accent transition-colors" href="/#pricing">
+              Plans
+            </a>
+          </nav>
+        </div>
+      </header>
+      <div id="main">{children}</div>
+      <ContactBand />
+      <Footer showWork={showWork} />
+    </>
+  );
+}
+
+export const PAGE = `${WIDTH} pt-16 sm:pt-24`;
+export const HEADING =
+  "m-0 text-[clamp(2.8rem,8vw,7rem)] leading-[0.92] tracking-[-0.055em] font-medium max-w-[14ch] [text-wrap:balance]";
+export const LEDE = "m-0 text-muted text-[clamp(1.1rem,1.6vw,1.3rem)] leading-relaxed max-w-[38rem]";

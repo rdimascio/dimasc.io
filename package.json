@@ -1,35 +1,44 @@
 {
-	"name": "dimasc-io",
-	"private": true,
-	"type": "module",
-	"scripts": {
-		"build": "react-router build",
-		"cf-typegen": "wrangler types",
-		"deploy": "pnpm run build && wrangler deploy",
-		"dev": "react-router dev",
-		"postinstall": "npm run cf-typegen",
-		"preview": "pnpm run build && vite preview",
-		"typecheck": "npm run cf-typegen && react-router typegen && tsc -b"
-	},
-	"dependencies": {
-		"@types/three": "^0.181.0",
-		"isbot": "^5.1.31",
-		"react": "^19.1.1",
-		"react-dom": "^19.1.1",
-		"react-router": "^7.10.0",
-		"three": "^0.181.2"
-	},
-	"devDependencies": {
-		"@cloudflare/vite-plugin": "^1.13.5",
-		"@react-router/dev": "^7.10.0",
-		"@tailwindcss/vite": "^4.1.13",
-		"@types/node": "^22",
-		"@types/react": "^19.1.13",
-		"@types/react-dom": "^19.1.9",
-		"tailwindcss": "^4.1.13",
-		"typescript": "^5.9.2",
-		"vite": "^7.1.7",
-		"vite-tsconfig-paths": "^5.1.4",
-		"wrangler": "^4.52.1"
-	}
+  "name": "dimasc-io",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "bun --bun lesto dev",
+    "build": "bun --bun lesto build",
+    "test": "bun test",
+    "typecheck": "tsc --noEmit",
+    "gate": "bun run typecheck && bun run test && bun run build",
+    "deploy": "bun run build && wrangler deploy"
+  },
+  "dependencies": {
+    "@fontsource/instrument-serif": "^5.3.0",
+    "@lesto/cli": "^0.2.0",
+    "@lesto/cloudflare": "^0.2.0",
+    "@lesto/content-core": "^0.2.0",
+    "@lesto/content-markdown": "^0.2.0",
+    "@lesto/kernel": "^0.2.0",
+    "@lesto/runtime": "^0.2.0",
+    "@lesto/seo": "^0.2.0",
+    "@lesto/sites": "^0.2.0",
+    "@lesto/styles": "^0.2.0",
+    "@lesto/ui": "^0.2.0",
+    "@lesto/web": "^0.2.0",
+    "@types/three": "^0.181.0",
+    "geist": "^1.9.2",
+    "preact": "^11.2.0",
+    "preact-render-to-string": "^6.8.2",
+    "react": "^19",
+    "react-dom": "^19",
+    "tailwindcss": "^4.3.0",
+    "three": "^0.181.2",
+    "zod": "^4.0.0"
+  },
+  "devDependencies": {
+    "@types/bun": "^1.3.5",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "typescript": "^5.7.0",
+    "wrangler": "4.149.0"
+  }
 }
