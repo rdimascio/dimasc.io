@@ -1,15 +1,17 @@
 import type { CSSProperties, ReactElement } from "react";
 
-import type { CaseStudy, FaqItem, Plan } from "../content";
+import { ARTICLES_ROUTE, type Article, type CaseStudy, type FaqItem, type Plan } from "../content";
 import { BRAND_LOGOS, logoSrc, opticalScale } from "../logos";
 import { fixRequestHref, introCallHref, MAX_SUBSCRIPTION_CLIENTS, planHref } from "../site";
 import { projectName, WORK_ROUTE } from "../work";
 import { ABOUT_ROUTE, ArrowLink, Eyebrow, SectionHead, WIDTH } from "./layout";
+import { ArticleList } from "./articles";
 import { CaseStudyGrid, RequestNote } from "./work";
 
 export const REFUND_RULE = "monthly help: not happy in the first 7 days? cancel and i refund 75% of your first payment, even if i already delivered work. care is cancel anytime.";
 export const STAFF_LINE = "monthly help is like having a website person on staff a few days a month, w/o hiring one. no hourly bills.";
 export const SINCE_YEAR = 2017;
+const HOME_ARTICLE_COUNT = 3;
 
 const HELP_WITH = [
   "fix what's broken on your website",
@@ -325,6 +327,24 @@ function SinceLine({ studies }: { studies: readonly CaseStudy[] }): ReactElement
   );
 }
 
+function LatestArticles({ articles }: { articles: readonly Article[] }): ReactElement | null {
+  if (articles.length === 0) return null;
+  return (
+    <section className={`${WIDTH} pb-24 sm:pb-32`}>
+      <SectionHead
+        aside={
+          <a className="link-underline inline-block py-2 text-ink" href={ARTICLES_ROUTE}>
+            all articles
+          </a>
+        }
+        label="articles"
+        title="stuff i've written."
+      />
+      <ArticleList articles={articles.slice(0, HOME_ARTICLE_COUNT)} />
+    </section>
+  );
+}
+
 function Faq({ faq }: { faq: readonly FaqItem[] }): ReactElement {
   return (
     <section className={`${WIDTH} pb-28 sm:pb-36`}>
@@ -353,10 +373,12 @@ export function Home({
   studies,
   plans,
   faq,
+  articles,
 }: {
   studies: readonly CaseStudy[];
   plans: readonly Plan[];
   faq: readonly FaqItem[];
+  articles: readonly Article[];
 }): ReactElement {
   return (
     <main>
@@ -368,13 +390,19 @@ export function Home({
       <WhatYouGet />
       <Work studies={studies} />
       <SinceLine studies={studies} />
+      <LatestArticles articles={articles} />
       <Faq faq={faq} />
     </main>
   );
 }
 
-export function makeHome(studies: readonly CaseStudy[], plans: readonly Plan[], faq: readonly FaqItem[]): () => ReactElement {
+export function makeHome(
+  studies: readonly CaseStudy[],
+  plans: readonly Plan[],
+  faq: readonly FaqItem[],
+  articles: readonly Article[],
+): () => ReactElement {
   return function BoundHome(): ReactElement {
-    return <Home faq={faq} plans={plans} studies={studies} />;
+    return <Home articles={articles} faq={faq} plans={plans} studies={studies} />;
   };
 }

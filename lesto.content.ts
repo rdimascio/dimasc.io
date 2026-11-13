@@ -72,6 +72,17 @@ export const experienceFrontmatter = z.object({
 
 export type ExperienceFrontmatter = z.infer<typeof experienceFrontmatter>;
 
+export const articleFrontmatter = z.object({
+  title: z.string(),
+  summary: z.string(),
+  published: z.coerce.date(),
+  updated: z.coerce.date().optional(),
+  tags: z.array(z.string()).default([]),
+  draft: z.boolean().default(false),
+});
+
+export type ArticleFrontmatter = z.infer<typeof articleFrontmatter>;
+
 export const faqFrontmatter = z.object({
   question: z.string(),
   order: z.number().int(),
@@ -119,4 +130,12 @@ const experience = defineCollection({
   render: { syntaxHighlighting: false },
 });
 
-export default defineConfig({ collections: [caseStudies, process, plans, faq, experience] });
+const articles = defineCollection({
+  name: "articles",
+  directory: "content/articles",
+  include: "**/*.md",
+  schema: articleFrontmatter,
+  render: { syntaxHighlighting: true },
+});
+
+export default defineConfig({ collections: [caseStudies, process, plans, faq, experience, articles] });

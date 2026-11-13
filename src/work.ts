@@ -4,7 +4,6 @@ import { CONTACT_EMAIL } from "./site";
 
 export const WORK_ROUTE = "/work";
 export const WORK_REQUEST_ROUTE = "/work/request";
-export const PREVIEW_ENV_VAR = "PREVIEW_CASE_STUDIES";
 
 const SCREENSHOT_DIR = "images/work";
 export const SCREENSHOT_SOURCE_DIR = "assets/work";
@@ -24,10 +23,6 @@ export function demoSrc(fileName: string): string {
 
 export type ScreenshotView = "desktop" | "mobile";
 
-export function previewCaseStudiesFromEnv(): boolean {
-  return process.env[PREVIEW_ENV_VAR] === "1";
-}
-
 export function screenshotSrc(study: Pick<CaseStudy, "slug">, view: ScreenshotView): string {
   return `/${SCREENSHOT_DIR}/${study.slug}-${view}.webp`;
 }
@@ -45,8 +40,8 @@ export function requestMailto(study: Pick<CaseStudy, "client" | "title">): strin
   return `mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent(subject)}`;
 }
 
-export function workRoutes(studies: readonly CaseStudy[], previewCaseStudies: boolean): string[] {
+export function workRoutes(studies: readonly CaseStudy[], previewDrafts: boolean): string[] {
   if (studies.length === 0) return [];
-  const fullStudies = previewCaseStudies ? studies.map((study) => study.route) : [];
+  const fullStudies = previewDrafts ? studies.map((study) => study.route) : [];
   return [WORK_ROUTE, WORK_REQUEST_ROUTE, ...fullStudies];
 }
