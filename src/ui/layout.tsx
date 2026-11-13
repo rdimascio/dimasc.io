@@ -153,7 +153,7 @@ function SiteLayout({ children, showWork }: { children: ReactNode; showWork: boo
       <header className="sticky top-0 z-30 bg-[color-mix(in_srgb,var(--bg)_82%,transparent)] backdrop-blur-xl border-b border-[color-mix(in_srgb,var(--line)_70%,transparent)]">
         <div className={`${WIDTH} flex items-center gap-4 h-16`}>
           <a className="group -my-1 py-1 text-ink" href="/">
-            <Signature className="w-[112px] sm:w-[150px] transition-transform duration-500 group-hover:-rotate-2" />
+            <Signature className="w-[96px] sm:w-[118px] transition-transform duration-500 group-hover:-rotate-2" />
           </a>
           <span className="flex-1" />
           <nav aria-label="Main" className="flex items-center gap-5 sm:gap-8 text-[0.92rem] whitespace-nowrap">

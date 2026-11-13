@@ -3,19 +3,11 @@ import type { ReactElement } from "react";
 import { SITE_NAME_PROPER } from "../site";
 import { SIGNATURE } from "../signature";
 
-export function Signature({
-  className = "",
-  draw = false,
-  weight = 0.6,
-}: {
-  className?: string;
-  draw?: boolean;
-  weight?: number;
-}): ReactElement {
+export function Signature({ className = "", weight = 0.6 }: { className?: string; weight?: number }): ReactElement {
   return (
     <svg
       aria-label={SITE_NAME_PROPER}
-      className={`signature block h-auto ${draw ? "signature-draw" : ""} ${className}`}
+      className={`signature block h-auto overflow-visible ${className}`}
       fill="currentColor"
       role="img"
       viewBox={SIGNATURE.viewBox}

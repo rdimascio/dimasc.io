@@ -266,8 +266,14 @@
     animation: line-rise 1s var(--ease-out) both;
   }
 
-  .signature-draw {
-    animation: signature-draw 1.6s cubic-bezier(0.65, 0, 0.35, 1) 0.2s both;
+  .signature {
+    -webkit-mask-image: linear-gradient(100deg, #000 48%, transparent 52%);
+    mask-image: linear-gradient(100deg, #000 48%, transparent 52%);
+    -webkit-mask-size: 200% 100%;
+    mask-size: 200% 100%;
+    -webkit-mask-repeat: no-repeat;
+    mask-repeat: no-repeat;
+    animation: signature-write 1.6s cubic-bezier(0.4, 0.1, 0.6, 0.95) 0.2s both;
   }
   .hero-line:nth-child(2) > span {
     animation-delay: 90ms;
@@ -376,12 +382,14 @@
     transform: translateY(12px);
   }
 }
-@keyframes signature-draw {
+@keyframes signature-write {
   from {
-    clip-path: inset(-10% 100% -10% -2%);
+    -webkit-mask-position: 96% 0;
+    mask-position: 96% 0;
   }
   to {
-    clip-path: inset(-10% -2% -10% -2%);
+    -webkit-mask-position: 4% 0;
+    mask-position: 4% 0;
   }
 }
 @keyframes line-rise {
