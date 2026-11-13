@@ -16,7 +16,7 @@ function AboutPage({ experience }: { experience: readonly Experience[] }): React
         </h1>
         <div className="mt-16 sm:mt-24 grid gap-10 md:grid-cols-12 items-start">
           <div className="md:col-span-4 text-ink">
-            <Signature className="w-[min(100%,320px)] -rotate-3" draw weight={1.1} />
+            <Signature className="w-[min(100%,300px)] -rotate-3" weight={1.1} />
           </div>
           <div className="md:col-span-8 max-w-[42rem]">
             <p className="m-0 text-[clamp(1.35rem,2.4vw,1.9rem)] leading-[1.3] tracking-[-0.025em] [text-wrap:pretty]">
