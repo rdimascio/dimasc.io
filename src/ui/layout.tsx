@@ -1,6 +1,7 @@
 import type { ReactElement, ReactNode } from "react";
 
 import { ABOUT_ROUTE, CONTACT_EMAIL, GITHUB_URL, introCallHref, introCallLabel, SITE_NAME, SITE_NAME_PROPER } from "../site";
+import { ARTICLES_ROUTE } from "../content";
 import { WORK_ROUTE } from "../work";
 import { PixelWordmark } from "./pixel-wordmark";
 import { Signature } from "./signature";
@@ -95,15 +96,27 @@ function ContactBand(): ReactElement {
   );
 }
 
-const NAV = [
-  { label: "past work", href: WORK_ROUTE, needsWork: true, hideNarrow: true },
-  { label: "how it works", href: "/#how-it-works", needsWork: false, hideNarrow: true },
-  { label: "about", href: ABOUT_ROUTE, needsWork: false, hideNarrow: false },
-] as const;
+export interface NavSections {
+  readonly work: boolean;
+  readonly articles: boolean;
+}
 
-function Footer({ showWork }: { showWork: boolean }): ReactElement {
+type NavSection = keyof NavSections | "always";
+
+const NAV: readonly { label: string; href: string; section: NavSection; hideNarrow: boolean }[] = [
+  { label: "past work", href: WORK_ROUTE, section: "work", hideNarrow: true },
+  { label: "articles", href: ARTICLES_ROUTE, section: "articles", hideNarrow: true },
+  { label: "how it works", href: "/#how-it-works", section: "always", hideNarrow: true },
+  { label: "about", href: ABOUT_ROUTE, section: "always", hideNarrow: false },
+];
+
+function visibleNav(sections: NavSections): typeof NAV {
+  return NAV.filter((item) => item.section === "always" || sections[item.section]);
+}
+
+function Footer({ sections }: { sections: NavSections }): ReactElement {
   const links = [
-    ...NAV.filter((item) => showWork || !item.needsWork).map((item) => ({ label: item.label, href: item.href })),
+    ...visibleNav(sections).map((item) => ({ label: item.label, href: item.href })),
     { label: "prices", href: "/#pricing" },
     { label: "one-project jobs", href: "/process" },
     { label: "github", href: GITHUB_URL },
@@ -138,13 +151,13 @@ function Footer({ showWork }: { showWork: boolean }): ReactElement {
   );
 }
 
-export function makeSiteLayout(showWork: boolean): (props: { children: ReactNode }) => ReactElement {
+export function makeSiteLayout(sections: NavSections): (props: { children: ReactNode }) => ReactElement {
   return function BoundSiteLayout({ children }: { children: ReactNode }): ReactElement {
-    return <SiteLayout showWork={showWork}>{children}</SiteLayout>;
+    return <SiteLayout sections={sections}>{children}</SiteLayout>;
   };
 }
 
-function SiteLayout({ children, showWork }: { children: ReactNode; showWork: boolean }): ReactElement {
+function SiteLayout({ children, sections }: { children: ReactNode; sections: NavSections }): ReactElement {
   return (
     <>
       <a className="skip-link" href="#main">
@@ -157,7 +170,7 @@ function SiteLayout({ children, showWork }: { children: ReactNode; showWork: boo
           </a>
           <span className="flex-1" />
           <nav aria-label="Main" className="flex items-center gap-5 sm:gap-8 text-[0.92rem] whitespace-nowrap">
-            {NAV.filter((item) => showWork || !item.needsWork).map((item) => (
+            {visibleNav(sections).map((item) => (
               <a className={`link-underline inline-block py-3 text-muted hover:text-ink ${item.hideNarrow ? "max-[520px]:hidden" : ""}`} href={item.href} key={item.label}>
                 {item.label}
               </a>
@@ -170,7 +183,7 @@ function SiteLayout({ children, showWork }: { children: ReactNode; showWork: boo
       </header>
       <div id="main">{children}</div>
       <ContactBand />
-      <Footer showWork={showWork} />
+      <Footer sections={sections} />
     </>
   );
 }

@@ -3,7 +3,8 @@ import { openSqlite } from "@lesto/runtime";
 import type { PageMetadata } from "@lesto/web";
 import { lesto } from "@lesto/web";
 
-import { loadAllCaseStudies, loadExperience, loadFaq, loadPlans, loadProcess, type Plan } from "./content";
+import { ARTICLES_ROUTE, loadAllCaseStudies, loadArticles, loadExperience, loadFaq, loadPlans, loadProcess, type Plan } from "./content";
+import { FEED_ROUTE } from "./feed";
 import {
   canonicalUrl,
   OG_IMAGE_ALT,
@@ -15,11 +16,13 @@ import {
   SITE_URL,
 } from "./site";
 import { makeAbout } from "./ui/about";
+import { ARTICLES_LEDE, makeArticle, makeArticlesIndex } from "./ui/articles";
 import { formatPrice, lowestPrice, makeHome } from "./ui/home";
 import { ABOUT_ROUTE, makeSiteLayout } from "./ui/layout";
 import { makeProcess } from "./ui/process";
 import { makeCaseStudy, makeWorkIndex, makeWorkRequest } from "./ui/work";
-import { previewCaseStudiesFromEnv, WORK_REQUEST_ROUTE, WORK_ROUTE } from "./work";
+import { previewDraftsFromEnv } from "./preview";
+import { WORK_REQUEST_ROUTE, WORK_ROUTE } from "./work";
 
 export { canonicalUrl, SITE_URL };
 
@@ -60,7 +63,12 @@ export function seoMetadata(input: {
 }
 
 export interface BuildOptions {
-  readonly previewCaseStudies: boolean;
+  readonly previewDrafts: boolean;
+}
+
+function withFeedLink(metadata: PageMetadata): PageMetadata {
+  const feed = { rel: "alternate", href: FEED_ROUTE, type: "application/rss+xml" };
+  return { ...metadata, links: [...(metadata.links ?? []), feed] };
 }
 
 function homeDescription(plans: readonly Plan[]): string {
@@ -70,23 +78,24 @@ function homeDescription(plans: readonly Plan[]): string {
 }
 
 export async function buildAppConfig(
-  options: BuildOptions = { previewCaseStudies: previewCaseStudiesFromEnv() },
+  options: BuildOptions = { previewDrafts: previewDraftsFromEnv() },
 ): Promise<LestoAppConfig> {
   const { db } = await openSqlite(":memory:");
-  const [studies, steps, plans, faq, experience] = await Promise.all([
+  const [studies, steps, plans, faq, experience, articles] = await Promise.all([
     loadAllCaseStudies(),
     loadProcess(),
     loadPlans(),
     loadFaq(),
     loadExperience(),
+    loadArticles(options.previewDrafts),
   ]);
 
   let app = lesto()
     .styles("/styles.css")
-    .layout(makeSiteLayout(studies.length > 0))
+    .layout(makeSiteLayout({ work: studies.length > 0, articles: articles.length > 0 }))
     .page("/", {
       static: true,
-      component: makeHome(studies, plans, faq),
+      component: makeHome(studies, plans, faq, articles),
       metadata: () =>
         seoMetadata({
           title: `${SITE_NAME} · ${SITE_TAGLINE}`,
@@ -145,7 +154,38 @@ export async function buildAppConfig(
       });
   }
 
-  const fullStudies = options.previewCaseStudies ? studies : [];
+  if (articles.length > 0) {
+    app = app.page(ARTICLES_ROUTE, {
+      static: true,
+      component: makeArticlesIndex(articles),
+      metadata: () =>
+        withFeedLink(
+          seoMetadata({
+            title: `articles · ${SITE_NAME}`,
+            description: ARTICLES_LEDE,
+            route: ARTICLES_ROUTE,
+            type: "website",
+          }),
+        ),
+    });
+  }
+
+  for (const article of articles) {
+    app = app.page(article.route, {
+      static: true,
+      component: makeArticle(article),
+      metadata: () => {
+        const base = withFeedLink(
+          seoMetadata({ title: `${article.title} · ${SITE_NAME}`, description: article.summary, route: article.route, type: "article" }),
+        );
+        const published = { property: "article:published_time", content: article.published };
+        const draftMeta = article.draft ? [{ name: "robots", content: "noindex" }] : [];
+        return { ...base, meta: [...(base.meta ?? []), published, ...draftMeta] };
+      },
+    });
+  }
+
+  const fullStudies = options.previewDrafts ? studies : [];
   for (const study of fullStudies) {
     app = app.page(study.route, {
       static: true,

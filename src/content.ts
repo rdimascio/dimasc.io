@@ -4,6 +4,7 @@ import { fileURLToPath } from "node:url";
 import { runPipeline } from "@lesto/content-core/build";
 
 import config, {
+  type ArticleFrontmatter,
   type CaseStudyFrontmatter,
   type DemoFrontmatter,
   type ExperienceFrontmatter,
@@ -26,6 +27,7 @@ type RawProcessStep = RawBase & ProcessStepFrontmatter;
 type RawPlan = RawBase & PlanFrontmatter;
 type RawFaq = RawBase & FaqFrontmatter;
 type RawExperience = RawBase & ExperienceFrontmatter;
+type RawArticle = RawBase & ArticleFrontmatter;
 
 export interface Plan {
   readonly slug: string;
@@ -186,6 +188,63 @@ export async function loadExperience(): Promise<Experience[]> {
       html: entry.rendered?.html ?? "",
     }))
     .toSorted((a, b) => a.order - b.order);
+}
+
+const WORDS_PER_MINUTE = 220;
+export const ARTICLES_ROUTE = "/articles";
+
+export interface Article {
+  readonly route: string;
+  readonly slug: string;
+  readonly title: string;
+  readonly summary: string;
+  readonly published: string;
+  readonly updated: string | undefined;
+  readonly tags: readonly string[];
+  readonly draft: boolean;
+  readonly minutes: number;
+  readonly html: string;
+}
+
+function readingMinutes(html: string): number {
+  const words = html.replace(/<[^>]+>/g, " ").split(/\s+/).filter(Boolean).length;
+  return Math.max(1, Math.round(words / WORDS_PER_MINUTE));
+}
+
+function isoDay(value: Date | string): string {
+  return new Date(value).toISOString().slice(0, 10);
+}
+
+function isTemplate(entry: RawBase): boolean {
+  return entry.file.pathSegments.at(-1)?.startsWith("_") === true;
+}
+
+export async function loadAllArticles(): Promise<Article[]> {
+  const entries = await loadEntries();
+  return entries
+    .filter((entry): entry is RawArticle => entry.collection === "articles")
+    .filter((entry) => !isTemplate(entry))
+    .map((entry) => {
+      const slug = slugOf(entry);
+      const html = entry.rendered?.html ?? "";
+      return {
+        route: `${ARTICLES_ROUTE}/${slug}`,
+        slug,
+        title: entry.title,
+        summary: entry.summary,
+        published: isoDay(entry.published),
+        updated: entry.updated === undefined ? undefined : isoDay(entry.updated),
+        tags: entry.tags,
+        draft: entry.draft,
+        minutes: readingMinutes(html),
+        html,
+      };
+    })
+    .toSorted((a, b) => b.published.localeCompare(a.published) || a.title.localeCompare(b.title));
+}
+
+export async function loadArticles(includeDrafts: boolean): Promise<Article[]> {
+  return (await loadAllArticles()).filter((article) => includeDrafts || !article.draft);
 }
 
 export async function loadFaq(): Promise<FaqItem[]> {

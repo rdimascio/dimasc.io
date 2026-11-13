@@ -7,6 +7,8 @@ import { defineStaticSite } from "@lesto/sites";
 import { SITE_URL } from "./src/app";
 import { HEADERS_FILE, OG_IMAGE_PATH, OG_IMAGE_SOURCE } from "./src/site";
 import { outputPathFor, PERSONAL_PAGES, personalPageHtml } from "./src/personal";
+import { loadArticles } from "./src/content";
+import { articlesFeed, FEED_ROUTE } from "./src/feed";
 import { SIGNATURE_INITIAL } from "./src/signature";
 import { STATIC_ASSET_DIRS } from "./src/work";
 
@@ -59,6 +61,9 @@ const onBuilt: BuildHook = async ({ sites }) => {
 
   await site.sink(OG_IMAGE_PATH.slice(1), new Uint8Array(await Bun.file(OG_IMAGE_SOURCE).arrayBuffer()));
   await site.sink("_headers", HEADERS_FILE);
+
+  const publishedArticles = await loadArticles(false);
+  if (publishedArticles.length > 0) await site.sink(FEED_ROUTE.slice(1), articlesFeed(publishedArticles));
 
   for (const font of FONT_FILES) {
     await site.sink(font.to, new Uint8Array(await Bun.file(font.from).arrayBuffer()));

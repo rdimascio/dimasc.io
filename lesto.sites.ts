@@ -1,8 +1,10 @@
 import { defineSites } from "@lesto/sites";
 
-import { loadAllCaseStudies } from "./src/content";
+import { loadAllCaseStudies, loadArticles } from "./src/content";
+import { articleRoutes } from "./src/feed";
 import { ABOUT_ROUTE } from "./src/site";
-import { previewCaseStudiesFromEnv, workRoutes } from "./src/work";
+import { previewDraftsFromEnv } from "./src/preview";
+import { workRoutes } from "./src/work";
 
 export default defineSites([
   {
@@ -10,8 +12,9 @@ export default defineSites([
     render: "static",
     basePath: "/",
     pages: async () => {
-      const studies = await loadAllCaseStudies();
-      return ["/", ABOUT_ROUTE, "/process", ...workRoutes(studies, previewCaseStudiesFromEnv())];
+      const previewDrafts = previewDraftsFromEnv();
+      const [studies, articles] = await Promise.all([loadAllCaseStudies(), loadArticles(previewDrafts)]);
+      return ["/", ABOUT_ROUTE, "/process", ...workRoutes(studies, previewDrafts), ...articleRoutes(articles)];
     },
   },
 ]);

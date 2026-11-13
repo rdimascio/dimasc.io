@@ -6,7 +6,10 @@ import type { App } from "@lesto/kernel";
 import appConfig from "../lesto.app";
 import { buildAppConfig } from "../src/app";
 import {
+  ARTICLES_ROUTE,
+  loadAllArticles,
   loadAllCaseStudies,
+  loadArticles,
   loadCaseStudies,
   loadExperience,
   loadFaq,
@@ -34,6 +37,7 @@ import {
 } from "../src/site";
 import { formatPrice, REFUND_RULE, SINCE_YEAR, STAFF_LINE } from "../src/ui/home";
 import { BRAND_LOGOS, LOGO_SOURCE_DIR, logoSrc } from "../src/logos";
+import { articleRoutes, articlesFeed, FEED_ROUTE } from "../src/feed";
 import { SIGNATURE } from "../src/signature";
 import { SKILLS } from "../src/ui/experience";
 import { REQUEST_LINE } from "../src/ui/work";
@@ -202,7 +206,7 @@ describe("site routes", () => {
   });
 
   it("keeps full case studies off the public site", async () => {
-    const publicApp = await createApp(await buildAppConfig({ previewCaseStudies: false }));
+    const publicApp = await createApp(await buildAppConfig({ previewDrafts: false }));
     for (const study of await loadAllCaseStudies()) {
       expect((await publicApp.handle("GET", study.route)).status).toBe(404);
     }
@@ -211,7 +215,7 @@ describe("site routes", () => {
   });
 
   it("renders every full case study in preview, marked noindex", async () => {
-    const preview = await createApp(await buildAppConfig({ previewCaseStudies: true }));
+    const preview = await createApp(await buildAppConfig({ previewDrafts: true }));
     for (const study of await loadAllCaseStudies()) {
       const response = await preview.handle("GET", study.route);
       const html = decodeEntities(await text(response));
@@ -309,6 +313,59 @@ describe("site routes", () => {
       expect(header).toContain(`aria-label="${SITE_NAME_PROPER}"`);
       expect(header).toContain(`d="${SIGNATURE.d.slice(0, 40)}`);
     }
+  });
+
+  it("keeps draft articles and the articles section off the public site", async () => {
+    const publicApp = await createApp(await buildAppConfig({ previewDrafts: false }));
+    const published = await loadArticles(false);
+    const home = await text(await publicApp.handle("GET", "/"));
+    expect((await publicApp.handle("GET", ARTICLES_ROUTE)).status).toBe(published.length > 0 ? 200 : 404);
+    expect(home.includes(`href="${ARTICLES_ROUTE}"`)).toBe(published.length > 0);
+    for (const draft of (await loadAllArticles()).filter((article) => article.draft)) {
+      expect((await publicApp.handle("GET", draft.route)).status).toBe(404);
+    }
+    expect((await loadAllArticles()).some((article) => article.slug.startsWith("_"))).toBe(false);
+  });
+
+  it("renders every article in preview, with the index, home section, nav link and noindex on drafts", async () => {
+    const preview = await createApp(await buildAppConfig({ previewDrafts: true }));
+    const articles = await loadArticles(true);
+    expect(articles.length).toBeGreaterThan(0);
+    const index = decodeEntities(await text(await preview.handle("GET", ARTICLES_ROUTE)));
+    const home = decodeEntities(await text(await preview.handle("GET", "/")));
+    expect(home).toContain(`href="${ARTICLES_ROUTE}"`);
+    for (const article of articles) {
+      const response = await preview.handle("GET", article.route);
+      const html = decodeEntities(await text(response));
+      expect(response.status).toBe(200);
+      expect(html).toContain(article.title);
+      expect(html).toContain(`<time dateTime="${article.published}">`);
+      expect(html).toContain(`href="${FEED_ROUTE}"`);
+      expect(html.includes('content="noindex"')).toBe(article.draft);
+      expect(index).toContain(`href="${article.route}"`);
+    }
+  });
+
+  it("builds a valid rss feed and route list from articles", () => {
+    const article = {
+      route: "/articles/fixture",
+      slug: "fixture",
+      title: "tips & tricks <for> \"owners\"",
+      summary: "a summary",
+      published: "2026-11-13",
+      updated: undefined,
+      tags: [],
+      draft: false,
+      minutes: 1,
+      html: "<p>hi</p>",
+    };
+    const feed = articlesFeed([article]);
+    expect(feed).toStartWith('<?xml version="1.0" encoding="UTF-8"?>');
+    expect(feed).toContain("<title>tips &amp; tricks &lt;for&gt; &quot;owners&quot;</title>");
+    expect(feed).toContain(`<link>${SITE_URL}/articles/fixture</link>`);
+    expect(feed).toContain("<pubDate>Fri, 13 Nov 2026 00:00:00 GMT</pubDate>");
+    expect(articleRoutes([article])).toEqual([ARTICLES_ROUTE, "/articles/fixture"]);
+    expect(articleRoutes([])).toEqual([]);
   });
 
   it("names Stanford without the eCorner suffix on public pages", async () => {
