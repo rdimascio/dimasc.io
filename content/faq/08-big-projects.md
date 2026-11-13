@@ -1,6 +1,6 @@
 ---
-question: "What about a big project with a fixed scope?"
+question: "what about one bigger project?"
 order: 8
 ---
 
-That's the Custom plan. We start with discovery and research, then you get a reviewed, flat quote for each step. See [how custom projects run](/process).
+that's the one project option. we talk first, then you get one price for each step before i start. see [how a one-project job works](/process).

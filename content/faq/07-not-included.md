@@ -1,6 +1,6 @@
 ---
-question: "What isn't included?"
+question: "what's not included?"
 order: 7
 ---
 
-Fees for the tools you run on, like Shopify, hosting or a booking platform, are billed to you directly. Brand design, copywriting and photography aren't included, but I'm happy to work with the people who do them.
+the monthly fees for the stuff you run on, like shopify, your website host or your booking app. those get billed to you directly. logo + brand design, writing your website's words and photos aren't included either, but i'm happy to work w/ whoever does them.

@@ -4,7 +4,16 @@ import type { PageMetadata } from "@lesto/web";
 import { lesto } from "@lesto/web";
 
 import { loadAllCaseStudies, loadExperience, loadFaq, loadPlans, loadProcess } from "./content";
-import { canonicalUrl, OG_IMAGE_ALT, OG_IMAGE_HEIGHT, OG_IMAGE_PATH, OG_IMAGE_WIDTH, SITE_NAME, SITE_URL } from "./site";
+import {
+  canonicalUrl,
+  OG_IMAGE_ALT,
+  OG_IMAGE_HEIGHT,
+  OG_IMAGE_PATH,
+  OG_IMAGE_WIDTH,
+  SITE_NAME,
+  SITE_TAGLINE,
+  SITE_URL,
+} from "./site";
 import { makeAbout } from "./ui/about";
 import { makeHome } from "./ui/home";
 import { ABOUT_ROUTE, makeSiteLayout } from "./ui/layout";
@@ -71,12 +80,12 @@ export async function buildAppConfig(
     .layout(makeSiteLayout(studies.length > 0))
     .page("/", {
       static: true,
-      component: makeHome(studies, plans, faq, experience),
+      component: makeHome(studies, plans, faq),
       metadata: () =>
         seoMetadata({
-          title: `${SITE_NAME} · Software subscriptions for small businesses`,
+          title: `${SITE_NAME} · ${SITE_TAGLINE}`,
           description:
-            "A software engineer on subscription: websites, stores, integrations and AI tools for one flat monthly price. Pause or cancel anytime.",
+            "i fix + improve your website, online booking and online store for one flat monthly price. cancel anytime.",
           route: "/",
           type: "website",
         }),
@@ -86,8 +95,8 @@ export async function buildAppConfig(
       component: makeAbout(experience),
       metadata: () =>
         seoMetadata({
-          title: `About · ${SITE_NAME}`,
-          description: "Ryan DiMascio: building websites, stores and software since 2017, at agencies, startups and product companies.",
+          title: `about · ${SITE_NAME}`,
+          description: "i've been building websites since 2017, at agencies, startups and product companies. you work directly w/ me.",
           route: ABOUT_ROUTE,
           type: "website",
         }),
@@ -97,8 +106,8 @@ export async function buildAppConfig(
       component: makeProcess(steps),
       metadata: () =>
         seoMetadata({
-          title: `How custom projects run · ${SITE_NAME}`,
-          description: "Custom projects: discovery, research, a recommendation, a reviewed flat quote, then small steps that each ship.",
+          title: `how a one-project job works · ${SITE_NAME}`,
+          description: "for one bigger job: we talk, i look around, you get one plan + one price per step, then i build it in small steps.",
           route: "/process",
           type: "website",
         }),
@@ -111,8 +120,8 @@ export async function buildAppConfig(
         component: makeWorkIndex(studies),
         metadata: () =>
           seoMetadata({
-            title: `Work · ${SITE_NAME}`,
-            description: "Selected work. Full case studies are shared on request.",
+            title: `past work · ${SITE_NAME}`,
+            description: "websites i've worked on, for stanford, blackstone, holt international and serhant.",
             route: WORK_ROUTE,
             type: "website",
           }),
@@ -122,8 +131,8 @@ export async function buildAppConfig(
         component: makeWorkRequest(studies),
         metadata: () =>
           seoMetadata({
-            title: `Request a case study · ${SITE_NAME}`,
-            description: "Full case studies are shared on request. Email me with the project you want to read about.",
+            title: `ask about a project · ${SITE_NAME}`,
+            description: "want to hear more about one of these? email me and i'll walk you through it.",
             route: WORK_REQUEST_ROUTE,
             type: "website",
           }),

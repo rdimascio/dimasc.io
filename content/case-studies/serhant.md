@@ -1,8 +1,8 @@
 ---
-title: "Listing search for SERHANT."
-summary: "Home search for a real estate brokerage, with homes for sale and rent across many US regions."
-client: "SERHANT."
-industry: "Real estate"
+title: "listing search for serhant."
+summary: "built serhant.'s website template in 30 days, while at luxury presence."
+client: "serhant."
+industry: "real estate"
 year: 2022 # TODO(ryan): Was the SERHANT. template delivered in 2022?
 services: ["Website template", "Technical leadership"]
 stack: ["Luxury Presence", "Cloudflare"]

@@ -20,6 +20,8 @@ import {
   ABOUT_ROUTE,
   BOOKING_URL,
   CONTACT_EMAIL,
+  fixRequestHref,
+  planHref,
   introCallHref,
   introCallLabel,
   OG_IMAGE_ALT,
@@ -29,7 +31,7 @@ import {
   OG_IMAGE_WIDTH,
   SITE_URL,
 } from "../src/site";
-import { formatPrice, REFUND_RULE } from "../src/ui/home";
+import { formatPrice, REFUND_RULE, SINCE_YEAR, STAFF_LINE } from "../src/ui/home";
 import { BRAND_LOGOS, LOGO_SOURCE_DIR, logoSrc } from "../src/logos";
 import { SKILLS } from "../src/ui/experience";
 import { REQUEST_LINE } from "../src/ui/work";
@@ -62,7 +64,7 @@ function decodeEntities(html: string): string {
 }
 
 function luxuryPresenceRoles(experience: Awaited<ReturnType<typeof loadExperience>>): readonly unknown[] {
-  return experience.find((item) => item.company === "Luxury Presence")?.roles ?? [];
+  return experience.find((item) => item.company === "luxury presence")?.roles ?? [];
 }
 
 function caseStudyFixture(overrides: Pick<CaseStudy, "draft" | "html">): CaseStudy {
@@ -92,14 +94,15 @@ describe("site routes", () => {
     const html = await text(await app.handle("GET", "/"));
     const plans = await loadPlans();
 
-    expect(plans.map((plan) => plan.price)).toEqual([2500, 5000, null]);
+    expect(plans.map((plan) => plan.price)).toEqual([null, 2500, 5000]);
     for (const plan of plans) {
       expect(html).toContain(plan.name);
       if (plan.price !== null) expect(html).toContain(formatPrice(plan.price));
     }
     expect(html).toContain('id="pricing"');
-    expect(html).toContain("75% back");
     const decoded = html.replaceAll("&#x27;", "'");
+    expect(decoded).toContain(REFUND_RULE);
+    expect(decoded).toContain(STAFF_LINE);
     for (const item of await loadFaq()) expect(decoded).toContain(item.question);
   });
 
@@ -107,8 +110,11 @@ describe("site routes", () => {
     const html = decodeEntities(await text(await app.handle("GET", "/")));
     expect(html).toContain(introCallHref());
     expect(html).toContain(introCallLabel());
-    if (BOOKING_URL === null) expect(html).not.toContain("Book a");
-    expect(html).toContain("mailto:ryan@dimasc.io?subject=Pro%20plan");
+    if (BOOKING_URL === null) expect(html.toLowerCase()).not.toContain("book a 15");
+    for (const plan of (await loadPlans()).filter((candidate) => candidate.price !== null)) {
+      expect(html).toContain(planHref(plan.name));
+    }
+    expect(html).toContain(fixRequestHref());
   });
 
   it("makes no claim the review flagged as unprovable", async () => {
@@ -124,19 +130,24 @@ describe("site routes", () => {
     expect(html).not.toContain("no refunds for finished work");
   });
 
-  it("offers the same capabilities on both subscription plans", async () => {
-    const [standard, pro] = await loadPlans();
-    expect(standard?.features).toContain("Everything on the What I build list");
-    expect(pro?.features).toContain("Everything in Standard");
+  it("offers the same help on both monthly plans and keeps every price claim", async () => {
+    const [, monthly, double] = await loadPlans();
+    expect(monthly?.features).toContain('anything on the "things i can help with" list');
+    expect(double?.features).toContain("everything in monthly");
+    for (const plan of [monthly, double]) {
+      expect(plan?.features).toContain("most small jobs done in 2 business days");
+      expect(plan?.features).toContain("i reply within 1 business day");
+    }
   });
 
   it("renders the process page with every step in order", async () => {
     const response = await app.handle("GET", "/process");
-    const html = await text(response);
+    const html = decodeEntities(await text(response));
+    const main = html.slice(html.indexOf("<ol", html.indexOf("<main")));
     const titles = (await loadProcess()).map((step) => step.title);
 
     expect(response.status).toBe(200);
-    const positions = titles.map((title) => html.indexOf(title));
+    const positions = titles.map((title) => main.indexOf(title));
     expect(positions.every((position) => position >= 0)).toBe(true);
     expect(positions).toEqual(positions.toSorted((a, b) => a - b));
   });
@@ -154,7 +165,7 @@ describe("site routes", () => {
     const home = decodeEntities(await text(await app.handle("GET", "/")));
 
     expect(studies.map((study) => study.slug).toSorted()).toEqual(CASE_STUDY_SLUGS.toSorted());
-    expect(home).toContain("Selected work");
+    expect(home).toContain("past work");
     expect(home).toContain(REQUEST_LINE);
     for (const study of studies) {
       expect(home).toContain(projectName(study));
@@ -210,24 +221,28 @@ describe("site routes", () => {
     }
   });
 
-  it("shows the work history on the home and about pages, with the demos under Luxury Presence", async () => {
+  it("shows the work history on the about page, with the demos under luxury presence", async () => {
     const experience = await loadExperience();
-    expect(experience.map((item) => item.company)).toEqual(["Every", "Luxury Presence", "10up", "Channel Bakers", "Lender Homepage"]);
+    expect(experience.map((item) => item.company)).toEqual(["every", "luxury presence", "10up", "channel bakers", "lender homepage"]);
     expect(luxuryPresenceRoles(experience)).toHaveLength(4);
-    const luxuryPresence = experience.find((item) => item.company === "Luxury Presence");
+    const luxuryPresence = experience.find((item) => item.company === "luxury presence");
     expect(luxuryPresence?.demos.map((demo) => demo.slug)).toEqual(["natural-language-search", "local-dev-app"]);
 
-    for (const route of ["/", ABOUT_ROUTE]) {
-      const response = await app.handle("GET", route);
-      const html = decodeEntities(await text(response));
-      expect(response.status).toBe(200);
-      for (const item of experience) expect(html).toContain(item.company);
-      for (const demo of luxuryPresence?.demos ?? []) {
-        expect(html).toContain(`src="${demoSrc(demo.clip)}"`);
-        expect(html).toContain(`poster="${demoSrc(demo.poster)}"`);
-      }
+    const response = await app.handle("GET", ABOUT_ROUTE);
+    const html = decodeEntities(await text(response));
+    expect(response.status).toBe(200);
+    for (const item of experience) expect(html).toContain(item.company);
+    for (const demo of luxuryPresence?.demos ?? []) {
+      expect(html).toContain(`src="${demoSrc(demo.clip)}"`);
+      expect(html).toContain(`poster="${demoSrc(demo.poster)}"`);
     }
-    expect(await text(await app.handle("GET", "/"))).toContain(`href="${ABOUT_ROUTE}"`);
+  });
+
+  it("points the home page at the about page with the since line instead of the timeline", async () => {
+    const home = decodeEntities(await text(await app.handle("GET", "/")));
+    expect(home).toContain(`href="${ABOUT_ROUTE}"`);
+    expect(home).toContain(`building websites since ${SINCE_YEAR}`);
+    expect(home).not.toContain("<video");
   });
 
   it("ships every demo file at web size", async () => {

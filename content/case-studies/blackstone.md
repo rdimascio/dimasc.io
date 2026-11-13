@@ -1,8 +1,8 @@
 ---
-title: "The public website for Blackstone"
-summary: "The corporate site of an alternative asset manager, for investors, shareholders and financial advisors."
-client: "Blackstone"
-industry: "Financial services"
+title: "the public website for blackstone"
+summary: "led the front end of blackstone's public website, while at 10up."
+client: "blackstone"
+industry: "financial services"
 year: 2021
 services: ["Frontend development", "Technical leadership"]
 stack: ["WordPress", "Cloudflare"]

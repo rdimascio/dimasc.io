@@ -1,6 +1,6 @@
 ---
-question: "How does pausing work?"
+question: "how does pausing work?"
 order: 4
 ---
 
-Billing runs in 31-day cycles. If you pause partway through, the unused days stay on your account for when you come back.
+you're billed once a month. pause whenever, and the unused days wait for you till you come back.

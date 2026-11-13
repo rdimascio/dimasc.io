@@ -1,8 +1,8 @@
 ---
-title: "Sponsorship, adoption and giving for Holt International"
-summary: "Child sponsorship, adoption and giving for a Christian organization that supports vulnerable children and families."
-client: "Holt International"
-industry: "Nonprofit"
+title: "sponsorship, adoption and giving for holt international"
+summary: "led the front end of the site where families sponsor + adopt kids, while at 10up."
+client: "holt international"
+industry: "nonprofit"
 year: 2021
 services: ["Frontend development", "Technical leadership"]
 stack: ["WordPress", "Kinsta", "Cloudflare"]

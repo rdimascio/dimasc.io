@@ -1,6 +1,6 @@
 ---
-question: "Who owns the work?"
+question: "who owns the work?"
 order: 6
 ---
 
-You do. Everything runs in your own accounts, like Shopify, hosting and any AI provider, so what I've delivered keeps working if you cancel. New work and fixes stop when the subscription does.
+you do. everything runs in your own accounts (your store, your website host, your booking app), so what i built keeps working if you cancel. new work + fixes stop when you cancel.

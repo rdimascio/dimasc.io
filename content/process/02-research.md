@@ -1,9 +1,9 @@
 ---
-title: "Research"
-summary: "I check what your current tools and the market already do before proposing anything custom."
+title: "i look around"
+summary: "i check what your current tools can already do before suggesting anything new."
 step: 2
 ---
 
-Before I write code, I read the docs, pricing and limits of the tools you already pay for and the alternatives. Often the fix is a setting or a tool you already own.
+before i build anything, i read up on the tools you already pay for + the other options. a lot of the time the fix is a setting or something you already own.
 
-When something has to move, like a booking system, I research the move itself: what data comes over, how long it takes, and what can go wrong. You get the findings with sources, and I mark anything I couldn't confirm.
+if something has to move, like your booking app, i look into the move itself: what comes over, how long it takes and what could go wrong. you get what i found w/ links, and i flag anything i couldn't confirm.

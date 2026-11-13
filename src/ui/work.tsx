@@ -5,7 +5,7 @@ import { CONTACT_EMAIL } from "../site";
 import { projectName, requestAnchor, requestMailto, screenshotSrc, WORK_REQUEST_ROUTE, WORK_ROUTE } from "../work";
 import { ArrowLink, Eyebrow, HEADING, LEDE, PAGE } from "./layout";
 
-export const REQUEST_LINE = "Full case studies are shared on request.";
+export const REQUEST_LINE = "want to hear more about one of these? email me and i'll walk you through it.";
 
 function indexLabel(position: number): string {
   return String(position + 1).padStart(2, "0");
@@ -43,7 +43,7 @@ function CaseStudyCard({ study, position }: { study: CaseStudy; position: number
           <p className="m-0 mt-2 text-muted leading-relaxed max-w-[34rem]">{study.summary}</p>
           <span />
           <span />
-          <p className="m-0 mt-4 font-mono text-[0.7rem] uppercase tracking-[0.14em] text-muted">{study.industry}</p>
+          <p className="m-0 mt-4 font-mono text-[0.7rem] tracking-[0.14em] text-muted">{study.industry}</p>
         </div>
       </a>
     </li>
@@ -76,10 +76,10 @@ export function RequestNote(): ReactElement {
   return (
     <div className="mt-20 flex flex-wrap items-center justify-between gap-6 border-t border-line pt-8">
       <p className="m-0 text-[clamp(1.2rem,2vw,1.5rem)] tracking-[-0.02em]">
-        {REQUEST_LINE} <span className="serif text-muted">Ask for the one you want.</span>
+        {REQUEST_LINE}
       </p>
       <ArrowLink href={WORK_REQUEST_ROUTE} tone="ghost">
-        Request a case study
+        ask about a project
       </ArrowLink>
     </div>
   );
@@ -89,11 +89,11 @@ function WorkIndex({ studies }: { studies: readonly CaseStudy[] }): ReactElement
   return (
     <main className="night pb-28">
       <div className={PAGE}>
-        <Eyebrow>Work · {String(studies.length).padStart(2, "0")}</Eyebrow>
+        <Eyebrow>past work · {String(studies.length).padStart(2, "0")}</Eyebrow>
         <h1 className={`${HEADING} mt-8`}>
-          Selected <span className="serif text-accent">work</span>
+          past <span className="serif text-accent">work</span>
         </h1>
-        <p className={`${LEDE} mt-8 mb-20`}>Sites and products I have worked on.</p>
+        <p className={`${LEDE} mt-8 mb-20`}>websites i've worked on, at agencies + product teams.</p>
         <CaseStudyGrid studies={studies} />
         <RequestNote />
       </div>
@@ -104,12 +104,12 @@ function WorkIndex({ studies }: { studies: readonly CaseStudy[] }): ReactElement
 function RequestPage({ studies }: { studies: readonly CaseStudy[] }): ReactElement {
   return (
     <main className={PAGE}>
-      <a className="font-mono text-[0.78rem] uppercase tracking-[0.1em] text-muted hover:text-ink" href={WORK_ROUTE}>
-        ← Work
+      <a className="font-mono text-[0.78rem] tracking-[0.1em] text-muted hover:text-ink" href={WORK_ROUTE}>
+        ← past work
       </a>
-      <h1 className={`${HEADING} mt-8`}>Request a case study</h1>
+      <h1 className={`${HEADING} mt-8`}>ask about a project</h1>
       <p className={`${LEDE} mt-8 mb-16`}>
-        {REQUEST_LINE} Email me and say which project you want to read about.
+        {REQUEST_LINE} pick one below + it opens an email to me.
       </p>
       <ul className="m-0 p-0 list-none border-b border-line">
         {studies.map((study) => (
@@ -124,13 +124,13 @@ function RequestPage({ studies }: { studies: readonly CaseStudy[] }): ReactEleme
               className="inline-flex justify-self-start items-center gap-2 rounded-full bg-ink text-bg px-5 py-2.5 font-medium hover:opacity-90"
               href={requestMailto(study)}
             >
-              Request this case study <span aria-hidden="true">→</span>
+              ask about this project <span aria-hidden="true">→</span>
             </a>
           </li>
         ))}
       </ul>
       <p className="mt-8 mb-0 text-muted">
-        Or write to{" "}
+        or just write to{" "}
         <a className="font-medium text-ink underline underline-offset-4" href={`mailto:${CONTACT_EMAIL}`}>
           {CONTACT_EMAIL}
         </a>
@@ -142,17 +142,17 @@ function RequestPage({ studies }: { studies: readonly CaseStudy[] }): ReactEleme
 
 function Facts({ study }: { study: CaseStudy }): ReactElement {
   const rows = [
-    ...(study.client === undefined ? [] : [["Client", study.client] as const]),
-    ["Industry", study.industry] as const,
-    ["Year", String(study.year)] as const,
-    ["Services", study.services.join(", ")] as const,
-    ["Stack", study.stack.join(", ")] as const,
+    ...(study.client === undefined ? [] : [["client", study.client] as const]),
+    ["industry", study.industry] as const,
+    ["year", String(study.year)] as const,
+    ["services", study.services.join(", ")] as const,
+    ["stack", study.stack.join(", ")] as const,
   ];
   return (
     <dl className="m-0 flex flex-col gap-5 text-[0.95rem]">
       {rows.map(([label, value]) => (
         <div className="border-t border-line pt-3" key={label}>
-          <dt className="font-mono text-[0.72rem] uppercase tracking-[0.12em] text-muted mb-1">{label}</dt>
+          <dt className="font-mono text-[0.72rem] tracking-[0.12em] text-muted mb-1">{label}</dt>
           <dd className="m-0">{value}</dd>
         </div>
       ))}
@@ -184,8 +184,8 @@ function Screens({ study }: { study: CaseStudy }): ReactElement {
 function CaseStudyPage({ study }: { study: CaseStudy }): ReactElement {
   return (
     <main className={PAGE}>
-      <a className="font-mono text-[0.78rem] uppercase tracking-[0.1em] text-muted hover:text-ink" href={WORK_ROUTE}>
-        ← Work
+      <a className="font-mono text-[0.78rem] tracking-[0.1em] text-muted hover:text-ink" href={WORK_ROUTE}>
+        ← past work
       </a>
       <h1 className={`${HEADING} mt-8 max-w-[18ch]`}>{study.title}</h1>
       <p className={`${LEDE} mt-8`}>{study.summary}</p>

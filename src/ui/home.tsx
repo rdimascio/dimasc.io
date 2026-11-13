@@ -1,42 +1,47 @@
 import type { CSSProperties, ReactElement } from "react";
 
-import type { CaseStudy, Experience, FaqItem, Plan } from "../content";
-import { introCallHref, introCallLabel, MAX_SUBSCRIPTION_CLIENTS, planHref } from "../site";
+import type { CaseStudy, FaqItem, Plan } from "../content";
 import { BRAND_LOGOS, logoSrc, opticalScale } from "../logos";
-import { WORK_ROUTE } from "../work";
-import { ExperienceTimeline } from "./experience";
+import { fixRequestHref, introCallHref, MAX_SUBSCRIPTION_CLIENTS, planHref } from "../site";
+import { projectName, WORK_ROUTE } from "../work";
 import { ABOUT_ROUTE, ArrowLink, Eyebrow, SectionHead, WIDTH } from "./layout";
 import { CaseStudyGrid, RequestNote } from "./work";
 
-export const REFUND_RULE = "Cancel within 7 days of your first payment and get 75% back, even after work is delivered.";
+export const REFUND_RULE = "not happy in the first 7 days? cancel and i refund 75% of your first payment, even if i already delivered work.";
+export const STAFF_LINE = "like having a website person on staff a few days a month, w/o hiring one. no hourly bills.";
+export const SINCE_YEAR = 2017;
+
+const HELP_WITH = [
+  "fix what's broken on your website",
+  "a website that works on phones + shows up on google",
+  "online booking + payments that work",
+  "an online store for your gear or products",
+  "pages your staff can update themselves",
+  "stop typing the same thing into two places",
+  "answer the questions customers ask every day, automatically",
+  "move off old software w/o losing your records",
+] as const;
 
 const STEPS = [
-  { title: "Subscribe", body: "Pick a plan. You get a private request board to add work to." },
-  { title: "Request", body: "Add what's slowing you down: a fix, a page, an integration, an AI tool." },
-  { title: "Receive", body: "Most small requests come back in two business days, and we revise until it's right." },
+  { title: "pick a plan", body: "monthly help, or one price for one project. you get one list for everything you ask for." },
+  { title: "add jobs to your list", body: "what's broken or slowing you down: a fix, a page, a new tool." },
+  { title: "check the finished work", body: "most small jobs come back in 2 business days. i keep going until it's right." },
 ] as const;
 
-const BENEFITS = [
-  { title: "Private request board", body: "Every request, decision and status in one place. No chasing." },
-  { title: "Fixed monthly price", body: "No hourly billing, no surprise invoices." },
-  { title: "Reply within one business day", body: "Every request gets an answer by the next business day." },
-  { title: "Pause anytime", body: "Quiet month? Pause, and keep the days you haven't used." },
-  { title: "You own everything", body: "It all runs in your accounts, so you're never locked in." },
-  { title: "Work directly with me", body: "No account managers and no handoffs. I build and test every change." },
+const WHAT_YOU_GET = [
+  { title: "one list for everything", body: "everything you asked for + where each one stands. no chasing." },
+  { title: "one flat monthly price", body: "no hourly bills, no surprise invoices." },
+  { title: "a reply within 1 business day", body: "monday to friday. no weekend or same-day emergency help." },
+  { title: "pause anytime", body: "you're billed once a month. pause, and the unused days wait for you." },
+  { title: "you own everything", body: "it all runs in your accounts, so you're never stuck w/ me." },
+  { title: "you work w/ me", body: "i do all the work myself + test every change. i use modern tools, including ai, to work faster." },
 ] as const;
 
-export const EXAMPLES = [
-  { request: "Fix a broken checkout or booking link", time: "1 to 3 business days" },
-  { request: "A new page your staff can edit", time: "About 2 business days" },
-  { request: "Connect two tools so data stops being typed twice", time: "1 to 2 weeks" },
-  { request: "An AI assistant that answers common customer questions", time: "About 2 weeks" },
-  { request: "A new Shopify store with your products loaded", time: "4 to 6 weeks" },
-] as const;
-
-const CAPABILITIES = [
-  { title: "Web and commerce", items: ["Marketing sites", "Shopify stores", "Pages your staff can edit", "Speed and search basics"] },
-  { title: "Systems", items: ["Booking and payments", "Integrations between tools", "Moving off old software", "Reports you can trust"] },
-  { title: "AI and internal tools", items: ["Dashboards and admin tools", "AI assistants and automations", "Workflows that remove busywork", "Monitoring and alerts"] },
+const BOARD = [
+  { title: "fix the broken booking link on the homepage", status: "done", tone: "bg-sage", meta: "2 days" },
+  { title: "new summer camp page staff can update", status: "ready for you to check", tone: "bg-sky", meta: "today" },
+  { title: "send new members to the email list automatically", status: "i'm working on it", tone: "bg-butter", meta: "started tue" },
+  { title: "an automatic helper for common parent questions", status: "waiting its turn", tone: "bg-blush", meta: "next up" },
 ] as const;
 
 export function formatPrice(price: number): string {
@@ -47,23 +52,26 @@ function sectionIndex(position: number): string {
   return `(${String(position).padStart(2, "0")})`;
 }
 
+function lowestPrice(plans: readonly Plan[]): number | null {
+  const prices = plans.map((plan) => plan.price).filter((price): price is number => price !== null);
+  return prices.length === 0 ? null : Math.min(...prices);
+}
+
+function listNames(names: readonly string[]): string {
+  if (names.length <= 1) return names.join("");
+  return `${names.slice(0, -1).join(", ")} and ${names.at(-1)}`;
+}
+
 function PlanCard({ plan }: { plan: Plan }): ReactElement {
   const quietTone = plan.price === null ? "bg-bg-soft border-line" : "bg-card border-line";
   const tone = plan.featured ? "night border-transparent" : quietTone;
   return (
     <div className={`reveal flex flex-col rounded-[28px] border p-7 sm:p-9 ${tone}`}>
-      <div className="flex items-center justify-between gap-4">
-        <h3 className="m-0 text-[1.25rem] font-medium">{plan.name}</h3>
-        {plan.featured ? (
-          <span className="rounded-full border border-line px-3 py-1 font-mono text-[0.66rem] uppercase tracking-[0.12em] text-muted">
-            Two at a time
-          </span>
-        ) : null}
-      </div>
+      <h3 className="m-0 text-[1.25rem] font-medium">{plan.name}</h3>
       <p className="mt-2 mb-0 text-muted">{plan.summary}</p>
       <p className="mt-10 mb-0 flex items-baseline gap-1.5">
         <span className="text-[clamp(2.8rem,4.6vw,3.8rem)] leading-none tracking-[-0.055em] font-medium">
-          {plan.price === null ? <span className="serif tracking-[-0.02em]">Let's talk</span> : formatPrice(plan.price)}
+          {plan.price === null ? <span className="serif tracking-[-0.02em]">let's talk</span> : formatPrice(plan.price)}
         </span>
         {plan.price === null ? null : <span className="text-muted">/month</span>}
       </p>
@@ -86,19 +94,12 @@ function PlanCard({ plan }: { plan: Plan }): ReactElement {
   );
 }
 
-const BOARD = [
-  { title: "Fix the broken booking link on the homepage", status: "Done", tone: "bg-sage", meta: "2 days" },
-  { title: "New summer camp page staff can edit", status: "In review", tone: "bg-sky", meta: "Today" },
-  { title: "Send new members to the email list automatically", status: "In progress", tone: "bg-butter", meta: "Started Tue" },
-  { title: "AI assistant for common parent questions", status: "Queued", tone: "bg-blush", meta: "Next up" },
-] as const;
-
 function ExampleBoard(): ReactElement {
   return (
     <figure className="reveal m-0 rounded-[28px] bg-card border border-line p-4 sm:p-5 shadow-[0_40px_80px_-40px_rgba(40,30,20,0.35)]">
       <figcaption className="flex items-center justify-between px-2 pb-4">
-        <span className="font-medium">Your request board</span>
-        <span className="font-mono text-[0.68rem] uppercase tracking-[0.12em] text-muted">Example</span>
+        <span className="font-medium">your job list</span>
+        <span className="font-mono text-[0.72rem] tracking-[0.06em] text-muted">example</span>
       </figcaption>
       <ul className="m-0 p-0 list-none flex flex-col gap-2.5">
         {BOARD.map((item) => (
@@ -115,49 +116,37 @@ function ExampleBoard(): ReactElement {
   );
 }
 
-function lowestPrice(plans: readonly Plan[]): number | null {
-  const prices = plans.map((plan) => plan.price).filter((price): price is number => price !== null);
-  return prices.length === 0 ? null : Math.min(...prices);
-}
-
 function Hero({ plans }: { plans: readonly Plan[] }): ReactElement {
   const fromPrice = lowestPrice(plans);
   return (
     <section className={`${WIDTH} pt-10 sm:pt-16 pb-12 sm:pb-20`}>
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <Eyebrow>Software engineer on subscription</Eyebrow>
-        <p className="m-0 font-mono text-[0.72rem] uppercase tracking-[0.14em] text-muted">For gyms, studios, clinics, shops and local businesses</p>
-      </div>
-      <h1 className="mt-8 sm:mt-10 mb-0 font-semibold leading-[0.84] tracking-[-0.065em] text-[clamp(3.6rem,17vw,16.5rem)]">
-        <span className="hero-line">
-          <span>Ryan</span>
-        </span>
+      <Eyebrow>for gyms, clinics, shops + other local businesses</Eyebrow>
+      <h1 className="mt-8 sm:mt-10 mb-0 font-semibold leading-[0.9] tracking-[-0.055em] text-[clamp(3rem,9vw,9.6rem)] max-w-[13ch] [text-wrap:balance]">
         <span className="hero-line">
           <span>
-            DiMascio<span className="text-accent-bright">.</span>
+            i make websites, <span className="serif font-normal tracking-[-0.02em] text-muted">and fix the one you have</span>
+            <span className="text-accent-bright">.</span>
           </span>
         </span>
       </h1>
-      <div className="mt-10 sm:mt-12 grid gap-10 md:grid-cols-12 items-end">
-        <p className="md:col-span-7 m-0 text-[clamp(1.45rem,2.7vw,2.4rem)] leading-[1.12] tracking-[-0.035em] font-medium max-w-[34rem] [text-wrap:balance]">
-          A software engineer on subscription. <span className="serif text-muted font-normal">Fixed and improved every week,</span> for one flat monthly price.
+      <div className="mt-12 sm:mt-16 grid gap-10 md:grid-cols-12 items-end">
+        <p className="md:col-span-6 m-0 text-[clamp(1.25rem,2vw,1.6rem)] leading-[1.35] tracking-[-0.02em] max-w-[32rem] [text-wrap:pretty]">
+          i fix + improve your website, your online booking and your online store. most small fixes are done in 2 business days.
         </p>
-        <div className="md:col-span-5 flex flex-col gap-6 md:items-end">
-          <p className="m-0 text-ink-2 leading-relaxed max-w-[26rem] md:text-right">
-            Your website, store, booking and the tools behind them. Most small requests come back in two business days.
-          </p>
+        <div className="md:col-span-6 flex flex-col gap-5 md:items-end">
           <div className="flex flex-wrap items-center gap-3 md:justify-end">
-            <ArrowLink href="#pricing" tone="accent">
-              See plans
+            <ArrowLink href={fixRequestHref()} tone="accent">
+              email me what's broken
             </ArrowLink>
-            {fromPrice === null ? null : (
-              <span className="font-mono text-[0.78rem] uppercase tracking-[0.1em] text-muted">From {formatPrice(fromPrice)}/month</span>
-            )}
-            <a className="inline-flex items-center rounded-full border border-line px-6 py-3 font-medium hover:border-ink transition-colors" href={introCallHref()}>
-              {introCallLabel()}
+            <a className="inline-flex items-center rounded-full border border-line px-6 py-3 font-medium hover:border-ink transition-colors" href="#pricing">
+              see prices
             </a>
           </div>
-          <p className="m-0 text-[0.88rem] text-muted">Pause or cancel anytime · 75% back in the first week</p>
+          {fromPrice === null ? null : (
+            <p className="m-0 text-[0.95rem] text-muted md:text-right">
+              from {formatPrice(fromPrice)} a month, or one project for one price. cancel anytime.
+            </p>
+          )}
         </div>
       </div>
     </section>
@@ -180,7 +169,7 @@ function LogoStrip(): ReactElement {
     </ul>
   );
   return (
-    <section aria-label="Brands I have worked with" className="border-y border-line overflow-hidden py-7 sm:py-9">
+    <section aria-label="brands i've worked with" className="border-y border-line overflow-hidden py-7 sm:py-9">
       <div className="marquee">
         {track(false)}
         {track(true)}
@@ -189,37 +178,31 @@ function LogoStrip(): ReactElement {
   );
 }
 
-function Work({ studies }: { studies: readonly CaseStudy[] }): ReactElement | null {
-  if (studies.length === 0) return null;
+function HelpWith(): ReactElement {
   return (
-    <section className="night scroll-mt-16" id="work">
-      <div className={`${WIDTH} py-24 sm:py-32`}>
-        <SectionHead
-          aside={<a className="link-underline text-ink" href={WORK_ROUTE}>All work</a>}
-          index={sectionIndex(1)}
-          label="Selected work"
-          title={
-            <>
-              Sites and products <span className="serif text-accent">I have worked on.</span>
-            </>
-          }
-        />
-        <CaseStudyGrid studies={studies} />
-        <RequestNote />
-      </div>
+    <section className={`${WIDTH} py-24 sm:py-32`}>
+      <SectionHead index={sectionIndex(1)} label="things i can help with" title="the usual stuff that eats your week." />
+      <ol className="m-0 p-0 list-none grid sm:grid-cols-2 gap-x-10 border-b border-line md:ml-[calc(33.333%+0.5rem)]">
+        {HELP_WITH.map((item, index) => (
+          <li className="reveal flex gap-4 border-t border-line py-5" key={item}>
+            <span className="font-mono text-[0.8rem] text-accent pt-1">{String(index + 1).padStart(2, "0")}</span>
+            <span className="text-[1.1rem] leading-snug tracking-[-0.01em]">{item}</span>
+          </li>
+        ))}
+      </ol>
     </section>
   );
 }
 
 function HowItWorks(): ReactElement {
   return (
-    <section className={`${WIDTH} py-24 sm:py-32`}>
+    <section className={`${WIDTH} pb-24 sm:pb-32 scroll-mt-16`} id="how-it-works">
       <SectionHead
         index={sectionIndex(2)}
-        label="How it works"
+        label="how it works"
         title={
           <>
-            Subscribe. Request. <span className="serif">Receive.</span>
+            tell me what needs doing. <span className="serif">i do it.</span>
           </>
         }
       />
@@ -243,97 +226,15 @@ function HowItWorks(): ReactElement {
   );
 }
 
-function Examples(): ReactElement {
-  return (
-    <section className={`${WIDTH} pb-24 sm:pb-32`}>
-      <SectionHead index={sectionIndex(3)} label="What a request looks like" title="What a request looks like, with time ranges." />
-      <ul className="m-0 p-0 list-none border-b border-line md:ml-[calc(33.333%+0.5rem)]">
-        {EXAMPLES.map((example) => (
-          <li className="reveal grid gap-1 sm:grid-cols-[minmax(0,1fr)_auto] sm:gap-6 border-t border-line py-5" key={example.request}>
-            <span className="text-[1.1rem] tracking-[-0.01em]">{example.request}</span>
-            <span className="font-mono text-[0.82rem] text-muted sm:text-right">{example.time}</span>
-          </li>
-        ))}
-      </ul>
-    </section>
-  );
-}
-
-function Membership(): ReactElement {
-  return (
-    <section className="bg-bg-soft">
-      <div className={`${WIDTH} py-24 sm:py-32`}>
-        <SectionHead
-          index={sectionIndex(4)}
-          label="Membership"
-          title={
-            <>
-              What a small tech team gives you, <span className="serif">without hiring one.</span>
-            </>
-          }
-        />
-        <div className="grid gap-x-10 gap-y-12 sm:grid-cols-2 lg:grid-cols-3">
-          {BENEFITS.map((benefit, index) => (
-            <div className="reveal border-t border-ink pt-5" key={benefit.title}>
-              <span className="font-mono text-[0.72rem] text-muted">{String(index + 1).padStart(2, "0")}</span>
-              <h3 className="m-0 mt-4 mb-2 text-[1.2rem] tracking-[-0.02em] font-medium">{benefit.title}</h3>
-              <p className="m-0 text-muted">{benefit.body}</p>
-            </div>
-          ))}
-        </div>
-        <div className="mt-24 grid gap-10 md:grid-cols-12">
-          <div className="md:col-span-4">
-            <Eyebrow>What I build</Eyebrow>
-            <p className="m-0 mt-5 text-[clamp(1.4rem,2.4vw,1.9rem)] leading-[1.15] tracking-[-0.03em] font-medium max-w-[18rem]">
-              Practical software for businesses without a tech team.
-            </p>
-          </div>
-          <div className="md:col-span-8 grid gap-10 sm:grid-cols-3">
-            {CAPABILITIES.map((group) => (
-              <div className="reveal" key={group.title}>
-                <h3 className="m-0 mb-4 text-[1rem] font-medium">{group.title}</h3>
-                <ul className="m-0 p-0 list-none flex flex-col gap-2 text-muted">
-                  {group.items.map((item) => (
-                    <li key={item}>{item}</li>
-                  ))}
-                </ul>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-    </section>
-  );
-}
-
-function ExperienceSection({ experience }: { experience: readonly Experience[] }): ReactElement | null {
-  if (experience.length === 0) return null;
-  return (
-    <section className={`${WIDTH} py-24 sm:py-32`} id="experience">
-      <SectionHead
-        aside={<a className="link-underline text-ink" href={ABOUT_ROUTE}>About me</a>}
-        index={sectionIndex(5)}
-        label="Experience"
-        title={
-          <>
-            Building for the web since 2017, <span className="serif text-muted">at agencies, startups and product companies.</span>
-          </>
-        }
-      />
-      <ExperienceTimeline items={experience} />
-    </section>
-  );
-}
-
 function Pricing({ plans }: { plans: readonly Plan[] }): ReactElement {
   return (
-    <section className={`${WIDTH} py-24 sm:py-32 scroll-mt-16`} id="pricing">
+    <section className={`${WIDTH} pb-24 sm:pb-32 scroll-mt-16`} id="pricing">
       <SectionHead
-        index={sectionIndex(6)}
-        label="Plans"
+        index={sectionIndex(3)}
+        label="prices"
         title={
           <>
-            One flat monthly price. <span className="serif text-muted">Pause or cancel anytime.</span>
+            one project, one price. <span className="serif text-muted">or monthly help, cancel anytime.</span>
           </>
         }
       />
@@ -342,12 +243,80 @@ function Pricing({ plans }: { plans: readonly Plan[] }): ReactElement {
           <PlanCard key={plan.slug} plan={plan} />
         ))}
       </div>
-      <p className="mt-10 mb-0 text-center text-muted">
-        <span className="text-ink font-medium">Try it for a week.</span> {REFUND_RULE}
-      </p>
+      <p className="mt-10 mb-0 text-center text-ink">{STAFF_LINE}</p>
+      <p className="mt-2 mb-0 text-center text-muted">{REFUND_RULE}</p>
       {MAX_SUBSCRIPTION_CLIENTS === null ? null : (
-        <p className="mt-2 mb-0 text-center text-muted">I take at most {MAX_SUBSCRIPTION_CLIENTS} subscription clients at a time.</p>
+        <p className="mt-2 mb-0 text-center text-muted">i take {MAX_SUBSCRIPTION_CLIENTS} monthly clients max at a time.</p>
       )}
+    </section>
+  );
+}
+
+function WhatYouGet(): ReactElement {
+  return (
+    <section className="bg-bg-soft">
+      <div className={`${WIDTH} py-24 sm:py-32`}>
+        <SectionHead
+          index={sectionIndex(4)}
+          label="what you get"
+          title={
+            <>
+              a website person, <span className="serif">w/o hiring one.</span>
+            </>
+          }
+        />
+        <div className="grid gap-x-10 gap-y-12 sm:grid-cols-2 lg:grid-cols-3">
+          {WHAT_YOU_GET.map((item, index) => (
+            <div className="reveal border-t border-ink pt-5" key={item.title}>
+              <span className="font-mono text-[0.72rem] text-muted">{String(index + 1).padStart(2, "0")}</span>
+              <h3 className="m-0 mt-4 mb-2 text-[1.2rem] tracking-[-0.02em] font-medium">{item.title}</h3>
+              <p className="m-0 text-muted">{item.body}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function Work({ studies }: { studies: readonly CaseStudy[] }): ReactElement | null {
+  if (studies.length === 0) return null;
+  return (
+    <section className="night scroll-mt-16" id="work">
+      <div className={`${WIDTH} py-24 sm:py-32`}>
+        <SectionHead
+          aside={
+            <a className="link-underline text-ink" href={WORK_ROUTE}>
+              all past work
+            </a>
+          }
+          index={sectionIndex(5)}
+          label="past work"
+          title={
+            <>
+              stuff i've worked on <span className="serif text-accent">at agencies + product teams.</span>
+            </>
+          }
+        />
+        <CaseStudyGrid studies={studies} />
+        <RequestNote />
+      </div>
+    </section>
+  );
+}
+
+function SinceLine({ studies }: { studies: readonly CaseStudy[] }): ReactElement {
+  const names = studies.map(projectName);
+  return (
+    <section className={`${WIDTH} py-20 sm:py-28`}>
+      <div className="border-t border-ink pt-8 flex flex-wrap items-end justify-between gap-6">
+        <p className="m-0 text-[clamp(1.5rem,3vw,2.4rem)] leading-[1.15] tracking-[-0.035em] font-medium max-w-[34rem] [text-wrap:balance]">
+          {`building websites since ${SINCE_YEAR}${names.length === 0 ? "" : `, for ${listNames(names)}`}.`}
+        </p>
+        <ArrowLink href={ABOUT_ROUTE} tone="ghost">
+          about me
+        </ArrowLink>
+      </div>
     </section>
   );
 }
@@ -355,7 +324,7 @@ function Pricing({ plans }: { plans: readonly Plan[] }): ReactElement {
 function Faq({ faq }: { faq: readonly FaqItem[] }): ReactElement {
   return (
     <section className={`${WIDTH} pb-28 sm:pb-36`}>
-      <SectionHead index={sectionIndex(7)} label="Questions" title="Frequently asked." />
+      <SectionHead index={sectionIndex(6)} label="questions" title="stuff people ask." />
       <div className="md:ml-[calc(33.333%+0.5rem)] border-b border-line">
         {faq.map((item) => (
           <details className="group border-t border-line py-6" key={item.slug}>
@@ -380,35 +349,28 @@ export function Home({
   studies,
   plans,
   faq,
-  experience,
 }: {
   studies: readonly CaseStudy[];
   plans: readonly Plan[];
   faq: readonly FaqItem[];
-  experience: readonly Experience[];
 }): ReactElement {
   return (
     <main>
       <Hero plans={plans} />
       <LogoStrip />
-      <Work studies={studies} />
+      <HelpWith />
       <HowItWorks />
-      <Examples />
-      <Membership />
-      <ExperienceSection experience={experience} />
       <Pricing plans={plans} />
+      <WhatYouGet />
+      <Work studies={studies} />
+      <SinceLine studies={studies} />
       <Faq faq={faq} />
     </main>
   );
 }
 
-export function makeHome(
-  studies: readonly CaseStudy[],
-  plans: readonly Plan[],
-  faq: readonly FaqItem[],
-  experience: readonly Experience[],
-): () => ReactElement {
+export function makeHome(studies: readonly CaseStudy[], plans: readonly Plan[], faq: readonly FaqItem[]): () => ReactElement {
   return function BoundHome(): ReactElement {
-    return <Home experience={experience} faq={faq} plans={plans} studies={studies} />;
+    return <Home faq={faq} plans={plans} studies={studies} />;
   };
 }

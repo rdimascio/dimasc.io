@@ -1,5 +1,7 @@
 export const SITE_URL = "https://dimasc.io";
-export const SITE_NAME = "Ryan DiMascio";
+export const SITE_NAME = "ryan dimascio";
+export const SITE_NAME_PROPER = "Ryan DiMascio";
+export const SITE_TAGLINE = "website help for local businesses";
 export const CONTACT_EMAIL = "ryan@dimasc.io";
 export const GITHUB_URL = "https://github.com/rdimascio";
 export const ABOUT_ROUTE = "/about";
@@ -7,7 +9,7 @@ export const ABOUT_ROUTE = "/about";
 export const BOOKING_URL: string | null = null;
 export const MAX_SUBSCRIPTION_CLIENTS: number | null = null;
 
-const INTRO_EMAIL_BODY = ["Business name and website:", "", "What's slowing you down:", "", "Anything with a deadline:", ""].join(
+const INTRO_EMAIL_BODY = ["your business + website:", "", "what's broken or slowing you down:", "", "anything w/ a deadline:", ""].join(
   "\n",
 );
 
@@ -20,22 +22,26 @@ function mailto(subject: string, body = INTRO_EMAIL_BODY): string {
 }
 
 export function introCallHref(): string {
-  return BOOKING_URL ?? mailto("Intro call");
+  return BOOKING_URL ?? mailto("quick call");
 }
 
 export function introCallLabel(): string {
-  return BOOKING_URL === null ? "Email to book a call" : "Book a 15-minute call";
+  return BOOKING_URL === null ? "email me to set up a call" : "book a 15-min call";
 }
 
 export function planHref(planName: string): string {
-  return mailto(`${planName} plan`);
+  return mailto(planName);
+}
+
+export function fixRequestHref(): string {
+  return mailto("something's broken");
 }
 
 export const OG_IMAGE_PATH = "/og.png";
 export const OG_IMAGE_SOURCE = "assets/og.png";
 export const OG_IMAGE_WIDTH = 1200;
 export const OG_IMAGE_HEIGHT = 630;
-export const OG_IMAGE_ALT = "Ryan DiMascio, software engineer on subscription. Websites, stores and tools, fixed every week.";
+export const OG_IMAGE_ALT = "Ryan DiMascio. Website help for local businesses.";
 
 const PRELOADED_FONTS = ["/fonts/Geist-Variable.woff2", "/fonts/InstrumentSerif-Italic.woff2"] as const;
 const IMMUTABLE_PATHS = ["/fonts/*", "/media/*"] as const;
