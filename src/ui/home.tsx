@@ -13,13 +13,13 @@ export const SINCE_YEAR = 2017;
 
 const HELP_WITH = [
   "fix what's broken on your website",
+  "new pages or a whole new site",
   "a website that works on phones + shows up on google",
-  "online booking + payments that work",
-  "an online store for your gear or products",
   "pages your staff can update themselves",
-  "stop typing the same thing into two places",
+  "connect your tools so nothing gets typed twice",
+  "simple internal tools + reports",
+  "automate the repetitive stuff",
   "answer the questions customers ask every day, automatically",
-  "move off old software w/o losing your records",
 ] as const;
 
 const STEPS = [
@@ -38,10 +38,10 @@ const WHAT_YOU_GET = [
 ] as const;
 
 const BOARD = [
-  { title: "fix the broken booking link on the homepage", status: "done", tone: "bg-sage", meta: "2 days" },
-  { title: "new summer camp page staff can update", status: "ready for you to check", tone: "bg-sky", meta: "today" },
-  { title: "send new members to the email list automatically", status: "i'm working on it", tone: "bg-butter", meta: "started tue" },
-  { title: "an automatic helper for common parent questions", status: "waiting its turn", tone: "bg-blush", meta: "next up" },
+  { title: "contact form stopped sending emails", status: "done", tone: "bg-sage", meta: "2 days" },
+  { title: "new services page staff can update", status: "ready for you to check", tone: "bg-sky", meta: "today" },
+  { title: "weekly sales report in your inbox", status: "i'm working on it", tone: "bg-butter", meta: "started tue" },
+  { title: "an automatic helper for common customer questions", status: "waiting its turn", tone: "bg-blush", meta: "next up" },
 ] as const;
 
 export function formatPrice(price: number): string {
@@ -120,7 +120,7 @@ function Hero({ plans }: { plans: readonly Plan[] }): ReactElement {
   const fromPrice = lowestPrice(plans);
   return (
     <section className={`${WIDTH} pt-10 sm:pt-16 pb-12 sm:pb-20`}>
-      <Eyebrow>for gyms, clinics, shops + other local businesses</Eyebrow>
+      <Eyebrow>for small businesses</Eyebrow>
       <h1 className="mt-8 sm:mt-10 mb-0 font-semibold leading-[0.9] tracking-[-0.055em] text-[clamp(3rem,9vw,9.6rem)] max-w-[13ch] [text-wrap:balance]">
         <span className="hero-line">
           <span>
@@ -131,7 +131,7 @@ function Hero({ plans }: { plans: readonly Plan[] }): ReactElement {
       </h1>
       <div className="mt-12 sm:mt-16 grid gap-10 md:grid-cols-12 items-end">
         <p className="md:col-span-6 m-0 text-[clamp(1.25rem,2vw,1.6rem)] leading-[1.35] tracking-[-0.02em] max-w-[32rem] [text-wrap:pretty]">
-          i fix + improve your website, your online booking and your online store. most small fixes are done in 2 business days.
+          i fix + improve your website and the tools behind it. most small fixes are done in 2 business days.
         </p>
         <div className="md:col-span-6 flex flex-col gap-5 md:items-end">
           <div className="flex flex-wrap items-center gap-3 md:justify-end">

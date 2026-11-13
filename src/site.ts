@@ -1,7 +1,7 @@
 export const SITE_URL = "https://dimasc.io";
 export const SITE_NAME = "ryan dimascio";
 export const SITE_NAME_PROPER = "Ryan DiMascio";
-export const SITE_TAGLINE = "website help for local businesses";
+export const SITE_TAGLINE = "website help for small businesses";
 export const CONTACT_EMAIL = "ryan@dimasc.io";
 export const GITHUB_URL = "https://github.com/rdimascio";
 export const ABOUT_ROUTE = "/about";
@@ -41,7 +41,7 @@ export const OG_IMAGE_PATH = "/og.png";
 export const OG_IMAGE_SOURCE = "assets/og.png";
 export const OG_IMAGE_WIDTH = 1200;
 export const OG_IMAGE_HEIGHT = 630;
-export const OG_IMAGE_ALT = "Ryan DiMascio. Website help for local businesses.";
+export const OG_IMAGE_ALT = "Ryan DiMascio. Website help for small businesses.";
 
 const PRELOADED_FONTS = ["/fonts/Geist-Variable.woff2", "/fonts/InstrumentSerif-Italic.woff2"] as const;
 const IMMUTABLE_PATHS = ["/fonts/*", "/media/*"] as const;

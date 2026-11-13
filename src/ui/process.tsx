@@ -30,7 +30,7 @@ function ProcessPage({ steps }: { steps: readonly ProcessStep[] }): ReactElement
       <Eyebrow>one-project jobs</Eyebrow>
       <h1 className={`${HEADING} mt-8`}>how a one-project job works</h1>
       <p className={`${LEDE} mt-8`}>
-        for one bigger job, like a new website or store. you see what i found behind each decision, one price per step before i start, and something working at the end of each step.
+        for one bigger job, like a new website. you see what i found behind each decision, one price per step before i start, and something working at the end of each step.
       </p>
       <ol className="mt-20 m-0 p-0 list-none">
         {steps.map((step) => (

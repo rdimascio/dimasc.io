@@ -85,7 +85,7 @@ export async function buildAppConfig(
         seoMetadata({
           title: `${SITE_NAME} · ${SITE_TAGLINE}`,
           description:
-            "i fix + improve your website, online booking and online store for one flat monthly price. cancel anytime.",
+            "i fix + improve your website and the tools behind it, for one flat monthly price. cancel anytime.",
           route: "/",
           type: "website",
         }),
