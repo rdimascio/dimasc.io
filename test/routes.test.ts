@@ -96,7 +96,10 @@ describe("site routes", () => {
     const html = await text(await app.handle("GET", "/"));
     const plans = await loadPlans();
 
-    expect(plans.map((plan) => plan.price)).toEqual([null, 2500, 5000]);
+    expect(plans.map((plan) => plan.name)).toEqual(["care", "monthly help", "one project"]);
+    expect(plans.map((plan) => plan.price)).toEqual([199, 1500, null]);
+    expect(html).toContain("from $199/month");
+    expect(html).toContain("care from $199/month");
     for (const plan of plans) {
       expect(html).toContain(plan.name);
       if (plan.price !== null) expect(html).toContain(formatPrice(plan.price));
@@ -132,14 +135,21 @@ describe("site routes", () => {
     expect(html).not.toContain("no refunds for finished work");
   });
 
-  it("offers the same help on both monthly plans and keeps every price claim", async () => {
-    const [, monthly, double] = await loadPlans();
-    expect(monthly?.features).toContain('anything on the "things i can help with" list');
-    expect(double?.features).toContain("everything in monthly");
-    for (const plan of [monthly, double]) {
-      expect(plan?.features).toContain("most small jobs done in 2 business days");
-      expect(plan?.features).toContain("i reply within 1 business day");
-    }
+  it("keeps every claim on the care and monthly help plans and drops the old tiers", async () => {
+    const [care, monthly] = await loadPlans();
+    expect(care?.features).toEqual(
+      expect.arrayContaining(["uptime + security monitoring", "up to 2 small fixes a month", "i reply within 1 business day", "cancel anytime"]),
+    );
+    expect(monthly?.features).toEqual(
+      expect.arrayContaining([
+        'anything on the "things i can help with" list',
+        "most small jobs done in 2 business days",
+        "i reply within 1 business day",
+        "pause or cancel anytime",
+      ]),
+    );
+    const html = decodeEntities(await text(await app.handle("GET", "/")));
+    for (const gone of ["2,500", "5,000", "monthly, double", "two jobs"]) expect(html).not.toContain(gone);
   });
 
   it("renders the process page with every step in order", async () => {

@@ -1,6 +1,6 @@
 ---
-name: "monthly"
-price: 2500
+name: "monthly help"
+price: 1500
 summary: "one job at a time, as many as you need."
 features:
   - "one job at a time"
@@ -9,7 +9,7 @@ features:
   - "i reply within 1 business day"
   - "one list of everything you asked for + where each one stands"
   - "pause or cancel anytime"
-cta: "ask about monthly"
+cta: "ask about monthly help"
 featured: true
 order: 2
 ---
