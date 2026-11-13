@@ -37,7 +37,7 @@
   --ink: #141311;
   --ink-2: #34312c;
   --muted: #66615a;
-  --faint: #a29d94;
+  --faint: #6b665f;
   --line: #dcd6cb;
   --accent: #c43d0e;
   --accent-bright: #ff5a1f;
@@ -57,7 +57,7 @@
     --ink: #f3f0ea;
     --ink-2: #d6d2ca;
     --muted: #a29c92;
-    --faint: #6f6a62;
+    --faint: #9c968c;
     --line: #2b2925;
     --accent: #ff7445;
     --accent-bright: #ff7445;
@@ -77,7 +77,7 @@
   --ink: #f3f0ea;
   --ink-2: #d6d2ca;
   --muted: #a29c92;
-  --faint: #6f6a62;
+  --faint: #9c968c;
   --line: #2b2925;
   --accent: #ff7445;
   --accent-bright: #ff7445;
@@ -130,7 +130,7 @@
     color: #fff;
   }
   :focus-visible {
-    outline: 2px solid var(--accent-bright);
+    outline: 2px solid var(--accent);
     outline-offset: 3px;
     border-radius: 6px;
   }
@@ -249,10 +249,6 @@
   }
 }
 
-.demo-motion-off {
-  display: none;
-}
-
 @media (prefers-reduced-motion: no-preference) {
   @view-transition {
     navigation: auto;
@@ -305,7 +301,8 @@
       animation-range: entry 60% entry 100%;
     }
   }
-  .marquee:hover {
+  .marquee:hover,
+  .marquee:focus-within {
     animation-play-state: paused;
   }
 
@@ -324,11 +321,19 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .demo-motion-on {
-    display: none;
+  .marquee {
+    width: auto;
+    justify-content: center;
   }
-  .demo-motion-off {
-    display: block;
+  .marquee-track {
+    flex-wrap: wrap;
+    flex-shrink: 1;
+    width: 100%;
+    justify-content: center;
+    row-gap: 1.75rem;
+  }
+  .marquee-track[aria-hidden="true"] {
+    display: none;
   }
   .work-card .shot-desktop,
   .work-card .shot-mobile,

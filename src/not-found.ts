@@ -12,7 +12,7 @@ export function renderNotFound(): string {
   <body>
     <main class="max-w-[36rem] mx-auto py-28 px-6 text-center">
       <h1 class="text-5xl mb-2 tracking-[-0.04em] font-semibold">404</h1>
-      <p class="text-muted">That page isn't here. Go to the <a href="/">home page</a> or see the <a href="/work">work</a>.</p>
+      <p class="text-muted">That page isn't here. Go to the <a class="underline underline-offset-4" href="/">home page</a> or see the <a class="underline underline-offset-4" href="/work">work</a>.</p>
     </main>
   </body>
 </html>`;

@@ -30,3 +30,22 @@ export function introCallLabel(): string {
 export function planHref(planName: string): string {
   return mailto(`${planName} plan`);
 }
+
+export const OG_IMAGE_PATH = "/og.png";
+export const OG_IMAGE_SOURCE = "assets/og.png";
+export const OG_IMAGE_WIDTH = 1200;
+export const OG_IMAGE_HEIGHT = 630;
+export const OG_IMAGE_ALT = "Ryan DiMascio, software engineer on subscription. Websites, stores and tools, fixed every week.";
+
+const PRELOADED_FONTS = ["/fonts/Geist-Variable.woff2", "/fonts/InstrumentSerif-Italic.woff2"] as const;
+const IMMUTABLE_PATHS = ["/fonts/*", "/media/*"] as const;
+const ONE_YEAR_SECONDS = 31_536_000;
+
+export const HEADERS_FILE = [
+  "/*",
+  `  Strict-Transport-Security: max-age=${ONE_YEAR_SECONDS}; includeSubDomains`,
+  "  X-Content-Type-Options: nosniff",
+  ...PRELOADED_FONTS.map((font) => `  Link: <${font}>; rel=preload; as=font; type="font/woff2"; crossorigin`),
+  ...IMMUTABLE_PATHS.flatMap((path) => [path, `  Cache-Control: public, max-age=${ONE_YEAR_SECONDS}, immutable`]),
+  "",
+].join("\n");

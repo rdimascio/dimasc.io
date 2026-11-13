@@ -97,7 +97,7 @@ function toCaseStudy(entry: RawCaseStudy): CaseStudy {
   };
 }
 
-function assertNoOpenQuestions(study: CaseStudy): CaseStudy {
+export function assertNoOpenQuestions(study: CaseStudy): CaseStudy {
   if (!study.draft && study.html.includes(OPEN_QUESTION_MARKER)) {
     throw new Error(`case study "${study.slug}" is not a draft but still has ${OPEN_QUESTION_MARKER} lines`);
   }

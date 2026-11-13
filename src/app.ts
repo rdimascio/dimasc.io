@@ -4,7 +4,7 @@ import type { PageMetadata } from "@lesto/web";
 import { lesto } from "@lesto/web";
 
 import { loadAllCaseStudies, loadExperience, loadFaq, loadPlans, loadProcess } from "./content";
-import { canonicalUrl, SITE_NAME, SITE_URL } from "./site";
+import { canonicalUrl, OG_IMAGE_ALT, OG_IMAGE_HEIGHT, OG_IMAGE_PATH, OG_IMAGE_WIDTH, SITE_NAME, SITE_URL } from "./site";
 import { makeAbout } from "./ui/about";
 import { makeHome } from "./ui/home";
 import { ABOUT_ROUTE, makeSiteLayout } from "./ui/layout";
@@ -14,7 +14,7 @@ import { previewCaseStudiesFromEnv, WORK_REQUEST_ROUTE, WORK_ROUTE } from "./wor
 
 export { canonicalUrl, SITE_URL };
 
-const OG_IMAGE = `${SITE_URL}/og.svg`;
+const OG_IMAGE = `${SITE_URL}${OG_IMAGE_PATH}`;
 
 export function seoMetadata(input: {
   title: string;
@@ -32,11 +32,16 @@ export function seoMetadata(input: {
       { property: "og:type", content: input.type },
       { property: "og:url", content: url },
       { property: "og:image", content: OG_IMAGE },
+      { property: "og:image:type", content: "image/png" },
+      { property: "og:image:width", content: String(OG_IMAGE_WIDTH) },
+      { property: "og:image:height", content: String(OG_IMAGE_HEIGHT) },
+      { property: "og:image:alt", content: OG_IMAGE_ALT },
       { property: "og:description", content: input.description },
       { name: "twitter:card", content: "summary_large_image" },
       { name: "twitter:title", content: input.title },
       { name: "twitter:description", content: input.description },
       { name: "twitter:image", content: OG_IMAGE },
+      { name: "twitter:image:alt", content: OG_IMAGE_ALT },
     ],
     links: [
       { rel: "canonical", href: url },
@@ -71,7 +76,7 @@ export async function buildAppConfig(
         seoMetadata({
           title: `${SITE_NAME} · Software subscriptions for small businesses`,
           description:
-            "A software engineer on subscription for one flat monthly price: websites, stores, integrations and AI tools. Most small requests back in two business days. Pause or cancel anytime.",
+            "A software engineer on subscription: websites, stores, integrations and AI tools for one flat monthly price. Pause or cancel anytime.",
           route: "/",
           type: "website",
         }),

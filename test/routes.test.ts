@@ -13,13 +13,27 @@ import {
   loadPlans,
   loadProcess,
   OPEN_QUESTION_MARKER,
+  assertNoOpenQuestions,
+  type CaseStudy,
 } from "../src/content";
-import { ABOUT_ROUTE, BOOKING_URL, CONTACT_EMAIL, introCallHref, introCallLabel } from "../src/site";
+import {
+  ABOUT_ROUTE,
+  BOOKING_URL,
+  CONTACT_EMAIL,
+  introCallHref,
+  introCallLabel,
+  OG_IMAGE_ALT,
+  OG_IMAGE_HEIGHT,
+  OG_IMAGE_PATH,
+  OG_IMAGE_SOURCE,
+  OG_IMAGE_WIDTH,
+  SITE_URL,
+} from "../src/site";
 import { formatPrice, REFUND_RULE } from "../src/ui/home";
 import { BRAND_LOGOS, LOGO_SOURCE_DIR, logoSrc } from "../src/logos";
 import { SKILLS } from "../src/ui/experience";
 import { REQUEST_LINE } from "../src/ui/work";
-import { PERSONAL_PAGES, personalPageHtml } from "../src/personal";
+import { outputPathFor, PERSONAL_PAGES, personalPageHtml } from "../src/personal";
 import {
   DEMO_SOURCE_DIR,
   demoSrc,
@@ -49,6 +63,22 @@ function decodeEntities(html: string): string {
 
 function luxuryPresenceRoles(experience: Awaited<ReturnType<typeof loadExperience>>): readonly unknown[] {
   return experience.find((item) => item.company === "Luxury Presence")?.roles ?? [];
+}
+
+function caseStudyFixture(overrides: Pick<CaseStudy, "draft" | "html">): CaseStudy {
+  return {
+    route: "/work/fixture",
+    slug: "fixture",
+    title: "Fixture",
+    summary: "Fixture",
+    client: undefined,
+    industry: "Test",
+    year: 2026,
+    services: [],
+    stack: [],
+    order: 1,
+    ...overrides,
+  };
 }
 
 let app: App;
@@ -149,10 +179,11 @@ describe("site routes", () => {
   });
 
   it("keeps full case studies off the public site", async () => {
+    const publicApp = await createApp(await buildAppConfig({ previewCaseStudies: false }));
     for (const study of await loadAllCaseStudies()) {
-      expect((await app.handle("GET", study.route)).status).toBe(404);
+      expect((await publicApp.handle("GET", study.route)).status).toBe(404);
     }
-    expect((await app.handle("GET", "/work/_template")).status).toBe(404);
+    expect((await publicApp.handle("GET", "/work/_template")).status).toBe(404);
     expect(workRoutes(await loadAllCaseStudies(), false)).toEqual([WORK_ROUTE, WORK_REQUEST_ROUTE]);
   });
 
@@ -258,6 +289,13 @@ describe("site routes", () => {
     }
   });
 
+  it("rejects a published case study that still has an open question, and accepts a draft", () => {
+    const question = `<p>${OPEN_QUESTION_MARKER}: What shipped?</p>`;
+    expect(() => assertNoOpenQuestions(caseStudyFixture({ draft: false, html: question }))).toThrow(OPEN_QUESTION_MARKER);
+    expect(assertNoOpenQuestions(caseStudyFixture({ draft: true, html: question })).draft).toBe(true);
+    expect(assertNoOpenQuestions(caseStudyFixture({ draft: false, html: "<p>Done.</p>" })).draft).toBe(false);
+  });
+
   it("keeps open questions out of published case studies", async () => {
     for (const study of await loadCaseStudies()) {
       expect(study.html).not.toContain(OPEN_QUESTION_MARKER);
@@ -267,10 +305,18 @@ describe("site routes", () => {
   it("sets canonical and social metadata", async () => {
     const html = await text(await app.handle("GET", "/"));
     expect(html).toContain('rel="canonical"');
-    expect(html).toContain("https://dimasc.io/og.svg");
+    expect(html).toContain(`content="${SITE_URL}${OG_IMAGE_PATH}"`);
+    expect(html).toContain(`<meta property="og:image:width" content="${OG_IMAGE_WIDTH}"`);
+    expect(html).toContain(`<meta property="og:image:height" content="${OG_IMAGE_HEIGHT}"`);
+    expect(decodeEntities(html)).toContain(`content="${OG_IMAGE_ALT}"`);
+    expect(html).not.toContain("og.svg");
+    const png = new Uint8Array(await Bun.file(OG_IMAGE_SOURCE).arrayBuffer());
+    const view = new DataView(png.buffer);
+    expect([...png.slice(1, 4)].map((byte) => String.fromCharCode(byte)).join("")).toBe("PNG");
+    expect([view.getUint32(16), view.getUint32(20)]).toEqual([OG_IMAGE_WIDTH, OG_IMAGE_HEIGHT]);
   });
 
-  it("keeps the personal pages unlinked, out of search and off the studio pages", async () => {
+  it("keeps the personal pages unlinked and out of search, served as standalone files", async () => {
     const home = await text(await app.handle("GET", "/"));
     for (const page of PERSONAL_PAGES) {
       const html = personalPageHtml(page);
@@ -278,12 +324,12 @@ describe("site routes", () => {
       expect(html).toContain(`src="${page.script}"`);
       expect(home).not.toContain(`href="${page.route}"`);
       expect(home).not.toContain(page.script);
-      expect((await app.handle("GET", page.route)).status).toBe(404);
+      expect(outputPathFor(page.route)).toBe(`${page.route.slice(1)}/index.html`);
     }
   });
 
   it("ships no client script on the studio pages", async () => {
-    for (const route of ["/", ABOUT_ROUTE, "/process"]) {
+    for (const route of ["/", ABOUT_ROUTE, "/process", WORK_ROUTE, WORK_REQUEST_ROUTE]) {
       expect(await text(await app.handle("GET", route))).not.toContain("<script");
     }
   });

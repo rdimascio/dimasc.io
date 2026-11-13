@@ -105,7 +105,7 @@ function ExampleBoard(): ReactElement {
           <li className="rounded-2xl border border-line bg-bg px-4 py-3.5 flex items-start justify-between gap-4" key={item.title}>
             <span className="text-[0.95rem] leading-snug">{item.title}</span>
             <span className="flex flex-col items-end gap-1 shrink-0">
-              <span className={`rounded-full px-2.5 py-1 text-[0.72rem] font-medium text-[#141311] ${item.tone}`}>{item.status}</span>
+              <span className={`rounded-full px-2.5 py-1 text-[0.72rem] font-medium text-ink ${item.tone}`}>{item.status}</span>
               <span className="font-mono text-[0.68rem] text-muted">{item.meta}</span>
             </span>
           </li>
@@ -115,14 +115,20 @@ function ExampleBoard(): ReactElement {
   );
 }
 
-function Hero(): ReactElement {
+function lowestPrice(plans: readonly Plan[]): number | null {
+  const prices = plans.map((plan) => plan.price).filter((price): price is number => price !== null);
+  return prices.length === 0 ? null : Math.min(...prices);
+}
+
+function Hero({ plans }: { plans: readonly Plan[] }): ReactElement {
+  const fromPrice = lowestPrice(plans);
   return (
     <section className={`${WIDTH} pt-10 sm:pt-16 pb-12 sm:pb-20`}>
       <div className="flex flex-wrap items-center justify-between gap-4">
         <Eyebrow>Software engineer on subscription</Eyebrow>
-        <p className="m-0 font-mono text-[0.72rem] uppercase tracking-[0.14em] text-muted max-sm:hidden">For gyms, studios, clinics, shops and local businesses</p>
+        <p className="m-0 font-mono text-[0.72rem] uppercase tracking-[0.14em] text-muted">For gyms, studios, clinics, shops and local businesses</p>
       </div>
-      <h1 className="mt-8 sm:mt-10 mb-0 font-semibold leading-[0.84] tracking-[-0.065em] text-[clamp(4.4rem,17vw,16.5rem)]">
+      <h1 className="mt-8 sm:mt-10 mb-0 font-semibold leading-[0.84] tracking-[-0.065em] text-[clamp(3.6rem,17vw,16.5rem)]">
         <span className="hero-line">
           <span>Ryan</span>
         </span>
@@ -140,10 +146,13 @@ function Hero(): ReactElement {
           <p className="m-0 text-ink-2 leading-relaxed max-w-[26rem] md:text-right">
             Your website, store, booking and the tools behind them. Most small requests come back in two business days.
           </p>
-          <div className="flex flex-wrap gap-3 md:justify-end">
+          <div className="flex flex-wrap items-center gap-3 md:justify-end">
             <ArrowLink href="#pricing" tone="accent">
               See plans
             </ArrowLink>
+            {fromPrice === null ? null : (
+              <span className="font-mono text-[0.78rem] uppercase tracking-[0.1em] text-muted">From {formatPrice(fromPrice)}/month</span>
+            )}
             <a className="inline-flex items-center rounded-full border border-line px-6 py-3 font-medium hover:border-ink transition-colors" href={introCallHref()}>
               {introCallLabel()}
             </a>
@@ -237,7 +246,7 @@ function HowItWorks(): ReactElement {
 function Examples(): ReactElement {
   return (
     <section className={`${WIDTH} pb-24 sm:pb-32`}>
-      <SectionHead index={sectionIndex(3)} label="What a request looks like" title="Real examples, with honest time ranges." />
+      <SectionHead index={sectionIndex(3)} label="What a request looks like" title="What a request looks like, with time ranges." />
       <ul className="m-0 p-0 list-none border-b border-line md:ml-[calc(33.333%+0.5rem)]">
         {EXAMPLES.map((example) => (
           <li className="reveal grid gap-1 sm:grid-cols-[minmax(0,1fr)_auto] sm:gap-6 border-t border-line py-5" key={example.request}>
@@ -380,7 +389,7 @@ export function Home({
 }): ReactElement {
   return (
     <main>
-      <Hero />
+      <Hero plans={plans} />
       <LogoStrip />
       <Work studies={studies} />
       <HowItWorks />

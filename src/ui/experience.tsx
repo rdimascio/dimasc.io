@@ -3,21 +3,19 @@ import type { ReactElement } from "react";
 import type { Demo, Experience, Role } from "../content";
 import { demoSrc } from "../work";
 
-function DemoVideo({ demo, controls }: { demo: Demo; controls: boolean }): ReactElement {
-  const common = {
-    className: "block w-full h-auto",
-    height: demo.height,
-    muted: true,
-    playsInline: true,
-    poster: demoSrc(demo.poster),
-    width: demo.width,
-  };
-  return controls ? (
-    <video {...common} controls preload="none">
-      <source src={demoSrc(demo.clip)} type="video/mp4" />
-    </video>
-  ) : (
-    <video {...common} autoPlay loop preload="none" aria-hidden="true">
+function DemoVideo({ demo }: { demo: Demo }): ReactElement {
+  return (
+    <video
+      aria-label={`${demo.title}, ${demo.event.toLowerCase()}`}
+      className="block w-full h-auto"
+      controls
+      height={demo.height}
+      muted
+      playsInline
+      poster={demoSrc(demo.poster)}
+      preload="none"
+      width={demo.width}
+    >
       <source src={demoSrc(demo.clip)} type="video/mp4" />
     </video>
   );
@@ -27,13 +25,8 @@ function DemoTile({ demo }: { demo: Demo }): ReactElement {
   return (
     <figure className="reveal m-0 flex flex-col" id={demo.slug}>
       <div className="relative overflow-hidden rounded-[18px] border border-line bg-[#0b0a09]">
-        <div className="demo-motion-on">
-          <DemoVideo controls={false} demo={demo} />
-        </div>
-        <div className="demo-motion-off">
-          <DemoVideo controls demo={demo} />
-        </div>
-        <span className="absolute left-3 top-3 rounded-full bg-[rgba(10,9,8,0.72)] backdrop-blur px-3 py-1 font-mono text-[0.66rem] uppercase tracking-[0.12em] text-[#f3f0ea]">
+        <DemoVideo demo={demo} />
+        <span className="pointer-events-none absolute left-3 top-3 rounded-full bg-[rgba(10,9,8,0.72)] backdrop-blur px-3 py-1 font-mono text-[0.66rem] uppercase tracking-[0.12em] text-[#f3f0ea]">
           {demo.event}
         </span>
       </div>
@@ -126,7 +119,7 @@ function ExperienceRow({ item }: { item: Experience }): ReactElement {
         </p>
         <CompanyName item={item} size="text-[clamp(2rem,4.4vw,3.6rem)]" />
         {item.role === undefined ? null : <p className="m-0 text-ink-2">{item.role}</p>}
-        {multipleRoles ? <p className="m-0 font-mono text-[0.72rem] uppercase tracking-[0.14em] text-faint">{item.roles.length} roles</p> : null}
+        {multipleRoles ? <p className="m-0 font-mono text-[0.72rem] uppercase tracking-[0.14em] text-muted">{item.roles.length} roles</p> : null}
       </div>
       <div className="md:col-span-8 flex flex-col gap-10">
         <p className="m-0 text-[clamp(1.15rem,1.8vw,1.45rem)] leading-[1.4] tracking-[-0.015em] max-w-[40rem] [text-wrap:pretty]">

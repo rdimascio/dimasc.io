@@ -43,7 +43,7 @@ function CaseStudyCard({ study, position }: { study: CaseStudy; position: number
           <p className="m-0 mt-2 text-muted leading-relaxed max-w-[34rem]">{study.summary}</p>
           <span />
           <span />
-          <p className="m-0 mt-4 font-mono text-[0.7rem] uppercase tracking-[0.14em] text-faint">{study.industry}</p>
+          <p className="m-0 mt-4 font-mono text-[0.7rem] uppercase tracking-[0.14em] text-muted">{study.industry}</p>
         </div>
       </a>
     </li>
