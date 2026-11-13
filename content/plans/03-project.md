@@ -1,7 +1,7 @@
 ---
 name: "one project"
 price: null
-summary: "a bigger job, like a new website. one price agreed up front."
+summary: "a bigger job, like a new website. quoted per step."
 features:
   - "we talk first, then i look at what you have"
   - "one price for each step, agreed before i start"
@@ -9,5 +9,5 @@ features:
   - "help after launch if you want it"
 cta: "let's talk"
 featured: false
-order: 1
+order: 3
 ---

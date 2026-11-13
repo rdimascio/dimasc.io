@@ -7,8 +7,8 @@ import { projectName, WORK_ROUTE } from "../work";
 import { ABOUT_ROUTE, ArrowLink, Eyebrow, SectionHead, WIDTH } from "./layout";
 import { CaseStudyGrid, RequestNote } from "./work";
 
-export const REFUND_RULE = "not happy in the first 7 days? cancel and i refund 75% of your first payment, even if i already delivered work.";
-export const STAFF_LINE = "like having a website person on staff a few days a month, w/o hiring one. no hourly bills.";
+export const REFUND_RULE = "monthly help: not happy in the first 7 days? cancel and i refund 75% of your first payment, even if i already delivered work. care is cancel anytime.";
+export const STAFF_LINE = "monthly help is like having a website person on staff a few days a month, w/o hiring one. no hourly bills.";
 export const SINCE_YEAR = 2017;
 
 const HELP_WITH = [
@@ -23,7 +23,7 @@ const HELP_WITH = [
 ] as const;
 
 const STEPS = [
-  { title: "pick a plan", body: "monthly help, or one price for one project. you get one list for everything you ask for." },
+  { title: "pick a plan", body: "care, monthly help or one price for one project. you get one list for everything you ask for." },
   { title: "add jobs to your list", body: "what's broken or slowing you down: a fix, a page, a new tool." },
   { title: "check the finished work", body: "most small jobs come back in 2 business days. i keep going until it's right." },
 ] as const;
@@ -52,7 +52,7 @@ function sectionIndex(position: number): string {
   return `(${String(position).padStart(2, "0")})`;
 }
 
-function lowestPrice(plans: readonly Plan[]): number | null {
+export function lowestPrice(plans: readonly Plan[]): number | null {
   const prices = plans.map((plan) => plan.price).filter((price): price is number => price !== null);
   return prices.length === 0 ? null : Math.min(...prices);
 }
@@ -148,7 +148,7 @@ function Hero({ plans }: { plans: readonly Plan[] }): ReactElement {
           </div>
           {fromPrice === null ? null : (
             <p className="m-0 text-[0.95rem] text-muted md:text-right">
-              from {formatPrice(fromPrice)} a month, or one project for one price. cancel anytime.
+              from {formatPrice(fromPrice)}/month, or one project for one price. cancel anytime.
             </p>
           )}
         </div>
@@ -238,7 +238,7 @@ function Pricing({ plans }: { plans: readonly Plan[] }): ReactElement {
         label="prices"
         title={
           <>
-            one project, one price. <span className="serif text-muted">or monthly help, cancel anytime.</span>
+            care, monthly help <span className="serif text-muted">or one project for one price.</span>
           </>
         }
       />

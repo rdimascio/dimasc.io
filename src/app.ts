@@ -3,7 +3,7 @@ import { openSqlite } from "@lesto/runtime";
 import type { PageMetadata } from "@lesto/web";
 import { lesto } from "@lesto/web";
 
-import { loadAllCaseStudies, loadExperience, loadFaq, loadPlans, loadProcess } from "./content";
+import { loadAllCaseStudies, loadExperience, loadFaq, loadPlans, loadProcess, type Plan } from "./content";
 import {
   canonicalUrl,
   OG_IMAGE_ALT,
@@ -15,7 +15,7 @@ import {
   SITE_URL,
 } from "./site";
 import { makeAbout } from "./ui/about";
-import { makeHome } from "./ui/home";
+import { formatPrice, lowestPrice, makeHome } from "./ui/home";
 import { ABOUT_ROUTE, makeSiteLayout } from "./ui/layout";
 import { makeProcess } from "./ui/process";
 import { makeCaseStudy, makeWorkIndex, makeWorkRequest } from "./ui/work";
@@ -63,6 +63,12 @@ export interface BuildOptions {
   readonly previewCaseStudies: boolean;
 }
 
+function homeDescription(plans: readonly Plan[]): string {
+  const fromPrice = lowestPrice(plans);
+  const careLine = fromPrice === null ? "" : ` care from ${formatPrice(fromPrice)}/month, monthly help or one project for one price.`;
+  return `i fix + improve your website and the tools behind it.${careLine} cancel anytime.`;
+}
+
 export async function buildAppConfig(
   options: BuildOptions = { previewCaseStudies: previewCaseStudiesFromEnv() },
 ): Promise<LestoAppConfig> {
@@ -85,7 +91,7 @@ export async function buildAppConfig(
         seoMetadata({
           title: `${SITE_NAME} · ${SITE_TAGLINE}`,
           description:
-            "i fix + improve your website and the tools behind it, for one flat monthly price. cancel anytime.",
+            homeDescription(plans),
           route: "/",
           type: "website",
         }),
