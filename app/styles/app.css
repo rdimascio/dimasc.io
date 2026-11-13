@@ -167,6 +167,7 @@
   background-size: 0% 1px;
   background-position: 0 100%;
   background-repeat: no-repeat;
+  background-origin: content-box;
   transition: background-size 0.4s var(--ease-out);
 }
 .link-underline:hover,
@@ -177,7 +178,8 @@
 .hero-line {
   display: block;
   overflow: hidden;
-  padding-bottom: 0.06em;
+  padding-block: 0.12em 0.28em;
+  margin-block: -0.12em -0.28em;
 }
 .hero-line > span {
   display: block;

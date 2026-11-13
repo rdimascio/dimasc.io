@@ -62,6 +62,10 @@ function listNames(names: readonly string[]): string {
   return `${names.slice(0, -1).join(", ")} and ${names.at(-1)}`;
 }
 
+function endSentence(text: string): string {
+  return text.endsWith(".") ? text : `${text}.`;
+}
+
 function PlanCard({ plan }: { plan: Plan }): ReactElement {
   const quietTone = plan.price === null ? "bg-bg-soft border-line" : "bg-card border-line";
   const tone = plan.featured ? "night border-transparent" : quietTone;
@@ -121,7 +125,7 @@ function Hero({ plans }: { plans: readonly Plan[] }): ReactElement {
   return (
     <section className={`${WIDTH} pt-10 sm:pt-16 pb-12 sm:pb-20`}>
       <Eyebrow>for small businesses</Eyebrow>
-      <h1 className="mt-8 sm:mt-10 mb-0 font-semibold leading-[0.9] tracking-[-0.055em] text-[clamp(3rem,9vw,9.6rem)] max-w-[13ch] [text-wrap:balance]">
+      <h1 className="mt-8 sm:mt-10 mb-0 font-semibold leading-[0.98] tracking-[-0.055em] text-[clamp(3rem,9vw,9.6rem)] max-w-[13ch] [text-wrap:balance]">
         <span className="hero-line">
           <span>
             i make websites, <span className="serif font-normal tracking-[-0.02em] text-muted">and fix the one you have</span>
@@ -286,7 +290,7 @@ function Work({ studies }: { studies: readonly CaseStudy[] }): ReactElement | nu
       <div className={`${WIDTH} py-24 sm:py-32`}>
         <SectionHead
           aside={
-            <a className="link-underline text-ink" href={WORK_ROUTE}>
+            <a className="link-underline inline-block py-2 text-ink" href={WORK_ROUTE}>
               all past work
             </a>
           }
@@ -311,7 +315,7 @@ function SinceLine({ studies }: { studies: readonly CaseStudy[] }): ReactElement
     <section className={`${WIDTH} py-20 sm:py-28`}>
       <div className="border-t border-ink pt-8 flex flex-wrap items-end justify-between gap-6">
         <p className="m-0 text-[clamp(1.5rem,3vw,2.4rem)] leading-[1.15] tracking-[-0.035em] font-medium max-w-[34rem] [text-wrap:balance]">
-          {`building websites since ${SINCE_YEAR}${names.length === 0 ? "" : `, for ${listNames(names)}`}.`}
+          {endSentence(`building websites since ${SINCE_YEAR}${names.length === 0 ? "" : `, for ${listNames(names)}`}`)}
         </p>
         <ArrowLink href={ABOUT_ROUTE} tone="ghost">
           about me

@@ -1,6 +1,6 @@
 ---
 title: "listing search for serhant."
-summary: "built serhant.'s website template in 30 days, while at luxury presence."
+summary: "built ryan serhant's website template in 30 days, while at luxury presence."
 client: "serhant."
 industry: "real estate"
 year: 2022 # TODO(ryan): Was the SERHANT. template delivered in 2022?
