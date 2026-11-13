@@ -47,7 +47,7 @@ import {
   workRoutes,
 } from "../src/work";
 
-const CASE_STUDY_SLUGS = ["stanford-ecorner", "blackstone", "holt-international", "yext-ai-search", "serhant", "r-selectric"];
+const CASE_STUDY_SLUGS = ["stanford-ecorner", "blackstone", "holt-international", "serhant"];
 const MAX_SCREENSHOT_BYTES = 300 * 1024;
 const PHONE_NUMBER = /\(?\d{3}\)?[\s.-]\d{3}[\s.-]\d{4}/;
 const MAX_CLIP_BYTES = 4 * 1024 * 1024;

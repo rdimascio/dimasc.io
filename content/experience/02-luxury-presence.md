@@ -2,8 +2,7 @@
 company: "Luxury Presence"
 url: "https://www.luxurypresence.com"
 description: "Luxury Presence makes websites, a CRM and marketing tools for residential real estate agents, teams and brokerages. I joined as a UI tech lead and grew into platform and developer experience work."
-period: "From May 2022"
-# TODO(ryan): When did I leave Luxury Presence (month and year)?
+period: "May 2022 – Dec 2024"
 # TODO(ryan): Which year was each hackathon?
 # TODO(ryan): The full search demo shows another person on camera near the end, so only the clip is published. Should the full video go up too?
 current: false
