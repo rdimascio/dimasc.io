@@ -41,7 +41,7 @@ export function requestAnchor(study: Pick<CaseStudy, "slug">): string {
 }
 
 export function requestMailto(study: Pick<CaseStudy, "client" | "title">): string {
-  const subject = `Case study request: ${projectName(study)}`;
+  const subject = `tell me about ${projectName(study)}`;
   return `mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent(subject)}`;
 }
 

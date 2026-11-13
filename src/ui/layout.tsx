@@ -1,6 +1,6 @@
 import type { ReactElement, ReactNode } from "react";
 
-import { ABOUT_ROUTE, CONTACT_EMAIL, GITHUB_URL, introCallHref, introCallLabel, SITE_NAME } from "../site";
+import { ABOUT_ROUTE, CONTACT_EMAIL, GITHUB_URL, introCallHref, introCallLabel, SITE_NAME, SITE_NAME_PROPER } from "../site";
 import { WORK_ROUTE } from "../work";
 import { PixelWordmark } from "./pixel-wordmark";
 
@@ -9,7 +9,7 @@ export { ABOUT_ROUTE };
 
 export function Eyebrow({ children }: { children: ReactNode }): ReactElement {
   return (
-    <p className="m-0 font-mono text-[0.72rem] uppercase tracking-[0.14em] text-muted flex items-center gap-2">
+    <p className="m-0 font-mono text-[0.72rem] tracking-[0.14em] text-muted flex items-center gap-2">
       <span className="inline-block w-1.5 h-1.5 rounded-full bg-accent-bright" aria-hidden="true" />
       {children}
     </p>
@@ -69,16 +69,16 @@ function ContactBand(): ReactElement {
   return (
     <section className="night" aria-labelledby="contact-title">
       <div className={`${WIDTH} pt-24 sm:pt-32 pb-16`}>
-        <Eyebrow>Not sure yet?</Eyebrow>
+        <Eyebrow>not sure yet?</Eyebrow>
         <h2
           className="reveal mt-8 mb-0 text-[clamp(2.6rem,8vw,7.4rem)] leading-[0.92] tracking-[-0.055em] font-medium max-w-[14ch]"
           id="contact-title"
         >
-          A free 15-minute call, <span className="serif text-accent">one clear</span> next step.
+          free 15-min call. <span className="serif text-accent">one clear</span> next step.
         </h2>
         <div className="mt-14 grid gap-8 md:grid-cols-12 items-end">
           <p className="md:col-span-5 m-0 text-muted text-[1.1rem] leading-relaxed max-w-[28rem]">
-            Tell me what's slowing you down. I'll tell you which plan fits, or whether you need one at all.
+            tell me what's broken or slowing you down. i'll tell you if monthly help or one project makes more sense, or if you need me at all.
           </p>
           <div className="md:col-span-7 flex flex-wrap gap-3 md:justify-end">
             <ArrowLink href={introCallHref()} tone="accent">
@@ -95,23 +95,24 @@ function ContactBand(): ReactElement {
 }
 
 const NAV = [
-  { label: "Work", href: WORK_ROUTE, needsWork: true, hideNarrow: false },
-  { label: "About", href: ABOUT_ROUTE, needsWork: false, hideNarrow: false },
-  { label: "Process", href: "/process", needsWork: false, hideNarrow: true },
+  { label: "past work", href: WORK_ROUTE, needsWork: true, hideNarrow: true },
+  { label: "how it works", href: "/#how-it-works", needsWork: false, hideNarrow: false },
+  { label: "about", href: ABOUT_ROUTE, needsWork: false, hideNarrow: false },
 ] as const;
 
 function Footer({ showWork }: { showWork: boolean }): ReactElement {
   const links = [
     ...NAV.filter((item) => showWork || !item.needsWork).map((item) => ({ label: item.label, href: item.href })),
-    { label: "Plans", href: "/#pricing" },
-    { label: "GitHub", href: GITHUB_URL },
-    { label: "Email", href: `mailto:${CONTACT_EMAIL}` },
+    { label: "prices", href: "/#pricing" },
+    { label: "one-project jobs", href: "/process" },
+    { label: "github", href: GITHUB_URL },
+    { label: "email", href: `mailto:${CONTACT_EMAIL}` },
   ];
   return (
     <footer className="night">
       <div className={`${WIDTH} pt-10`}>
         <div className="border-t border-line pt-8 grid gap-8 md:grid-cols-12">
-          <p className="md:col-span-5 m-0 text-muted max-w-[22rem]">Software subscriptions for small businesses. Built and tested by me.</p>
+          <p className="md:col-span-5 m-0 text-muted max-w-[22rem]">website help for local businesses. built + tested by me.</p>
           <ul className="md:col-span-7 m-0 p-0 list-none flex flex-wrap gap-x-8 gap-y-3 md:justify-end">
             {links.map((link) => (
               <li key={link.label}>
@@ -124,10 +125,10 @@ function Footer({ showWork }: { showWork: boolean }): ReactElement {
         </div>
       </div>
       <div className="mt-14 sm:mt-20">
-        <PixelWordmark label={SITE_NAME} word="DiMascio." />
+        <PixelWordmark label={SITE_NAME_PROPER} word="dimascio." />
       </div>
       <div className={`${WIDTH} pt-6 pb-8`}>
-        <div className="flex flex-wrap justify-between gap-3 text-[0.82rem] text-muted font-mono uppercase tracking-[0.1em]">
+        <div className="flex flex-wrap justify-between gap-3 text-[0.82rem] text-muted font-mono tracking-[0.06em]">
           <span>© {SITE_NAME}</span>
           <span>dimasc.io</span>
         </div>
@@ -146,7 +147,7 @@ function SiteLayout({ children, showWork }: { children: ReactNode; showWork: boo
   return (
     <>
       <a className="skip-link" href="#main">
-        Skip to content
+        skip to content
       </a>
       <header className="sticky top-0 z-30 bg-[color-mix(in_srgb,var(--bg)_82%,transparent)] backdrop-blur-xl border-b border-[color-mix(in_srgb,var(--line)_70%,transparent)]">
         <div className={`${WIDTH} flex items-center gap-4 h-16`}>
@@ -155,7 +156,7 @@ function SiteLayout({ children, showWork }: { children: ReactNode; showWork: boo
               className="grid place-items-center w-7 h-7 rounded-full bg-ink text-bg text-[0.62rem] font-semibold tracking-[0] transition-transform duration-500 group-hover:rotate-[-12deg]"
               aria-hidden="true"
             >
-              RD
+              rd
             </span>
             <span className="max-[440px]:sr-only">{SITE_NAME}</span>
           </a>
@@ -167,7 +168,7 @@ function SiteLayout({ children, showWork }: { children: ReactNode; showWork: boo
               </a>
             ))}
             <a className="rounded-full bg-ink text-bg px-4 py-2 font-medium hover:bg-accent hover:text-on-accent transition-colors" href="/#pricing">
-              Plans
+              prices
             </a>
           </nav>
         </div>

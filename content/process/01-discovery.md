@@ -1,9 +1,9 @@
 ---
-title: "Discovery"
-summary: "A short call to find what actually hurts, what must stay, and what can wait."
+title: "we talk"
+summary: "a short call to find what's actually broken, what has to stay and what can wait."
 step: 1
 ---
 
-We start with what's slowing you down, not a feature list. Most briefs I see are wishlists. That's fine, but the answer to most of the list can be "not yet".
+we start w/ what's slowing you down, not a wish list. most wish lists are fine, but the answer to a lot of it is "not yet".
 
-I leave the call with three things: the one or two problems worth fixing first, the hard requirements (a tool you must keep, a vendor you rely on, a date), and the questions I still need answered.
+i leave the call w/ 3 things: the 1 or 2 problems worth fixing first, the must-haves (a tool you have to keep, a company you rely on, a date) and the questions i still need answered.

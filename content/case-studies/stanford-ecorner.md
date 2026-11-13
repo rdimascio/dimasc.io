@@ -1,8 +1,8 @@
 ---
-title: "A library of entrepreneurship talks for Stanford"
-summary: "Free videos, podcasts and articles on entrepreneurship from the Stanford Technology Ventures Program."
-client: "Stanford"
-industry: "Higher education"
+title: "a library of entrepreneurship talks for stanford"
+summary: "led the front end of stanford's library of talks on starting companies, while at 10up."
+client: "stanford"
+industry: "higher education"
 year: 2021
 services: ["Frontend development", "Technical leadership"]
 stack: ["Drupal 11"]

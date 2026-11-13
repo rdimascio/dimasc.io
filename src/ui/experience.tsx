@@ -26,7 +26,7 @@ function DemoTile({ demo }: { demo: Demo }): ReactElement {
     <figure className="reveal m-0 flex flex-col" id={demo.slug}>
       <div className="relative overflow-hidden rounded-[18px] border border-line bg-[#0b0a09]">
         <DemoVideo demo={demo} />
-        <span className="pointer-events-none absolute left-3 top-3 rounded-full bg-[rgba(10,9,8,0.72)] backdrop-blur px-3 py-1 font-mono text-[0.66rem] uppercase tracking-[0.12em] text-[#f3f0ea]">
+        <span className="pointer-events-none absolute left-3 top-3 rounded-full bg-[rgba(10,9,8,0.72)] backdrop-blur px-3 py-1 font-mono text-[0.66rem] tracking-[0.12em] text-[#f3f0ea]">
           {demo.event}
         </span>
       </div>
@@ -47,7 +47,7 @@ function DemoTile({ demo }: { demo: Demo }): ReactElement {
         )}
         {demo.full === undefined ? null : (
           <a className="link-underline inline-block mt-4 font-medium" href={demoSrc(demo.full)}>
-            Watch the full demo, with sound
+            watch the full demo, w/ sound
           </a>
         )}
       </figcaption>
@@ -93,7 +93,7 @@ function CompactRow({ item }: { item: Experience }): ReactElement {
   return (
     <li className="reveal grid gap-3 md:grid-cols-12 border-t border-line py-7">
       <div className="md:col-span-4 flex flex-col gap-2">
-        <p className="m-0 font-mono text-[0.72rem] uppercase tracking-[0.14em] text-muted">{item.period ?? "Before"}</p>
+        <p className="m-0 font-mono text-[0.72rem] tracking-[0.14em] text-muted">{item.period ?? "before"}</p>
         <CompanyName item={item} size="text-[clamp(1.4rem,2.2vw,1.8rem)]" />
         {item.role === undefined ? null : <p className="m-0 text-ink-2">{item.role}</p>}
       </div>
@@ -108,18 +108,18 @@ function ExperienceRow({ item }: { item: Experience }): ReactElement {
   return (
     <li className="reveal grid gap-6 md:grid-cols-12 border-t border-line py-10 sm:py-12">
       <div className="md:col-span-4 flex flex-col gap-3">
-        <p className="m-0 font-mono text-[0.72rem] uppercase tracking-[0.14em] text-muted flex items-center gap-2">
+        <p className="m-0 font-mono text-[0.72rem] tracking-[0.14em] text-muted flex items-center gap-2">
           {item.current ? (
             <span className="relative inline-flex w-2 h-2" aria-hidden="true">
               <span className="absolute inset-0 rounded-full bg-accent-bright opacity-60 motion-safe:animate-ping" />
               <span className="relative w-2 h-2 rounded-full bg-accent-bright" />
             </span>
           ) : null}
-          {item.period ?? (item.current ? "Now" : "Before")}
+          {item.period ?? (item.current ? "now" : "before")}
         </p>
         <CompanyName item={item} size="text-[clamp(2rem,4.4vw,3.6rem)]" />
         {item.role === undefined ? null : <p className="m-0 text-ink-2">{item.role}</p>}
-        {multipleRoles ? <p className="m-0 font-mono text-[0.72rem] uppercase tracking-[0.14em] text-muted">{item.roles.length} roles</p> : null}
+        {multipleRoles ? <p className="m-0 font-mono text-[0.72rem] tracking-[0.14em] text-muted">{item.roles.length} roles</p> : null}
       </div>
       <div className="md:col-span-8 flex flex-col gap-10">
         <p className="m-0 text-[clamp(1.15rem,1.8vw,1.45rem)] leading-[1.4] tracking-[-0.015em] max-w-[40rem] [text-wrap:pretty]">
@@ -135,7 +135,7 @@ function ExperienceRow({ item }: { item: Experience }): ReactElement {
         {item.html.trim() === "" ? null : <div className="prose max-w-[40rem]" dangerouslySetInnerHTML={{ __html: item.html }} />}
         {item.demos.length === 0 ? null : (
           <div>
-            <p className="m-0 mb-6 font-mono text-[0.72rem] uppercase tracking-[0.14em] text-muted">Experiments · built solo</p>
+            <p className="m-0 mb-6 font-mono text-[0.72rem] tracking-[0.14em] text-muted">experiments · built solo</p>
             <div className="grid gap-10 lg:grid-cols-2">
               {item.demos.map((demo) => (
                 <DemoTile demo={demo} key={demo.slug} />
@@ -149,16 +149,16 @@ function ExperienceRow({ item }: { item: Experience }): ReactElement {
 }
 
 export const SKILLS = [
-  { group: "Frontend", items: ["React", "TypeScript", "Next.js", "CSS Modules", "Tailwind", "shadcn/ui", "Radix", "Vite", "Storybook"] },
-  { group: "Backend", items: ["Node.js", "Postgres", "Express", "GraphQL", "Apollo", "Nest.js", "Prisma", "Drizzle"] },
-  { group: "Infrastructure", items: ["Docker", "Kubernetes", "AWS", "Terraform", "CI/CD", "Vercel", "Argo CD"] },
-  { group: "Tools", items: ["Git", "Nx and monorepos", "Playwright", "Artillery", "Postman"] },
+  { group: "frontend", items: ["react", "typescript", "next.js", "css modules", "tailwind", "shadcn/ui", "radix", "vite", "storybook"] },
+  { group: "backend", items: ["node.js", "postgres", "express", "graphql", "apollo", "nest.js", "prisma", "drizzle"] },
+  { group: "infrastructure", items: ["docker", "kubernetes", "aws", "terraform", "ci/cd", "vercel", "argo cd"] },
+  { group: "tools", items: ["git", "nx + monorepos", "playwright", "artillery", "postman"] },
 ] as const;
 
 export function SkillsRow(): ReactElement {
   return (
     <div className="grid gap-8 md:grid-cols-12">
-      <p className="md:col-span-4 m-0 font-mono text-[0.72rem] uppercase tracking-[0.14em] text-muted">Skills</p>
+      <p className="md:col-span-4 m-0 font-mono text-[0.72rem] tracking-[0.14em] text-muted">skills</p>
       <dl className="md:col-span-8 m-0 grid gap-6 sm:grid-cols-2">
         {SKILLS.map((skill) => (
           <div key={skill.group}>

@@ -1,9 +1,9 @@
 ---
-title: "A checked plan"
-summary: "Before you see a plan or quote, I check it for missing costs, risks and dependencies I don't control."
+title: "i double-check it"
+summary: "before you see a plan or price, i check it for missing costs, risks and stuff outside my control."
 step: 4
 ---
 
-Before a plan or quote reaches you, I check it for missing costs, promises I can't keep and dependencies outside my control, like a vendor's approval. I use AI tools to help me look for gaps, and I verify every one against the real docs.
+before a plan or price gets to you, i check it for missing costs, promises i can't keep and stuff outside my control, like waiting on another company to approve something. i use ai tools to help look for gaps, and i check every one against the real docs.
 
-What's left is a plan I can stand behind.
+what's left is a plan i can stand behind.

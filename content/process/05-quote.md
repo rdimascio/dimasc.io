@@ -1,9 +1,9 @@
 ---
-title: "A flat quote"
-summary: "A flat price per step, paid per step. No hourly billing, and you can stop after any step."
+title: "one price per step"
+summary: "one price per step, paid per step. no hourly bills, and you can stop after any step."
 step: 5
 ---
 
-Each step has a flat price and a timeline. You pay per step and can stop after any one of them and keep what's done.
+each step has one price + a timeline. you pay per step and can stop after any of them and keep what's done.
 
-The quote also says what's not included and which outside dates, like a vendor's approval, could move the timeline.
+the price also says what's not included and which outside dates, like waiting on another company, could move things.
