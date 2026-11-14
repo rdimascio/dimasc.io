@@ -1,4 +1,4 @@
-import { beforeAll, describe, expect, it } from "bun:test";
+import { afterEach, beforeAll, beforeEach, describe, expect, it } from "bun:test";
 
 import { createApp } from "@lesto/kernel";
 import type { App } from "@lesto/kernel";
@@ -18,6 +18,12 @@ import {
   handleCheck,
   MAX_CHECK_BODY_BYTES,
   renderCheckProblem,
+  TURNSTILE_ACTION,
+  TURNSTILE_HOSTNAMES,
+  TURNSTILE_RESPONSE_FIELD,
+  TURNSTILE_SCRIPT_SRC,
+  TURNSTILE_SITEKEY,
+  TURNSTILE_VERIFY_URL,
   withSourceFilled,
 } from "../src/check";
 import { CHECK_NEXT_STEPS, CHECK_SENT_HEADLINE } from "../src/ui/check";
@@ -109,6 +115,13 @@ function jsonLdBlocks(html: string): string[] {
 
 function withoutJsonLd(html: string): string {
   return html.replace(JSON_LD_BLOCK, "");
+}
+
+const TURNSTILE_SCRIPT_TAG = `<script async="" defer="" src="${TURNSTILE_SCRIPT_SRC}"></script>`;
+
+function withoutAllowedScripts(route: string, html: string): string {
+  const withoutData = withoutJsonLd(html);
+  return route === SITE_CHECK_PAGE ? withoutData.replace(TURNSTILE_SCRIPT_TAG, "") : withoutData;
 }
 
 function ldNodes(html: string): LdNode[] {
@@ -501,10 +514,10 @@ describe("site routes", () => {
     }
   });
 
-  it("ships no client script on the studio pages, only JSON-LD data blocks", async () => {
+  it("ships no client script on the studio pages, only JSON-LD data blocks + the form page's one Turnstile script", async () => {
     for (const route of STUDIO_ROUTES) {
       const html = await text(await app.handle("GET", route));
-      expect(withoutJsonLd(html)).not.toContain("<script");
+      expect(`${route}: ${withoutAllowedScripts(route, html)}`).not.toContain("<script");
       for (const block of jsonLdBlocks(html)) {
         expect(() => JSON.parse(block)).not.toThrow();
         expect(block).not.toContain("<");
@@ -783,10 +796,54 @@ interface CheckFixture {
   readonly sent: CheckEmail[];
 }
 
-function checkFixture(options: { allow?: boolean; mailer?: boolean } = {}): CheckFixture {
+const TEST_TURNSTILE_SECRET = "1x0000000000000000000000000000000AA";
+const PASS_TOKEN = "XXXX.DUMMY.TOKEN.XXXX";
+const CLIENT_IP = "203.0.113.7";
+
+type SiteverifyBody = Record<string, string>;
+type Siteverify = (body: SiteverifyBody) => Response | Promise<Response>;
+
+function siteverifyReply(result: Record<string, unknown>): Siteverify {
+  return () => Response.json(result);
+}
+
+const SITEVERIFY_PASS = siteverifyReply({ success: true, hostname: "dimasc.io", "error-codes": [] });
+const realFetch = globalThis.fetch;
+const siteverifyCalls: SiteverifyBody[] = [];
+let siteverify: Siteverify = SITEVERIFY_PASS;
+
+beforeEach(() => {
+  siteverify = SITEVERIFY_PASS;
+  siteverifyCalls.length = 0;
+  globalThis.fetch = (async (input: RequestInfo | URL, init?: RequestInit) => {
+    const url = input instanceof Request ? input.url : String(input);
+    if (url !== TURNSTILE_VERIFY_URL) throw new Error(`unexpected fetch: ${url}`);
+    const body = JSON.parse(String(init?.body)) as SiteverifyBody;
+    siteverifyCalls.push(body);
+    return siteverify(body);
+  }) as typeof fetch;
+});
+
+afterEach(() => {
+  globalThis.fetch = realFetch;
+});
+
+async function captureLogs<T>(run: () => Promise<T>): Promise<{ result: T; logged: string }> {
+  const lines: string[] = [];
+  const original = console.log;
+  console.log = (...args: unknown[]) => lines.push(args.join(" "));
+  try {
+    return { result: await run(), logged: lines.join("\n") };
+  } finally {
+    console.log = original;
+  }
+}
+
+function checkFixture(options: { allow?: boolean; mailer?: boolean; secret?: boolean } = {}): CheckFixture {
   const stored = new Map<string, string>();
   const sent: CheckEmail[] = [];
   const env: CheckEnv = {
+    ...(options.secret === false ? {} : { TURNSTILE_SECRET_KEY: TEST_TURNSTILE_SECRET }),
     REQUESTS: {
       put: async (key, value) => {
         stored.set(key, value);
@@ -813,10 +870,11 @@ const VALID_CHECK = {
   [CHECK_FIELD.message]: "the booking button does nothing on my phone",
   [CHECK_FIELD.source]: "",
   [CHECK_FIELD.trap]: "",
+  [TURNSTILE_RESPONSE_FIELD]: PASS_TOKEN,
 };
 
 function checkPost(fields: Record<string, string>, init: { method?: string; referer?: string; body?: string } = {}): Request {
-  const headers = new Headers({ "content-type": "application/x-www-form-urlencoded", "cf-connecting-ip": "203.0.113.7" });
+  const headers = new Headers({ "content-type": "application/x-www-form-urlencoded", "cf-connecting-ip": CLIENT_IP });
   if (init.referer !== undefined) headers.set("referer", init.referer);
   return new Request(`${SITE_URL}${CHECK_ROUTE}`, {
     method: init.method ?? "POST",
@@ -954,13 +1012,109 @@ describe("site check form", () => {
     expect(sitemapRoutes(await loadAllCaseStudies(), await loadAllArticles())).not.toContain(CHECK_SENT_ROUTE);
   });
 
-  it("ships no client script on any page, the error page included", async () => {
+  it("ships no client script on any page but the Turnstile script on the form page, the error page included", async () => {
     const routes = [...siteRoutes(await loadAllCaseStudies(), await loadArticles(false), false), CHECK_SENT_ROUTE];
+    expect(routes).toContain(SITE_CHECK_PAGE);
     for (const route of routes) {
       const html = await text(await app.handle("GET", route));
-      expect(`${route}: ${withoutJsonLd(html)}`).not.toContain("<script");
+      expect(`${route}: ${withoutAllowedScripts(route, html)}`).not.toContain("<script");
+      if (route !== SITE_CHECK_PAGE) expect(html).not.toContain("challenges.cloudflare.com");
     }
     expect(renderCheckProblem({ title: "x", detail: "y" })).not.toContain("<script");
+  });
+
+  it("loads the Turnstile script once on the form page + puts the widget inside the form", async () => {
+    const html = await text(await app.handle("GET", SITE_CHECK_PAGE));
+    const form = html.slice(html.indexOf("<form"), html.indexOf("</form>"));
+    expect(html.split(TURNSTILE_SCRIPT_TAG)).toHaveLength(2);
+    expect(form).toContain(`class="cf-turnstile"`);
+    expect(form).toContain(`data-sitekey="${TURNSTILE_SITEKEY}"`);
+    expect(form).toContain(`data-action="${TURNSTILE_ACTION}"`);
+  });
+});
+
+const NOT_HUMAN_LINE = "couldn't confirm you're human";
+
+async function expectRefused(response: Response, fixture: CheckFixture): Promise<void> {
+  expect(response.status).toBe(403);
+  expect(await response.text()).toContain(NOT_HUMAN_LINE);
+  expect(fixture.stored.size).toBe(0);
+  expect(fixture.sent).toHaveLength(0);
+}
+
+describe("site check turnstile", () => {
+  it("stores + emails a request w/ a valid token, verified server-side w/ the secret, ip + an idempotency key", async () => {
+    const fixture = checkFixture();
+    const { result: response, logged } = await captureLogs(() => handleCheck(checkPost(VALID_CHECK), fixture.env));
+    expect(response.status).toBe(303);
+    expect(response.headers.get("location")).toBe(CHECK_SENT_ROUTE);
+    expect(fixture.stored.size).toBe(1);
+    expect(fixture.sent).toHaveLength(1);
+    expect(siteverifyCalls).toHaveLength(1);
+    const call = siteverifyCalls[0];
+    expect(call?.secret).toBe(TEST_TURNSTILE_SECRET);
+    expect(call?.response).toBe(PASS_TOKEN);
+    expect(call?.remoteip).toBe(CLIENT_IP);
+    expect(call?.idempotency_key).toMatch(/^[0-9a-f-]{36}$/);
+    expect(logged).not.toContain(PASS_TOKEN);
+    expect(logged).not.toContain(TEST_TURNSTILE_SECRET);
+  });
+
+  it("refuses a missing token w/ a 4xx, no siteverify call, nothing stored or sent", async () => {
+    const fixture = checkFixture();
+    const { [TURNSTILE_RESPONSE_FIELD]: _token, ...withoutToken } = VALID_CHECK;
+    await expectRefused(await handleCheck(checkPost(withoutToken), fixture.env), fixture);
+    await expectRefused(await handleCheck(checkPost({ ...VALID_CHECK, [TURNSTILE_RESPONSE_FIELD]: " " }), fixture.env), fixture);
+    expect(siteverifyCalls).toHaveLength(0);
+  });
+
+  it("refuses a failed token w/ a 4xx + logs only the event + error codes", async () => {
+    const fixture = checkFixture();
+    siteverify = siteverifyReply({ success: false, hostname: "dimasc.io", "error-codes": ["invalid-input-response"] });
+    const { result: response, logged } = await captureLogs(() => handleCheck(checkPost(VALID_CHECK), fixture.env));
+    await expectRefused(response, fixture);
+    expect(JSON.parse(logged)).toEqual({ event: "turnstile_failed", codes: ["invalid-input-response"] });
+    expect(logged).not.toContain(PASS_TOKEN);
+  });
+
+  it("fails closed when siteverify is down, errors or the secret is missing", async () => {
+    const down = checkFixture();
+    siteverify = () => {
+      throw new TypeError("network down");
+    };
+    await expectRefused(await handleCheck(checkPost(VALID_CHECK), down.env), down);
+
+    const erroring = checkFixture();
+    siteverify = () => new Response("bad gateway", { status: 502 });
+    await expectRefused(await handleCheck(checkPost(VALID_CHECK), erroring.env), erroring);
+
+    const garbled = checkFixture();
+    siteverify = () => new Response("not json", { status: 200 });
+    await expectRefused(await handleCheck(checkPost(VALID_CHECK), garbled.env), garbled);
+
+    siteverify = SITEVERIFY_PASS;
+    const unconfigured = checkFixture({ secret: false });
+    await expectRefused(await handleCheck(checkPost(VALID_CHECK), unconfigured.env), unconfigured);
+  });
+
+  it("refuses a token solved on a hostname the widget does not list", async () => {
+    for (const hostname of ["evil.example", "dimasc.io.evil.example", undefined]) {
+      const fixture = checkFixture();
+      siteverify = siteverifyReply({ success: true, hostname, "error-codes": [] });
+      await expectRefused(await handleCheck(checkPost(VALID_CHECK), fixture.env), fixture);
+    }
+    for (const hostname of TURNSTILE_HOSTNAMES) {
+      const fixture = checkFixture();
+      siteverify = siteverifyReply({ success: true, hostname, "error-codes": [] });
+      expect((await handleCheck(checkPost(VALID_CHECK), fixture.env)).status).toBe(303);
+    }
+  });
+
+  it("checks the honeypot + the form before it calls siteverify", async () => {
+    const fixture = checkFixture();
+    await handleCheck(checkPost({ ...VALID_CHECK, [CHECK_FIELD.trap]: "http://spam.example" }), fixture.env);
+    await handleCheck(checkPost({ ...VALID_CHECK, [CHECK_FIELD.email]: "not-an-email" }), fixture.env);
+    expect(siteverifyCalls).toHaveLength(0);
   });
 });
 
@@ -976,7 +1130,7 @@ function streamedPost(body: string, headers: Record<string, string> = {}): Reque
   });
   return new Request(`${SITE_URL}${CHECK_ROUTE}`, {
     method: "POST",
-    headers: { "content-type": "application/x-www-form-urlencoded", "cf-connecting-ip": "203.0.113.7", ...headers },
+    headers: { "content-type": "application/x-www-form-urlencoded", "cf-connecting-ip": CLIENT_IP, ...headers },
     body: stream,
     duplex: "half",
   } as RequestInit);

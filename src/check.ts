@@ -20,6 +20,22 @@ export const CHECK_LIMIT = {
   source: 300,
 } as const;
 
+export const TURNSTILE_SITEKEY = "0x4AAAAAAGBM8jO7arL9_5TM";
+export const TURNSTILE_SCRIPT_SRC = "https://challenges.cloudflare.com/turnstile/v0/api.js";
+export const TURNSTILE_VERIFY_URL = "https://challenges.cloudflare.com/turnstile/v0/siteverify";
+export const TURNSTILE_ACTION = "turnstile-spin-v1";
+export const TURNSTILE_RESPONSE_FIELD = "cf-turnstile-response";
+export const TURNSTILE_HOSTNAMES = [
+  "dimasc.io",
+  "www.dimasc.io",
+  "dimasc-io.markd-site.workers.dev",
+  "turnstile-dimasc-io.markd-site.workers.dev",
+  "localhost",
+  "127.0.0.1",
+] as const;
+const MAX_TURNSTILE_TOKEN_LENGTH = 2048;
+const TURNSTILE_TIMEOUT_MS = 5000;
+
 export const MAX_CHECK_BODY_BYTES = 16 * 1024;
 export const CHECK_KEY_PREFIX = "check:";
 export const CHECK_SENDER = `site@${SITE_HOST}`;
@@ -58,6 +74,7 @@ export interface CheckEnv {
   readonly REQUESTS: CheckStore;
   readonly CHECK_LIMITER?: CheckRateLimiter;
   readonly EMAIL?: CheckMailer;
+  readonly TURNSTILE_SECRET_KEY?: string;
 }
 
 export interface CheckContext {
@@ -83,7 +100,48 @@ const PROBLEMS = {
   missing: { status: 400, title: "a few things are missing", detail: "i need your name, your email + what's broken." },
   badEmail: { status: 400, title: "check your email address", detail: "i need a real email address to reply to." },
   tooMany: { status: 429, title: "slow down a sec", detail: "a lot of requests came from your connection. wait a minute + try again." },
+  notHuman: { status: 403, title: "couldn't confirm you're human", detail: "i couldn't confirm you're human. try again, or email me." },
 } as const satisfies Record<string, Problem>;
+
+interface SiteverifyResult {
+  readonly success?: unknown;
+  readonly hostname?: unknown;
+  readonly "error-codes"?: unknown;
+}
+
+type HumanCheck = { ok: true } | { ok: false; event: string; codes: readonly string[] };
+
+const ALLOWED_TURNSTILE_HOSTS: ReadonlySet<string> = new Set(TURNSTILE_HOSTNAMES);
+
+function errorCodes(result: SiteverifyResult): string[] {
+  const codes = result["error-codes"];
+  return Array.isArray(codes) ? codes.filter((code): code is string => typeof code === "string") : [];
+}
+
+export async function verifyHuman(token: string, secret: string | undefined, remoteip: string | null, idempotencyKey: string): Promise<HumanCheck> {
+  if (token === "" || token.length > MAX_TURNSTILE_TOKEN_LENGTH) return { ok: false, event: "turnstile_missing", codes: [] };
+  if (secret === undefined || secret === "") return { ok: false, event: "turnstile_unconfigured", codes: [] };
+  const body: Record<string, string> = { secret, response: token, idempotency_key: idempotencyKey };
+  if (remoteip !== null) body.remoteip = remoteip;
+  let result: SiteverifyResult;
+  try {
+    const response = await fetch(TURNSTILE_VERIFY_URL, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(body),
+      signal: AbortSignal.timeout(TURNSTILE_TIMEOUT_MS),
+    });
+    if (!response.ok) return { ok: false, event: "turnstile_unreachable", codes: [`http_${response.status}`] };
+    result = (await response.json()) as SiteverifyResult;
+  } catch {
+    return { ok: false, event: "turnstile_unreachable", codes: [] };
+  }
+  if (result.success !== true) return { ok: false, event: "turnstile_failed", codes: errorCodes(result) };
+  if (typeof result.hostname !== "string" || !ALLOWED_TURNSTILE_HOSTS.has(result.hostname)) {
+    return { ok: false, event: "turnstile_wrong_host", codes: [] };
+  }
+  return { ok: true };
+}
 
 export function sourceFromQuery(params: URLSearchParams): string {
   const kept = new URLSearchParams();
@@ -268,6 +326,13 @@ export async function handleCheck(request: Request, env: CheckEnv, ctx?: CheckCo
 
   const parsed = parseCheck(params, request);
   if (!("id" in parsed)) return problemResponse(parsed);
+
+  const token = (params.get(TURNSTILE_RESPONSE_FIELD) ?? "").trim();
+  const human = await verifyHuman(token, env.TURNSTILE_SECRET_KEY, request.headers.get("cf-connecting-ip"), parsed.id);
+  if (!human.ok) {
+    console.log(JSON.stringify({ event: human.event, codes: human.codes }));
+    return problemResponse(PROBLEMS.notHuman);
+  }
 
   await env.REQUESTS.put(checkKey(parsed), JSON.stringify(parsed));
   console.log(JSON.stringify({ event: "check_stored", id: parsed.id, mailer: env.EMAIL !== undefined }));

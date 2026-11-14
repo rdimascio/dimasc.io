@@ -1,6 +1,6 @@
 import type { ReactElement } from "react";
 
-import { CHECK_FIELD, CHECK_LIMIT, CHECK_ROUTE } from "../check";
+import { CHECK_FIELD, CHECK_LIMIT, CHECK_ROUTE, TURNSTILE_ACTION, TURNSTILE_SCRIPT_SRC, TURNSTILE_SITEKEY } from "../check";
 import { CONTACT_EMAIL, QUICK_FIX_MINUTES, SITE_CHECK_ANCHOR, SITE_CHECK_CTA } from "../site";
 import { WORK_ROUTE } from "../work";
 import { ArrowLink, Eyebrow, HEADING, LEDE, PAGE } from "./layout";
@@ -72,6 +72,8 @@ export function CheckForm(): ReactElement {
             <input autoComplete="off" name={CHECK_FIELD.trap} tabIndex={-1} type="text" />
           </label>
         </div>
+        <script async defer src={TURNSTILE_SCRIPT_SRC} />
+        <div className="cf-turnstile" data-action={TURNSTILE_ACTION} data-sitekey={TURNSTILE_SITEKEY} />
         <div className="flex flex-wrap items-center gap-4">
           <button className="rounded-full bg-accent px-7 py-3 font-medium text-on-accent hover:opacity-90" type="submit">
             {CHECK_SUBMIT_LABEL}
