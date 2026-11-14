@@ -1,8 +1,8 @@
 import type { ReactElement } from "react";
 
 import type { Plan } from "../content";
-import { CONTACT_EMAIL, SERVICE_AREA_COPY, SERVICE_AREA_SHORT } from "../site";
-import { ORANGE_COUNTY_ROUTE, serviceBySlug, serviceRoute, SERVICES, SERVICES_ROUTE, type Service, type ServiceFaq } from "../services";
+import { CONTACT_EMAIL, SERVICE_AREA_COPY, SERVICE_AREA_SHORT, SITE_CHECK_CTA, siteCheckHref } from "../site";
+import { type ComparisonRow, ORANGE_COUNTY_ROUTE, serviceBySlug, serviceRoute, SERVICES, SERVICES_ROUTE, type Service, type ServiceFaq } from "../services";
 import { breadcrumbLd, businessLd, pageGraph, serviceLd } from "../structured-data";
 import { WORK_ROUTE } from "../work";
 import { PlanCard, planCtaHref, startingPricesLine } from "./home";
@@ -11,9 +11,14 @@ import { ArrowLink, Eyebrow, HEADING, LEDE, PAGE, SectionHead } from "./layout";
 
 export const SERVICES_CRUMB = { name: "services", route: SERVICES_ROUTE } as const;
 export const ORANGE_COUNTY_CRUMB = { name: SERVICE_AREA_SHORT, route: ORANGE_COUNTY_ROUTE } as const;
-export const PAST_WORK_LINE = "i've built websites for stanford, blackstone, holt international + serhant, while at 10up + luxury presence.";
-export const AREA_LINE = `i'm based in ${SERVICE_AREA_COPY} + work w/ businesses around here, like in tustin + corona. happy to meet in person around oc. anywhere else in the us works too, over email + video.`;
-export const SERVICES_LEDE = "website help for small businesses: one fix, a new site, booking, a store, or someone keeping an eye on it all.";
+export const PAST_WORK_LINE =
+  "i led front-end work on sites for stanford ecorner, blackstone + holt international at 10up, and built the serhant template at luxury presence. your site gets the same engineer.";
+export const AREA_LINE = `i'm a senior software engineer based in ${SERVICE_AREA_COPY}. i fix + look after websites for small businesses here + nearby, like in tustin + corona. happy to meet in person around oc. anywhere else in the us works too, over email + video.`;
+export const SERVICES_LEDE =
+  "website help from a senior software engineer, not an agency: a free site check, a new site, booking, a store, or me keeping an eye on it all.";
+export const WHY_ME_LINE =
+  "a lot of local web help is an agency selling seo, or someone who updates plugins. i'm neither. i've been a software engineer since 2017. i built + scaled the platform behind 30k+ websites, and led front-end work on sites for blackstone + stanford ecorner. now i do it for businesses down the street.";
+export const DEFAULT_STEPS_LABEL = "how it works";
 
 export function findPlan(plans: readonly Plan[], name: string): Plan | undefined {
   return plans.find((plan) => plan.name === name);
@@ -85,6 +90,50 @@ function Section({ label, children }: { label: string; children: ReactElement })
   );
 }
 
+function Comparison({ rows }: { rows: readonly ComparisonRow[] }): ReactElement {
+  return (
+    <table className="w-full border-collapse text-left text-[1rem] leading-snug">
+      <thead>
+        <tr className="border-b border-line">
+          <th className="py-3 pr-4 font-medium" scope="col">
+            <span className="sr-only">topic</span>
+          </th>
+          <th className="py-3 pr-4 font-medium text-muted" scope="col">
+            a plugin-update plan
+          </th>
+          <th className="py-3 font-medium" scope="col">
+            care from me
+          </th>
+        </tr>
+      </thead>
+      <tbody>
+        {rows.map((row) => (
+          <tr className="border-b border-line align-top" key={row.topic}>
+            <th className="py-4 pr-4 font-medium" scope="row">
+              {row.topic}
+            </th>
+            <td className="py-4 pr-4 text-muted">{row.typical}</td>
+            <td className="py-4">{row.mine}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  );
+}
+
+function PrimaryCta({ plan }: { plan: Plan | undefined }): ReactElement {
+  return (
+    <div className="mt-10 flex flex-wrap items-center gap-3">
+      <ArrowLink href={plan === undefined ? siteCheckHref() : planCtaHref(plan)} tone="accent">
+        {plan === undefined ? SITE_CHECK_CTA : plan.cta}
+      </ArrowLink>
+      <a className="link-underline inline-block py-2 text-muted hover:text-ink" href={`mailto:${CONTACT_EMAIL}`}>
+        {CONTACT_EMAIL}
+      </a>
+    </div>
+  );
+}
+
 function RelatedLinks({ service }: { service: Service }): ReactElement {
   const links = [
     ...service.related.map((slug) => ({ href: serviceRoute(slug), label: serviceBySlug(slug).name })),
@@ -103,7 +152,7 @@ function RelatedLinks({ service }: { service: Service }): ReactElement {
 }
 
 function ServicePage({ service, plans }: { service: Service; plans: readonly Plan[] }): ReactElement {
-  const plan = findPlan(plans, service.plan);
+  const plan = service.plan === null ? undefined : findPlan(plans, service.plan);
   const route = serviceRoute(service.slug);
   return (
     <main className={`${PAGE} pb-28`}>
@@ -122,22 +171,20 @@ function ServicePage({ service, plans }: { service: Service; plans: readonly Pla
       <h1 className={`${HEADING} mt-8`}>{service.name}</h1>
       <p className={`${LEDE} mt-8`}>{service.lede}</p>
       <p className="mt-4 mb-0 text-muted max-w-[38rem]">{service.who}</p>
-      {plan === undefined ? null : (
-        <div className="mt-10 flex flex-wrap items-center gap-3">
-          <ArrowLink href={planCtaHref(plan)} tone="accent">
-            {plan.cta}
-          </ArrowLink>
-          <a className="inline-flex items-center rounded-full border border-line px-6 py-3 font-medium hover:border-ink" href={`mailto:${CONTACT_EMAIL}`}>
-            {CONTACT_EMAIL}
-          </a>
-        </div>
-      )}
+      <p className="mt-4 mb-0 max-w-[38rem]">{PAST_WORK_LINE}</p>
+      <PrimaryCta plan={plan} />
 
       <Section label="what i can do">
         <List items={service.includes} />
       </Section>
 
-      <Section label="how it works">
+      {service.comparison === undefined ? null : (
+        <Section label="how it's different">
+          <Comparison rows={service.comparison} />
+        </Section>
+      )}
+
+      <Section label={service.stepsLabel ?? DEFAULT_STEPS_LABEL}>
         <Steps steps={service.steps} />
       </Section>
 
@@ -154,10 +201,7 @@ function ServicePage({ service, plans }: { service: Service; plans: readonly Pla
       </Section>
 
       <Section label="related">
-        <div className="grid gap-6">
-          <p className="m-0 text-muted">{PAST_WORK_LINE}</p>
-          <RelatedLinks service={service} />
-        </div>
+        <RelatedLinks service={service} />
       </Section>
     </main>
   );
@@ -208,28 +252,22 @@ function ServicesIndex({ plans }: { plans: readonly Plan[] }): ReactElement {
 
 function OrangeCountyPage({ plans }: { plans: readonly Plan[] }): ReactElement {
   const prices = startingPricesLine(plans);
-  const fix = findPlan(plans, "fix it");
   return (
     <main className={`${PAGE} pb-28`}>
       <JsonLd data={pageGraph(businessLd(plans), breadcrumbLd([ORANGE_COUNTY_CRUMB]))} />
       <Eyebrow>{SERVICE_AREA_COPY}</Eyebrow>
       <h1 className={`${HEADING} mt-8`}>website help in {SERVICE_AREA_SHORT}</h1>
       <p className={`${LEDE} mt-8`}>{AREA_LINE}</p>
-      {fix === undefined ? null : (
-        <div className="mt-10 flex flex-wrap items-center gap-3">
-          <ArrowLink href={planCtaHref(fix)} tone="accent">
-            {fix.cta}
-          </ArrowLink>
-          <a className="inline-flex items-center rounded-full border border-line px-6 py-3 font-medium hover:border-ink" href={`mailto:${CONTACT_EMAIL}`}>
-            {CONTACT_EMAIL}
-          </a>
-        </div>
-      )}
+      <PrimaryCta plan={undefined} />
 
       <Section label="who i help">
         <p className="m-0 text-[1.1rem] leading-relaxed">
-          small businesses w/ a website that's broken, old or slowing them down. gyms, studios, clinics, shops. you work directly w/ me, not an agency.
+          small businesses w/ a website that's broken, old or slowing them down. gyms, studios, clinics, shops. you get the engineer, not an account manager. i can come by + look at it w/ you.
         </p>
+      </Section>
+
+      <Section label="why me">
+        <p className="m-0 text-[1.1rem] leading-relaxed">{WHY_ME_LINE}</p>
       </Section>
 
       <Section label="what i do">

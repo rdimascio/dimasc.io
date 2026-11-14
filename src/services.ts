@@ -1,13 +1,19 @@
 export const SERVICES_ROUTE = "/services";
 export const ORANGE_COUNTY_ROUTE = "/orange-county";
 
-export type PlanName = "fix it" | "care" | "monthly help" | "one project";
+export type PlanName = "care" | "monthly help" | "one project";
 
 export type ServiceSlug = "fix-my-website" | "new-website" | "online-booking" | "online-store" | "website-care" | "monthly-help";
 
 export interface ServiceFaq {
   readonly question: string;
   readonly answer: string;
+}
+
+export interface ComparisonRow {
+  readonly topic: string;
+  readonly typical: string;
+  readonly mine: string;
 }
 
 export interface Service {
@@ -20,20 +26,22 @@ export interface Service {
   readonly who: string;
   readonly includes: readonly string[];
   readonly steps: readonly string[];
-  readonly plan: PlanName;
+  readonly stepsLabel?: string;
+  readonly plan: PlanName | null;
   readonly costNote: string;
   readonly faq: readonly ServiceFaq[];
   readonly related: readonly ServiceSlug[];
+  readonly comparison?: readonly ComparisonRow[];
 }
 
 export const SERVICES: readonly Service[] = [
   {
     slug: "fix-my-website",
     name: "fix my website",
-    title: "fix my website: $500 flat, orange county",
-    description: "something broken on your website? i fix one thing for $500 flat, paid upfront. if i can't fix it, you get your $500 back.",
-    summary: "one thing broken? one fix, $500 flat. if i can't fix it, you get your money back.",
-    lede: "one thing broken on your site? send it to me. i fix it for $500 flat. if i can't fix it, you get your $500 back.",
+    title: "fix my website: free site check, orange county",
+    description: "something broken on your website? i check it for free + tell you what's broken. if the fix takes me under 30 min, it's free too.",
+    summary: "a free site check. i tell you what's broken. fixes under 30 min are free.",
+    lede: "something broken on your site? send it to me. i'm a senior software engineer, so i find why it broke, not just patch it. the check is free, + if the fix takes me under 30 min, i just do it, free.",
     who: "for small business owners whose site mostly works, but one thing is broken + nobody's around to fix it.",
     includes: [
       "a contact form that stopped sending",
@@ -41,22 +49,23 @@ export const SERVICES: readonly Service[] = [
       "a button that does nothing when you tap it",
       "something that used to work + now doesn't",
     ],
+    stepsLabel: "what happens after you email",
     steps: [
-      "email me what's broken + a link to your site",
-      "if it's bigger than one fix, i tell you before i start",
-      "you pay $500 upfront + i fix it, usually in about a week",
-      "want someone watching it after? care is $199/month",
+      "you email me your site + what's bugging you",
+      "i reply within 1 business day",
+      "i look through your site for free + send you a plain list of what's broken",
+      "fixes under 30 min: i just do them, free",
+      "bigger fixes go on care or monthly help, w/ the $500 setup fee waived. no hourly bills",
     ],
-    plan: "fix it",
-    costNote: "one fix, one fixed price. if i can't fix it, you get your $500 back.",
+    plan: null,
+    costNote: "the site check is free, + so are fixes under 30 min. bigger fixes go on care ($199/month) or monthly help ($1,500/month), w/ the $500 setup fee waived.",
     faq: [
-      { question: "what if you can't fix it?", answer: "you get your $500 back." },
+      { question: "what does the site check cost?", answer: "nothing. you don't have to sign up for anything." },
       {
-        question: "what if it's bigger than one fix?",
-        answer: "i tell you before i start. then we can split it up, put it on monthly help or quote it as one project. your call.",
+        question: "what if it's bigger than a quick fix?",
+        answer: "i tell you before i start. it can go on care or monthly help, w/ the $500 setup fee waived, or get quoted as one project. your call.",
       },
       { question: "do i need to know what's wrong?", answer: "no. tell me what you see, like \"the form doesn't send\", + i find the cause." },
-      { question: "do i have to sign up for a monthly plan?", answer: "no. one fix is one payment. care is there if you want someone keeping an eye on it after." },
     ],
     related: ["website-care", "monthly-help", "new-website"],
   },
@@ -66,7 +75,7 @@ export const SERVICES: readonly Service[] = [
     title: "small business website design, orange county",
     description: "a new website for your small business, built in small steps. you see one price per step before i start + can stop after any step.",
     summary: "a new site, built in small steps. one price per step, agreed before i start.",
-    lede: "your site is old, slow or hard to update, + fixing it piece by piece doesn't make sense anymore. i build you a new one, in small steps, w/ one price per step.",
+    lede: "your site is old, slow or hard to update, + fixing it piece by piece doesn't make sense anymore. i build you a new one, in small steps, w/ one price per step. i led the front end on sites for blackstone + stanford ecorner. yours gets built the same way: tested before you see it, and yours to keep.",
     who: "for owners who've outgrown their site, or never had a real one.",
     includes: [
       "a site that works on phones",
@@ -89,7 +98,7 @@ export const SERVICES: readonly Service[] = [
       },
       {
         question: "do i really need a new one?",
-        answer: "maybe not. if a few fixes get you there, i'll say so + we start w/ one fix.",
+        answer: "maybe not. if a few fixes get you there, i'll say so + we start w/ a free site check.",
       },
       {
         question: "who owns the site?",
@@ -104,7 +113,7 @@ export const SERVICES: readonly Service[] = [
     title: "online booking for gyms + studios",
     description: "let customers book from their phone. i add booking to your website or connect the tool you already use, for gyms, studios + small businesses.",
     summary: "booking on your site that works on phones + doesn't make you type things twice.",
-    lede: "people should be able to book from their phone in a few taps. i add booking to your site, or connect the booking tool you already use.",
+    lede: "people should be able to book from their phone in a few taps. i add booking to your site, or connect the booking tool you already use. getting two systems to talk to each other is what i do all day as a software engineer.",
     who: "for gyms, studios, clinics + anyone who takes classes or appointments.",
     includes: [
       "help picking a booking tool, or keeping the one you have",
@@ -142,7 +151,7 @@ export const SERVICES: readonly Service[] = [
     title: "shopify + online store help for small shops",
     description: "set up a new online store or fix the one you have, w/o hiring an agency. one price per step, agreed before i start. you own the store.",
     summary: "set up a new store, move to a better one or fix the one you have.",
-    lede: "sell online w/o hiring an agency. i set up a new store, move you to a better one, or fix the one you have.",
+    lede: "sell online w/ a senior software engineer in your corner, not an agency. i set up a new store, move you to a better one, or fix the one you have. when the store + your other tools won't connect, i fix that part too.",
     who: "for small shops + makers who want to sell online, or sell more online.",
     includes: [
       "a new store on a platform like shopify",
@@ -157,7 +166,7 @@ export const SERVICES: readonly Service[] = [
       "i build it in small steps + you can stop after any step",
     ],
     plan: "one project",
-    costNote: "a new store is one project, quoted per step. one broken thing on a store you have is one $500 fix.",
+    costNote: "a new store is one project, quoted per step. one broken thing on a store you have starts w/ a free site check.",
     faq: [
       {
         question: "which store platform should i use?",
@@ -178,30 +187,54 @@ export const SERVICES: readonly Service[] = [
     slug: "website-care",
     name: "website care",
     title: "website maintenance, $199/month, orange county",
-    description: "care is $199/month: updates, uptime + security monitoring, up to 2 small fixes a month + a reply within 1 business day. cancel anytime.",
-    summary: "updates, monitoring + up to 2 small fixes a month. $199/month, cancel anytime.",
-    lede: "for when your site mostly works + you want someone keeping an eye on it. $199/month, cancel anytime.",
+    description: "care from a senior software engineer, not a plugin-update plan. $199/month: updates, monitoring + up to 2 small fixes a month. cancel anytime.",
+    summary: "an engineer watching your site: updates, monitoring + up to 2 small fixes a month. $199/month, cancel anytime.",
+    lede: "a senior software engineer keeping an eye on your site. not a plugin-update plan. $199/month, cancel anytime.",
     who: "for owners who don't want to think about updates, or find out the site is down from a customer.",
-    includes: ["updates, done for you", "uptime + security monitoring", "up to 2 small fixes a month", "a reply within 1 business day"],
+    includes: [
+      "updates, done for you. i check the site still works after each one",
+      "uptime + security monitoring that tells me when something breaks",
+      "up to 2 small fixes a month, done by me. i find the cause, not just the symptom",
+      "a reply within 1 business day, from me",
+    ],
     steps: [
       "email me to ask about care",
-      "i set up updates + monitoring on your site",
+      "i look through your site first, then set up updates + monitoring",
       "something breaks? tell me. up to 2 small fixes a month are covered",
       "bigger stuff goes on monthly help or gets quoted as one project",
     ],
     plan: "care",
-    costNote: "$199/month. cancel anytime.",
+    costNote: "$199/month + a $500 setup fee, waived when you start w/ a free site check. no long-term contract, cancel anytime.",
     faq: [
       {
-        question: "what does care cover?",
-        answer: "updates, uptime + security monitoring and up to 2 small fixes a month. i reply within 1 business day.",
+        question: "how is this different from a $50 maintenance plan?",
+        answer:
+          "a lot of those are someone logging in once a month to click update on plugins. that works till an update breaks your booking form. then you need someone who can read the code + find out why. that's the part i do. i'm a senior software engineer. at luxury presence i worked on the platform behind 30k+ websites and cut how often it broke by 60%.",
       },
       {
-        question: "what if i need more than that?",
-        answer: "anything bigger goes on monthly help or gets quoted as one project. i tell you before i start.",
+        question: "are you a wordpress person?",
+        answer: "i've worked w/ wordpress, but i'm a software engineer, not a plugin installer. if the fix is a setting, i change the setting. if it's code, i fix the code.",
+      },
+      {
+        question: "what does care cover?",
+        answer: "updates, uptime + security monitoring and up to 2 small fixes a month, all done by me. i reply within 1 business day.",
       },
       { question: "is hosting included?", answer: "no. your website host's monthly fee gets billed to you directly." },
-      { question: "can i cancel?", answer: "yes, anytime." },
+    ],
+    comparison: [
+      { topic: "who does it", typical: "whoever is on the ticket", mine: "me, a senior software engineer, every time" },
+      { topic: "updates", typical: "click update once a month", mine: "update, then check the site still works" },
+      {
+        topic: "when an update breaks something",
+        typical: "\"that's out of scope\"",
+        mine: "i find the cause + fix it. up to 2 small fixes a month are covered",
+      },
+      {
+        topic: "when it's bigger than a small fix",
+        typical: "a surprise invoice",
+        mine: "i tell you before i start. it goes on monthly help or gets quoted as one project",
+      },
+      { topic: "if you leave", typical: "depends on the contract", mine: "cancel anytime. everything stays in your accounts" },
     ],
     related: ["fix-my-website", "monthly-help"],
   },
@@ -209,9 +242,9 @@ export const SERVICES: readonly Service[] = [
     slug: "monthly-help",
     name: "monthly help",
     title: "monthly website help for small businesses",
-    description: "$1,500/month for a website person a few days a month, w/o hiring one. one job at a time, most small jobs done in 2 business days.",
-    summary: "a website person a few days a month. one job at a time, as many as you need.",
-    lede: "like having a website person on staff a few days a month, w/o hiring one. no hourly bills.",
+    description: "$1,500/month for a senior software engineer a few days a month, w/o hiring one. one job at a time, most small jobs done in 2 business days.",
+    summary: "a senior engineer a few days a month. one job at a time, as many as you need.",
+    lede: "like having a senior software engineer on staff a few days a month, w/o hiring one. no hourly bills.",
     who: "for owners w/ a steady list of website + tool jobs, not just one fix.",
     includes: [
       "fix what's broken on your website",
@@ -226,7 +259,7 @@ export const SERVICES: readonly Service[] = [
       "check the finished work. i keep going until it's right",
     ],
     plan: "monthly help",
-    costNote: "$1,500/month. pause or cancel anytime.",
+    costNote: "$1,500/month + a $500 setup fee, waived when you start w/ a free site check. no long-term contract, pause or cancel anytime.",
     faq: [
       {
         question: "how fast do i get stuff back?",
@@ -246,7 +279,6 @@ export const SERVICES: readonly Service[] = [
 ];
 
 export const PLAN_SERVICE: Readonly<Record<PlanName, ServiceSlug>> = {
-  "fix it": "fix-my-website",
   care: "website-care",
   "monthly help": "monthly-help",
   "one project": "new-website",
