@@ -5,6 +5,7 @@
 	"compatibility_flags": ["nodejs_compat"],
 	"workers_dev": true,
 	"preview_urls": true,
+	"observability": { "enabled": true },
 	"routes": [
 		{ "pattern": "dimasc.io", "custom_domain": true },
 		{ "pattern": "www.dimasc.io", "custom_domain": true }
