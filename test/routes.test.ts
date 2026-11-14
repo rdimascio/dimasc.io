@@ -1110,6 +1110,44 @@ describe("site check turnstile", () => {
     }
   });
 
+  it("re-fills the form on a failed check, escaped, w/ a fresh interaction-only widget + the email line", async () => {
+    const fixture = checkFixture();
+    const hostile = {
+      ...VALID_CHECK,
+      [CHECK_FIELD.name]: `<script>alert("x")</script>`,
+      [CHECK_FIELD.website]: `pats"gym.com`,
+      [CHECK_FIELD.message]: "the <b>booking</b> button & the menu</textarea><script>x</script>",
+      [CHECK_FIELD.source]: "utm_source=google",
+    };
+    const { [TURNSTILE_RESPONSE_FIELD]: _token, ...withoutToken } = hostile;
+    const response = await handleCheck(checkPost(withoutToken), fixture.env);
+    expect(response.status).toBe(403);
+    const html = await response.text();
+    expect(fixture.stored.size).toBe(0);
+    expect(html).toContain(`value="&lt;script&gt;alert(&quot;x&quot;)&lt;/script&gt;"`);
+    expect(html).toContain(`value="pats&quot;gym.com"`);
+    expect(html).toContain(`value="${VALID_CHECK.email}"`);
+    expect(html).toContain(`value="utm_source=google"`);
+    expect(html).toContain("the &lt;b&gt;booking&lt;/b&gt; button &amp; the menu&lt;/textarea&gt;&lt;script&gt;x&lt;/script&gt;</textarea>");
+    expect(html.split("<script").length - 1).toBe(1);
+    expect(html).toContain(`<script async defer src="${TURNSTILE_SCRIPT_SRC}"></script>`);
+    expect(html).toContain(`data-sitekey="${TURNSTILE_SITEKEY}"`);
+    expect(html).toContain(`data-appearance="interaction-only"`);
+    expect(html).toContain(`action="${CHECK_ROUTE}"`);
+    expect(html).toContain(`name="${CHECK_FIELD.trap}"`);
+    expect(html).toContain(`or email me at <a class="underline underline-offset-4" href="mailto:${CONTACT_EMAIL}">`);
+  });
+
+  it("logs the siteverify error codes, never the token or the message", async () => {
+    const fixture = checkFixture();
+    siteverify = siteverifyReply({ success: false, "error-codes": ["timeout-or-duplicate"] });
+    const { logged } = await captureLogs(() => handleCheck(checkPost(VALID_CHECK), fixture.env));
+    expect(JSON.parse(logged)).toEqual({ event: "turnstile_failed", codes: ["timeout-or-duplicate"] });
+    for (const secret of [PASS_TOKEN, TEST_TURNSTILE_SECRET, VALID_CHECK.message, VALID_CHECK.email, VALID_CHECK.name]) {
+      expect(logged).not.toContain(secret);
+    }
+  });
+
   it("checks the honeypot + the form before it calls siteverify", async () => {
     const fixture = checkFixture();
     await handleCheck(checkPost({ ...VALID_CHECK, [CHECK_FIELD.trap]: "http://spam.example" }), fixture.env);
