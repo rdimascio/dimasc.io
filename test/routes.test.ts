@@ -30,7 +30,6 @@ import {
   CONTACT_EMAIL,
   QUICK_FIX_MINUTES,
   SETUP_FEE,
-  SETUP_WAIVER,
   SITE_CHECK_CTA,
   siteCheckHref,
   planHref,
@@ -70,8 +69,7 @@ import {
 const CASE_STUDY_SLUGS = ["stanford-ecorner", "blackstone", "holt-international", "serhant"];
 const MAX_SCREENSHOT_BYTES = 300 * 1024;
 const PHONE_NUMBER = /\(?\d{3}\)?[\s.-]\d{3}[\s.-]\d{4}/;
-const MAX_CLIP_BYTES = 4 * 1024 * 1024;
-const MAX_WORKER_ASSET_BYTES = 25 * 1024 * 1024;
+const MAX_CLIP_BYTES = 4 * 1024 * 1024;const MAX_WORKER_ASSET_BYTES = 25 * 1024 * 1024;
 
 async function text(response: { body: unknown }): Promise<string> {
   return new Response(response.body as BodyInit).text();
@@ -496,7 +494,7 @@ describe("site routes", () => {
     }
   });
 
-  it("starts w/ a free site check + shows the setup fee w/ its waiver next to it", async () => {
+  it("starts w/ a free site check + shows the setup fee next to the monthly prices", async () => {
     const plans = await loadPlans();
     const html = decodeEntities(await text(await app.handle("GET", "/")));
     expect(html).toContain(SITE_CHECK_CTA);
@@ -505,14 +503,14 @@ describe("site routes", () => {
     for (const plan of plans.filter((candidate) => candidate.setup !== undefined)) {
       expect(html).toContain(setupLine(plan.setup ?? 0));
     }
-    expect(setupLine(SETUP_FEE)).toContain(SETUP_WAIVER);
+    expect(setupLine(SETUP_FEE)).toBe(`+ ${formatPrice(SETUP_FEE)} setup`);
     for (const gone of ["fix it", "you get your $500 back", "/fix</span>"]) expect(html).not.toContain(gone);
     const anchor = hireAnchorLine(plans);
     expect(anchor).not.toBeNull();
     expect(html).toContain(anchor ?? "");
     const faq = (await loadFaq()).find((item) => item.question.includes(formatPrice(SETUP_FEE)));
     expect(faq).toBeDefined();
-    expect(htmlToText(faq?.html ?? "")).toContain(SETUP_WAIVER);
+    expect(htmlToText(faq?.html ?? "")).toContain("backups");
   });
 
   it("names the service area in the title, description, hero, footer and FAQ", async () => {
@@ -673,7 +671,7 @@ describe("site routes", () => {
     expect(lede).toContain(`under ${QUICK_FIX_MINUTES} min`);
     expect(lede).toContain(siteCheckHref());
     expect(html).toContain("what happens after you email");
-    expect(html).toContain("setup fee waived");
+    expect(html).toContain("get quoted as one project");
   });
 
   it("marks up every service page as a Service from the business, serving orange county, w/ a breadcrumb", async () => {
@@ -744,6 +742,16 @@ describe("site routes", () => {
     }
     const care = decodeEntities(await text(await app.handle("GET", serviceRoute("website-care"))));
     for (const row of SERVICES.find((service) => service.slug === "website-care")?.comparison ?? []) expect(care).toContain(row.mine);
+  });
+
+  it("never advertises a setup fee waiver in the built public HTML", async () => {
+    const publicApp = await createApp(await buildAppConfig({ previewDrafts: false }));
+    const routes = sitemapRoutes(await loadAllCaseStudies(), await loadAllArticles());
+    expect(routes.length).toBeGreaterThan(0);
+    for (const route of [...routes, ...NOINDEX_ROUTES]) {
+      const html = await text(await publicApp.handle("GET", route));
+      expect(`${route}: ${html}`.toLowerCase()).not.toContain("waive");
+    }
   });
 
   it("returns 404 for an unknown path", async () => {

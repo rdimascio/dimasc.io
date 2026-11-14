@@ -41,7 +41,6 @@ export function planHref(planName: string): string {
 }
 
 export const SETUP_FEE = 500;
-export const SETUP_WAIVER = "waived when you start w/ a free site check";
 export const QUICK_FIX_MINUTES = 30;
 export const SITE_CHECK_NAME = "free site check";
 export const SITE_CHECK_CTA = "get a free site check";

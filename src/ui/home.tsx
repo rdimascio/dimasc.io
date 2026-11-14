@@ -10,7 +10,6 @@ import {
   QUICK_FIX_MINUTES,
   SERVICE_AREA_COPY,
   SERVICE_AREA_SHORT,
-  SETUP_WAIVER,
   SITE_CHECK_CTA,
   SITE_CHECK_NAME,
   siteCheckHref,
@@ -37,7 +36,7 @@ export const SITE_CHECK_FEATURES = [
   "i look through your whole site",
   "you get a plain list of what's broken",
   `fixes under ${QUICK_FIX_MINUTES} min: free`,
-  "bigger fixes go on care or monthly help, setup fee waived",
+  "bigger fixes go on care or monthly help, or get quoted as one project",
 ] as const;
 
 export function hireAnchorLine(plans: readonly Plan[]): string | null {
@@ -106,7 +105,7 @@ export function startingPricesLine(plans: readonly Plan[]): string {
 }
 
 export function setupLine(setup: number): string {
-  return `+ ${formatPrice(setup)} setup, ${SETUP_WAIVER}`;
+  return `+ ${formatPrice(setup)} setup`;
 }
 
 function listNames(names: readonly string[]): string {

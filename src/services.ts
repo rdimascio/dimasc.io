@@ -55,15 +55,15 @@ export const SERVICES: readonly Service[] = [
       "i reply within 1 business day",
       "i look through your site for free + send you a plain list of what's broken",
       "fixes under 30 min: i just do them, free",
-      "bigger fixes go on care or monthly help, w/ the $500 setup fee waived. no hourly bills",
+      "bigger fixes go on care or monthly help, or get quoted as one project. no hourly bills",
     ],
     plan: null,
-    costNote: "the site check is free, + so are fixes under 30 min. bigger fixes go on care ($199/month) or monthly help ($1,500/month), w/ the $500 setup fee waived.",
+    costNote: "the site check is free, + so are fixes under 30 min. bigger fixes go on care ($199/month) or monthly help ($1,500/month), or get quoted as one project.",
     faq: [
       { question: "what does the site check cost?", answer: "nothing. you don't have to sign up for anything." },
       {
         question: "what if it's bigger than a quick fix?",
-        answer: "i tell you before i start. it can go on care or monthly help, w/ the $500 setup fee waived, or get quoted as one project. your call.",
+        answer: "i tell you before i start. it can go on care or monthly help, or get quoted as one project. your call.",
       },
       { question: "do i need to know what's wrong?", answer: "no. tell me what you see, like \"the form doesn't send\", + i find the cause." },
     ],
@@ -204,7 +204,7 @@ export const SERVICES: readonly Service[] = [
       "bigger stuff goes on monthly help or gets quoted as one project",
     ],
     plan: "care",
-    costNote: "$199/month + a $500 setup fee, waived when you start w/ a free site check. no long-term contract, cancel anytime.",
+    costNote: "$199/month + a $500 setup fee. no long-term contract, cancel anytime.",
     faq: [
       {
         question: "how is this different from a $50 maintenance plan?",
@@ -259,7 +259,7 @@ export const SERVICES: readonly Service[] = [
       "check the finished work. i keep going until it's right",
     ],
     plan: "monthly help",
-    costNote: "$1,500/month + a $500 setup fee, waived when you start w/ a free site check. no long-term contract, pause or cancel anytime.",
+    costNote: "$1,500/month + a $500 setup fee. no long-term contract, pause or cancel anytime.",
     faq: [
       {
         question: "how fast do i get stuff back?",

@@ -7,7 +7,6 @@ import {
   OG_IMAGE_PATH,
   SERVICE_AREA,
   SERVICE_AREA_LABEL,
-  SETUP_WAIVER,
   SITE_CHECK_NAME,
   SITE_NAME_PROPER,
   SITE_URL,
@@ -80,7 +79,7 @@ function setupFeeLd(setup: number): JsonLd {
     priceComponentType: "https://schema.org/ActivationFee",
     price: String(setup),
     priceCurrency: CURRENCY,
-    description: `one-time setup fee, ${SETUP_WAIVER}`,
+    description: "one-time setup fee",
   };
 }
 
