@@ -11,14 +11,16 @@ import {
   OG_IMAGE_HEIGHT,
   OG_IMAGE_PATH,
   OG_IMAGE_WIDTH,
+  SERVICE_AREA_COPY,
+  SERVICE_AREA_SHORT,
   SITE_NAME,
-  SITE_TAGLINE,
   SITE_URL,
 } from "./site";
 import { makeAbout } from "./ui/about";
 import { ARTICLES_LEDE, makeArticle, makeArticlesIndex } from "./ui/articles";
-import { formatPrice, lowestPrice, makeHome } from "./ui/home";
+import { makeHome, startingPricesLine } from "./ui/home";
 import { ABOUT_ROUTE, makeSiteLayout } from "./ui/layout";
+import { NOINDEX_ROUTES, PROCESS_ROUTE } from "./sitemap";
 import { makeProcess } from "./ui/process";
 import { makeCaseStudy, makeWorkIndex, makeWorkRequest } from "./ui/work";
 import { previewDraftsFromEnv } from "./preview";
@@ -71,10 +73,23 @@ function withFeedLink(metadata: PageMetadata): PageMetadata {
   return { ...metadata, links: [...(metadata.links ?? []), feed] };
 }
 
-function homeDescription(plans: readonly Plan[]): string {
-  const fromPrice = lowestPrice(plans);
-  const careLine = fromPrice === null ? "" : ` care from ${formatPrice(fromPrice)}/month, monthly help or one project for one price.`;
-  return `i fix + improve your website and the tools behind it.${careLine} cancel anytime.`;
+const NOINDEX = { name: "robots", content: "noindex" } as const;
+const NOINDEX_FOLLOW = { name: "robots", content: "noindex, follow" } as const;
+
+export const HOME_TITLE = `small business website help in ${SERVICE_AREA_SHORT} · ${SITE_NAME}`;
+
+function withMeta(metadata: PageMetadata, extra: PageMetadata["meta"]): PageMetadata {
+  return { ...metadata, meta: [...(metadata.meta ?? []), ...(extra ?? [])] };
+}
+
+function routeMetadata(input: Parameters<typeof seoMetadata>[0]): PageMetadata {
+  const base = seoMetadata(input);
+  return NOINDEX_ROUTES.includes(input.route) ? withMeta(base, [NOINDEX_FOLLOW]) : base;
+}
+
+export function homeDescription(plans: readonly Plan[]): string {
+  const prices = startingPricesLine(plans);
+  return `i fix + improve websites for small businesses in ${SERVICE_AREA_COPY}.${prices === null ? "" : ` ${prices}`}`;
 }
 
 export async function buildAppConfig(
@@ -98,9 +113,8 @@ export async function buildAppConfig(
       component: makeHome(studies, plans, faq, articles),
       metadata: () =>
         seoMetadata({
-          title: `${SITE_NAME} · ${SITE_TAGLINE}`,
-          description:
-            homeDescription(plans),
+          title: HOME_TITLE,
+          description: homeDescription(plans),
           route: "/",
           type: "website",
         }),
@@ -110,20 +124,20 @@ export async function buildAppConfig(
       component: makeAbout(experience),
       metadata: () =>
         seoMetadata({
-          title: `about · ${SITE_NAME}`,
+          title: `about · web developer in ${SERVICE_AREA_SHORT} · ${SITE_NAME}`,
           description: "i've been building websites since 2017, at agencies, startups and product companies. you work directly w/ me.",
           route: ABOUT_ROUTE,
           type: "website",
         }),
     })
-    .page("/process", {
+    .page(PROCESS_ROUTE, {
       static: true,
       component: makeProcess(steps),
       metadata: () =>
         seoMetadata({
           title: `how a one-project job works · ${SITE_NAME}`,
           description: "for one bigger job: we talk, i look around, you get one plan + one price per step, then i build it in small steps.",
-          route: "/process",
+          route: PROCESS_ROUTE,
           type: "website",
         }),
     });
@@ -145,7 +159,7 @@ export async function buildAppConfig(
         static: true,
         component: makeWorkRequest(studies),
         metadata: () =>
-          seoMetadata({
+          routeMetadata({
             title: `ask about a project · ${SITE_NAME}`,
             description: "want to hear more about one of these? email me and i'll walk you through it.",
             route: WORK_REQUEST_ROUTE,
@@ -155,17 +169,21 @@ export async function buildAppConfig(
   }
 
   if (articles.length > 0) {
+    const allDrafts = articles.every((article) => article.draft);
     app = app.page(ARTICLES_ROUTE, {
       static: true,
       component: makeArticlesIndex(articles),
       metadata: () =>
-        withFeedLink(
-          seoMetadata({
-            title: `articles · ${SITE_NAME}`,
-            description: ARTICLES_LEDE,
-            route: ARTICLES_ROUTE,
-            type: "website",
-          }),
+        withMeta(
+          withFeedLink(
+            seoMetadata({
+              title: `articles · ${SITE_NAME}`,
+              description: ARTICLES_LEDE,
+              route: ARTICLES_ROUTE,
+              type: "website",
+            }),
+          ),
+          allDrafts ? [NOINDEX] : [],
         ),
     });
   }
@@ -179,8 +197,7 @@ export async function buildAppConfig(
           seoMetadata({ title: `${article.title} · ${SITE_NAME}`, description: article.summary, route: article.route, type: "article" }),
         );
         const published = { property: "article:published_time", content: article.published };
-        const draftMeta = article.draft ? [{ name: "robots", content: "noindex" }] : [];
-        return { ...base, meta: [...(base.meta ?? []), published, ...draftMeta] };
+        return withMeta(base, [published, ...(article.draft ? [NOINDEX] : [])]);
       },
     });
   }
@@ -197,7 +214,7 @@ export async function buildAppConfig(
           route: study.route,
           type: "article",
         });
-        return { ...base, meta: [...(base.meta ?? []), { name: "robots", content: "noindex" }] };
+        return withMeta(base, [NOINDEX]);
       },
     });
   }

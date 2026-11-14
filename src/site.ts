@@ -1,4 +1,11 @@
-export const SITE_URL = "https://dimasc.io";
+export const SITE_HOST = "dimasc.io";
+export const SITE_URL = `https://${SITE_HOST}`;
+export const WWW_HOST = `www.${SITE_HOST}`;
+
+export const SERVICE_AREA = { county: "Orange County", state: "CA", cities: ["Tustin", "Corona"] } as const;
+export const SERVICE_AREA_LABEL = `${SERVICE_AREA.county}, ${SERVICE_AREA.state}`;
+export const SERVICE_AREA_COPY = SERVICE_AREA_LABEL.toLowerCase();
+export const SERVICE_AREA_SHORT = SERVICE_AREA.county.toLowerCase();
 export const SITE_NAME = "ryan dimascio";
 export const SITE_NAME_PROPER = "Ryan DiMascio";
 export const SITE_TAGLINE = "website help for small businesses";

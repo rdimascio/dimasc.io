@@ -33,6 +33,7 @@ export interface Plan {
   readonly slug: string;
   readonly name: string;
   readonly price: number | null;
+  readonly per: PlanFrontmatter["per"];
   readonly summary: string;
   readonly features: readonly string[];
   readonly cta: string;
@@ -142,6 +143,7 @@ export async function loadPlans(): Promise<Plan[]> {
       slug: slugOf(entry),
       name: entry.name,
       price: entry.price,
+      per: entry.per,
       summary: entry.summary,
       features: entry.features,
       cta: entry.cta,

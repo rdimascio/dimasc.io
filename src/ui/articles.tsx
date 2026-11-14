@@ -2,8 +2,12 @@ import type { ReactElement } from "react";
 
 import { ARTICLES_ROUTE, type Article } from "../content";
 import { CONTACT_EMAIL } from "../site";
+import { articleLd, breadcrumbLd, pageGraph } from "../structured-data";
+import { JsonLd } from "./json-ld";
 import { Eyebrow, HEADING, LEDE, PAGE } from "./layout";
 import { Signature } from "./signature";
+
+const ARTICLES_CRUMB = { name: "articles", route: ARTICLES_ROUTE } as const;
 
 export const ARTICLES_LEDE = "notes on websites, tools + running a small business online.";
 
@@ -47,6 +51,7 @@ export function ArticleList({ articles }: { articles: readonly Article[] }): Rea
 function ArticlesIndex({ articles }: { articles: readonly Article[] }): ReactElement {
   return (
     <main className={`${PAGE} pb-28`}>
+      <JsonLd data={pageGraph(breadcrumbLd([ARTICLES_CRUMB]))} />
       <Eyebrow>articles · {String(articles.length).padStart(2, "0")}</Eyebrow>
       <h1 className={`${HEADING} mt-8`}>articles</h1>
       <p className={`${LEDE} mt-8 mb-16`}>{ARTICLES_LEDE}</p>
@@ -58,6 +63,7 @@ function ArticlesIndex({ articles }: { articles: readonly Article[] }): ReactEle
 function ArticlePage({ article }: { article: Article }): ReactElement {
   return (
     <main className={`${PAGE} pb-28`}>
+      <JsonLd data={pageGraph(articleLd(article), breadcrumbLd([ARTICLES_CRUMB, { name: article.title, route: article.route }]))} />
       <a className="inline-block py-2 font-mono text-[0.78rem] tracking-[0.04em] text-muted hover:text-ink" href={ARTICLES_ROUTE}>
         ← articles
       </a>
