@@ -146,15 +146,24 @@ export function websiteLd(): JsonLd {
   };
 }
 
-export function faqLd(faq: readonly FaqItem[]): JsonLd {
+export interface QuestionAnswer {
+  readonly question: string;
+  readonly answer: string;
+}
+
+export function faqPageLd(items: readonly QuestionAnswer[]): JsonLd {
   return {
     "@type": "FAQPage",
-    mainEntity: faq.map((item) => ({
+    mainEntity: items.map((item) => ({
       "@type": "Question",
       name: item.question,
-      acceptedAnswer: { "@type": "Answer", text: htmlToText(item.html) },
+      acceptedAnswer: { "@type": "Answer", text: item.answer },
     })),
   };
+}
+
+export function faqLd(faq: readonly FaqItem[]): JsonLd {
+  return faqPageLd(faq.map((item) => ({ question: item.question, answer: htmlToText(item.html) })));
 }
 
 export interface Crumb {

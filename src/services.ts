@@ -3,7 +3,14 @@ export const ORANGE_COUNTY_ROUTE = "/orange-county";
 
 export type PlanName = "care" | "monthly help" | "one project";
 
-export type ServiceSlug = "fix-my-website" | "new-website" | "online-booking" | "online-store" | "website-care" | "monthly-help";
+export type ServiceSlug =
+  | "fix-my-website"
+  | "new-website"
+  | "online-booking"
+  | "online-store"
+  | "website-care"
+  | "monthly-help"
+  | "squarespace-wix-help";
 
 export interface ServiceFaq {
   readonly question: string;
@@ -14,6 +21,11 @@ export interface ComparisonRow {
   readonly topic: string;
   readonly typical: string;
   readonly mine: string;
+}
+
+export interface StayOrMove {
+  readonly stay: readonly string[];
+  readonly move: readonly string[];
 }
 
 export interface Service {
@@ -32,7 +44,13 @@ export interface Service {
   readonly faq: readonly ServiceFaq[];
   readonly related: readonly ServiceSlug[];
   readonly comparison?: readonly ComparisonRow[];
+  readonly stayOrMove?: StayOrMove;
 }
+
+const SETUP_FEE_FAQ: ServiceFaq = {
+  question: "what's the $500 setup fee?",
+  answer: "it covers the work at the start: i look through your whole site, get access to everything, set up backups + set up monitoring. you pay it once.",
+};
 
 export const SERVICES: readonly Service[] = [
   {
@@ -66,6 +84,12 @@ export const SERVICES: readonly Service[] = [
         answer: "i tell you before i start. it can go on care or monthly help, or get quoted as one project. your call.",
       },
       { question: "do i need to know what's wrong?", answer: "no. tell me what you see, like \"the form doesn't send\", + i find the cause." },
+      {
+        question: "who looks at my site?",
+        answer:
+          "me. i've been a software engineer since 2017. i was a tech lead at 10up on sites for blackstone + stanford ecorner, and i built the platform behind 30k+ websites at luxury presence. by day i'm a senior engineer at every, a y combinator startup.",
+      },
+      { question: "how fast do you reply?", answer: "within 1 business day, monday to friday. no weekend or same-day emergency help." },
     ],
     related: ["website-care", "monthly-help", "new-website"],
   },
@@ -103,6 +127,14 @@ export const SERVICES: readonly Service[] = [
       {
         question: "who owns the site?",
         answer: "you do. it runs in your own accounts, so it keeps working if we stop working together.",
+      },
+      {
+        question: "can my staff update it?",
+        answer: "yes. i set it up so you + your staff can change text, photos + hours w/o me.",
+      },
+      {
+        question: "do you write the words + take the photos?",
+        answer: "no. logo, brand design, writing + photos aren't included, but i'm happy to work w/ whoever does them.",
       },
     ],
     related: ["fix-my-website", "online-store", "website-care"],
@@ -142,6 +174,10 @@ export const SERVICES: readonly Service[] = [
         question: "who owns it?",
         answer: "you do. it all runs in your own accounts, so it keeps working if we stop working together.",
       },
+      {
+        question: "what does it cost to set up booking?",
+        answer: "it's usually one project, quoted per step. you see each price before i start. changes later can go on monthly help.",
+      },
     ],
     related: ["online-store", "monthly-help", "new-website"],
   },
@@ -179,6 +215,10 @@ export const SERVICES: readonly Service[] = [
       {
         question: "who owns the store?",
         answer: "you do. it runs in your own accounts, so it keeps working if we stop working together.",
+      },
+      {
+        question: "can you fix my store w/o rebuilding it?",
+        answer: "usually, yes. one broken thing starts w/ a free site check. if the fix takes me under 30 min, it's free.",
       },
     ],
     related: ["online-booking", "new-website", "fix-my-website"],
@@ -220,6 +260,7 @@ export const SERVICES: readonly Service[] = [
         answer: "updates, uptime + security monitoring and up to 2 small fixes a month, all done by me. i reply within 1 business day.",
       },
       { question: "is hosting included?", answer: "no. your website host's monthly fee gets billed to you directly." },
+      SETUP_FEE_FAQ,
     ],
     comparison: [
       { topic: "who does it", typical: "whoever is on the ticket", mine: "me, a senior software engineer, every time" },
@@ -273,8 +314,77 @@ export const SERVICES: readonly Service[] = [
         question: "what if it's not a fit?",
         answer: "not happy in the first 7 days? cancel and i refund 75% of your first payment, even if i already delivered work.",
       },
+      {
+        question: "what counts as a job?",
+        answer: "a fix, a new page, connecting two tools, a simple report. one at a time, as many as you need in the month.",
+      },
+      SETUP_FEE_FAQ,
     ],
     related: ["website-care", "online-booking", "new-website"],
+  },
+  {
+    slug: "squarespace-wix-help",
+    name: "squarespace + wix help",
+    title: "squarespace, wix + wordpress help, orange county",
+    description:
+      "site on squarespace, wix, godaddy or wordpress? i fix what's broken + tell you straight if you should stay or move. the site check is free.",
+    summary: "fixes for sites on squarespace, wix, godaddy + wordpress. stay or move, i'll tell you straight.",
+    lede: "your site is on squarespace, wix, godaddy or wordpress, + something's off. i fix it on the platform you already have. you might not need to move, + i'll tell you straight if you do.",
+    who: "for owners who built the site themselves, or had someone build it + can't reach them anymore.",
+    includes: [
+      "a contact or booking form that stopped sending",
+      "pages that look wrong on phones",
+      "a domain or email that broke after a change",
+      "page titles, descriptions + heavy images that make it hard for google to read your site",
+      "booking, payment or newsletter tools that won't connect",
+    ],
+    stepsLabel: "what happens after you send it",
+    steps: [
+      "you send me your site + what's bugging you",
+      "i look through it for free + send you a plain list of what's broken",
+      "fixes under 30 min: i just do them, free",
+      "bigger fixes go on care or monthly help, or get quoted as one project",
+    ],
+    plan: null,
+    costNote:
+      "the site check is free, + so are fixes under 30 min. bigger fixes go on care ($199/month) or monthly help ($1,500/month), or get quoted as one project. a move to a new platform is one project, quoted per step.",
+    stayOrMove: {
+      stay: [
+        "the site mostly works + you can update it yourself",
+        "the problem is a setting, the layout or one broken form",
+        "the monthly fee feels fair for what you get",
+      ],
+      move: [
+        "the platform won't let you do something you need, like booking that talks to your other tools",
+        "you pay for add-ons to patch things the platform should do",
+        "the site is slow on phones + no setting fixes it",
+      ],
+    },
+    faq: [
+      {
+        question: "do you work on squarespace + wix sites?",
+        answer:
+          "yes. i'm a software engineer, not a squarespace or wix partner. these builders hide most of the code, so most fixes are a setting, the layout, the domain or a tool plugged into the site.",
+      },
+      {
+        question: "should i move off squarespace or wix?",
+        answer:
+          "usually not. if a few fixes get you there, i'll say so. i only suggest a move when the platform itself is what's in the way, + you see the price for each step before i start.",
+      },
+      {
+        question: "can you fix my godaddy site?",
+        answer: "probably. godaddy sells a site builder + wordpress hosting, + they break in different ways. the free site check tells you which one you have + what's wrong.",
+      },
+      {
+        question: "what about wordpress?",
+        answer: "i've worked w/ wordpress, but i'm a software engineer, not a plugin installer. if the fix is a setting, i change the setting. if it's code, i fix the code.",
+      },
+      {
+        question: "who owns the site if i move?",
+        answer: "you do. it runs in your own accounts, so it keeps working if we stop working together.",
+      },
+    ],
+    related: ["fix-my-website", "website-care", "new-website"],
   },
 ];
 

@@ -31,6 +31,7 @@ import {
 import { PRIVACY_DESCRIPTION, PRIVACY_LEDE, PRIVACY_SECTIONS } from "../src/ui/privacy";
 import { clickIdOf, conversionsCsv, CSV_HEADER, googleAdsTime, keysSince, parseArgs } from "../scripts/export-ad-leads.mjs";
 import { CHECK_NEXT_STEPS, CHECK_SENT_HEADLINE } from "../src/ui/check";
+import { MOVE_LABEL, PROJECT_PRICE_COPY, servicePriceLine, STAY_LABEL } from "../src/ui/service";
 import { NOINDEX_ROUTES, PROCESS_ROUTE, siteRoutes, sitemapRoutes } from "../src/sitemap";
 import { BUSINESS_ID, htmlToText, PERSON_ID } from "../src/structured-data";
 import { JSON_LD_TYPE } from "../src/ui/json-ld";
@@ -582,14 +583,14 @@ describe("site routes", () => {
     }
   });
 
-  it("marks up only the FAQ that is on the page, and only on the home page", async () => {
+  it("marks up only the FAQ that is on the page, and only on the home page + service pages", async () => {
     const html = await text(await app.handle("GET", "/"));
     const faq = await loadFaq();
     const questions = (ldNode(html, "FAQPage")?.mainEntity ?? []) as { name: string; acceptedAnswer: { text: string } }[];
     expect(questions.length).toBe((html.match(/<details/g) ?? []).length);
     expect(questions.map((question) => question.name)).toEqual(faq.map((item) => item.question));
     for (const question of questions) expect(question.acceptedAnswer.text).not.toMatch(/<[a-z]/);
-    for (const route of STUDIO_ROUTES.slice(1)) {
+    for (const route of STUDIO_ROUTES.slice(1).filter((candidate) => !SERVICE_PAGE_ROUTES.includes(candidate))) {
       expect(ldTypes(await text(await app.handle("GET", route)))).not.toContain("FAQPage");
     }
   });
@@ -672,6 +673,7 @@ describe("site routes", () => {
       "online-store",
       "website-care",
       "monthly-help",
+      "squarespace-wix-help",
     ]);
     for (const service of SERVICES) {
       const response = await app.handle("GET", serviceRoute(service.slug));
@@ -683,8 +685,8 @@ describe("site routes", () => {
       expect(html).toContain(`<title>${title}</title>`);
       expect(html).toContain(`<link rel="canonical" href="${SITE_URL}${serviceRoute(service.slug)}"`);
       expect((html.match(/<h1[\s>]/g) ?? []).length).toBe(1);
-      expect(service.faq.length).toBeGreaterThanOrEqual(2);
-      expect(service.faq.length).toBeLessThanOrEqual(4);
+      expect(service.faq.length).toBeGreaterThanOrEqual(3);
+      expect(service.faq.length).toBeLessThanOrEqual(5);
       for (const item of service.faq) expect(html).toContain(item.question);
       const plan = plans.find((candidate) => candidate.name === service.plan);
       expect(plan === undefined).toBe(service.plan === null);
@@ -764,6 +766,45 @@ describe("site routes", () => {
     for (const block of jsonLdBlocks(html)) {
       for (const banned of ["telephone", "address", "streetAddress", "postalCode"]) expect(block).not.toContain(`"${banned}"`);
     }
+  });
+
+  it("marks up each service page's FAQ as an FAQPage that matches the visible questions + answers", async () => {
+    for (const service of SERVICES) {
+      const html = await text(await app.handle("GET", serviceRoute(service.slug)));
+      const questions = (ldNode(html, "FAQPage")?.mainEntity ?? []) as { name: string; acceptedAnswer: { text: string } }[];
+      const visible = decodeEntities(withoutJsonLd(html)).replaceAll("&quot;", '"');
+      expect(questions.length).toBe((html.match(/<details/g) ?? []).length);
+      expect(questions.map((question) => question.name)).toEqual(service.faq.map((item) => item.question));
+      for (const question of questions) {
+        expect(visible).toContain(question.name);
+        expect(visible).toContain(question.acceptedAnswer.text);
+      }
+    }
+  });
+
+  it("puts the price line near the top of every service page", async () => {
+    for (const service of SERVICES) {
+      const html = decodeEntities(await text(await app.handle("GET", serviceRoute(service.slug))));
+      const top = html.slice(html.indexOf("<h1"), html.indexOf("what i can do"));
+      expect(top).toContain(servicePriceLine(await loadPlans()));
+      for (const price of ["free site check", `under ${QUICK_FIX_MINUTES} min free`, "$199/month + $500 setup", "$1,500/month + $500 setup", PROJECT_PRICE_COPY]) {
+        expect(top).toContain(price);
+      }
+    }
+  });
+
+  it("renders the squarespace + wix help page w/ stay-or-move advice, listed on the index, footer + sitemap", async () => {
+    const route = serviceRoute("squarespace-wix-help");
+    const response = await app.handle("GET", route);
+    const html = decodeEntities(await text(response));
+    expect(response.status).toBe(200);
+    for (const word of ["squarespace", "wix", "godaddy", "wordpress", STAY_LABEL, MOVE_LABEL]) expect(html).toContain(word);
+    expect(html).toContain(siteCheckHref());
+    expect(decodeEntities(await text(await app.handle("GET", SERVICES_ROUTE)))).toContain(`href="${route}"`);
+    const home = await text(await app.handle("GET", "/"));
+    expect(home.slice(home.indexOf("<footer"))).toContain(`href="${route}"`);
+    expect(sitemapRoutes(await loadAllCaseStudies(), await loadAllArticles())).toContain(route);
+    for (const claim of ["expert", "certified", "partner since", "years of squarespace", "years of wix"]) expect(html.toLowerCase()).not.toContain(claim);
   });
 
   it("puts every service page + the orange county page in the sitemap", async () => {
