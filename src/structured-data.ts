@@ -166,6 +166,32 @@ export function articleLd(article: Article): JsonLd {
   };
 }
 
+export interface ServiceLdInput {
+  readonly name: string;
+  readonly description: string;
+  readonly route: string;
+  readonly plan: Plan | undefined;
+}
+
+function providerLd(): JsonLd {
+  return { "@type": "ProfessionalService", "@id": BUSINESS_ID, name: SITE_NAME_PROPER, url: canonicalUrl("/") };
+}
+
+export function serviceLd(input: ServiceLdInput): JsonLd {
+  const plan = input.plan;
+  const priced = plan !== undefined && plan.price !== null ? { ...plan, price: plan.price } : undefined;
+  return {
+    "@type": "Service",
+    name: input.name,
+    serviceType: input.name,
+    description: input.description,
+    url: canonicalUrl(input.route),
+    provider: providerLd(),
+    areaServed: areaServed(),
+    ...(priced === undefined ? {} : { offers: offerLd(priced) }),
+  };
+}
+
 export function homeGraph(plans: readonly Plan[], faq: readonly FaqItem[]): JsonLd {
   return { "@context": SCHEMA_CONTEXT, "@graph": [businessLd(plans), personLd(), websiteLd(), faqLd(faq)] };
 }

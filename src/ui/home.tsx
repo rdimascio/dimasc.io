@@ -4,6 +4,7 @@ import { ARTICLES_ROUTE, type Article, type CaseStudy, type FaqItem, type Plan }
 import { BRAND_LOGOS, logoSrc, opticalScale } from "../logos";
 import { fixRequestHref, introCallHref, MAX_SUBSCRIPTION_CLIENTS, planHref, SERVICE_AREA_COPY, SERVICE_AREA_SHORT } from "../site";
 import { homeGraph } from "../structured-data";
+import { PLAN_SERVICE, type PlanName, serviceBySlug, serviceRoute, SERVICES_ROUTE, type ServiceSlug } from "../services";
 import { projectName, WORK_ROUTE } from "../work";
 import { ABOUT_ROUTE, ArrowLink, Eyebrow, SectionHead, WIDTH } from "./layout";
 import { ArticleList } from "./articles";
@@ -15,16 +16,16 @@ export const STAFF_LINE = "monthly help is like having a website person on staff
 export const SINCE_YEAR = 2017;
 const HOME_ARTICLE_COUNT = 3;
 
-const HELP_WITH = [
-  "fix what's broken on your website",
-  "new pages or a whole new site",
-  "a website that works on phones + shows up on google",
-  "pages your staff can update themselves",
-  "connect your tools so nothing gets typed twice",
-  "simple internal tools + reports",
-  "automate the repetitive stuff",
-  "answer the questions customers ask every day, automatically",
-] as const;
+const HELP_WITH: readonly { label: string; service?: ServiceSlug }[] = [
+  { label: "fix what's broken on your website", service: "fix-my-website" },
+  { label: "new pages or a whole new site", service: "new-website" },
+  { label: "a website that works on phones + shows up on google" },
+  { label: "pages your staff can update themselves" },
+  { label: "connect your tools so nothing gets typed twice", service: "monthly-help" },
+  { label: "simple internal tools + reports" },
+  { label: "automate the repetitive stuff" },
+  { label: "answer the questions customers ask every day, automatically" },
+];
 
 const STEPS = [
   { title: "pick a plan", body: "one fix, care, monthly help or one price for one project. you get one list for everything you ask for." },
@@ -87,7 +88,20 @@ function endSentence(text: string): string {
   return text.endsWith(".") ? text : `${text}.`;
 }
 
-function PlanCard({ plan }: { plan: Plan }): ReactElement {
+export function planCtaHref(plan: Plan): string {
+  return plan.price === null ? introCallHref() : planHref(plan.name);
+}
+
+function isPlanName(name: string): name is PlanName {
+  return Object.hasOwn(PLAN_SERVICE, name);
+}
+
+function planService(plan: Plan): ServiceSlug | undefined {
+  return isPlanName(plan.name) ? PLAN_SERVICE[plan.name] : undefined;
+}
+
+export function PlanCard({ plan, showMore = true }: { plan: Plan; showMore?: boolean }): ReactElement {
+  const more = showMore ? planService(plan) : undefined;
   const quietTone = plan.price === null ? "bg-bg-soft border-line" : "bg-card border-line";
   const tone = plan.featured ? "night border-transparent" : quietTone;
   return (
@@ -110,10 +124,15 @@ function PlanCard({ plan }: { plan: Plan }): ReactElement {
           </li>
         ))}
       </ul>
-      <div className="mt-auto">
-        <ArrowLink href={plan.price === null ? introCallHref() : planHref(plan.name)} tone={plan.featured ? "accent" : "ink"}>
+      <div className="mt-auto flex flex-col items-start gap-4">
+        <ArrowLink href={planCtaHref(plan)} tone={plan.featured ? "accent" : "ink"}>
           {plan.cta}
         </ArrowLink>
+        {more === undefined ? null : (
+          <a className="link-underline inline-block py-2 text-[0.92rem] text-muted hover:text-ink" href={serviceRoute(more)}>
+            {`more about ${serviceBySlug(more).name}`}
+          </a>
+        )}
       </div>
     </div>
   );
@@ -202,12 +221,27 @@ function LogoStrip(): ReactElement {
 function HelpWith(): ReactElement {
   return (
     <section className={`${WIDTH} py-24 sm:py-32`}>
-      <SectionHead index={sectionIndex(1)} label="things i can help with" title="the usual stuff that eats your week." />
+      <SectionHead
+        aside={
+          <a className="link-underline inline-block py-2 text-ink" href={SERVICES_ROUTE}>
+            all services
+          </a>
+        }
+        index={sectionIndex(1)}
+        label="things i can help with"
+        title="the usual stuff that eats your week."
+      />
       <ol className="m-0 p-0 list-none grid sm:grid-cols-2 gap-x-10 border-b border-line md:ml-[calc(33.333%+0.5rem)]">
         {HELP_WITH.map((item, index) => (
-          <li className="reveal flex gap-4 border-t border-line py-5" key={item}>
+          <li className="reveal flex gap-4 border-t border-line py-5" key={item.label}>
             <span className="font-mono text-[0.8rem] text-accent pt-1">{String(index + 1).padStart(2, "0")}</span>
-            <span className="text-[1.1rem] leading-snug tracking-[-0.01em]">{item}</span>
+            {item.service === undefined ? (
+              <span className="text-[1.1rem] leading-snug tracking-[-0.01em]">{item.label}</span>
+            ) : (
+              <a className="link-underline text-[1.1rem] leading-snug tracking-[-0.01em] text-ink" href={serviceRoute(item.service)}>
+                {item.label}
+              </a>
+            )}
           </li>
         ))}
       </ol>
