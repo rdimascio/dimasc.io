@@ -15,6 +15,8 @@ import {
   CHECK_SENT_ROUTE,
   type CheckEmail,
   type CheckEnv,
+  cleanClickedAt,
+  cleanClickId,
   handleCheck,
   MAX_CHECK_BODY_BYTES,
   renderCheckProblem,
@@ -24,8 +26,10 @@ import {
   TURNSTILE_SCRIPT_SRC,
   TURNSTILE_SITEKEY,
   TURNSTILE_VERIFY_URL,
-  withSourceFilled,
+  withFormFilled,
 } from "../src/check";
+import { PRIVACY_DESCRIPTION, PRIVACY_LEDE, PRIVACY_SECTIONS } from "../src/ui/privacy";
+import { clickIdOf, conversionsCsv, CSV_HEADER, googleAdsTime, keysSince, parseArgs } from "../scripts/export-ad-leads.mjs";
 import { CHECK_NEXT_STEPS, CHECK_SENT_HEADLINE } from "../src/ui/check";
 import { NOINDEX_ROUTES, PROCESS_ROUTE, siteRoutes, sitemapRoutes } from "../src/sitemap";
 import { BUSINESS_ID, htmlToText, PERSON_ID } from "../src/structured-data";
@@ -62,6 +66,7 @@ import {
   OG_IMAGE_PATH,
   OG_IMAGE_SOURCE,
   OG_IMAGE_WIDTH,
+  PRIVACY_ROUTE,
   SERVICE_AREA,
   SERVICE_AREA_COPY,
   SITE_NAME_PROPER,
@@ -103,7 +108,7 @@ function decodeEntities(html: string): string {
 
 const JSON_LD_BLOCK = new RegExp(`<script type="${RegExp.escape(JSON_LD_TYPE)}">([\\s\\S]*?)</script>`, "g");
 const SERVICE_PAGE_ROUTES = SERVICES.map((service) => serviceRoute(service.slug));
-const STUDIO_ROUTES = ["/", ABOUT_ROUTE, PROCESS_ROUTE, WORK_ROUTE, WORK_REQUEST_ROUTE, ...serviceRoutes(), CHECK_SENT_ROUTE] as const;
+const STUDIO_ROUTES = ["/", ABOUT_ROUTE, PROCESS_ROUTE, WORK_ROUTE, WORK_REQUEST_ROUTE, ...serviceRoutes(), PRIVACY_ROUTE, CHECK_SENT_ROUTE] as const;
 const MAX_TITLE_LENGTH = 65;
 const MAX_DESCRIPTION_LENGTH = 155;
 
@@ -992,12 +997,94 @@ describe("site check form", () => {
   it("fills the hidden source field on the form page from the URL's utm params, server-side", async () => {
     const page = new Response('<form><input name="source" type="hidden" value=""/></form>', { headers: { "content-type": "text/html" } });
     const url = new URL(`${SITE_URL}${SITE_CHECK_PAGE}?utm_source=email&utm_campaign=2026-12-oc-gyms"><b>`);
-    const html = await withSourceFilled(page, url).text();
+    const html = await withFormFilled(page, url).text();
     const value = /value="([^"]*)"/.exec(html)?.[1] ?? "";
     expect(value).toStartWith("utm_source=email&utm_campaign=2026-12-oc-gyms");
     expect(value).toMatch(/^[\w.\-=&]+$/);
     const plain = new Response("<p>x</p>", { headers: { "content-type": "text/html" } });
-    expect(withSourceFilled(plain, new URL(`${SITE_URL}${SITE_CHECK_PAGE}`))).toBe(plain);
+    expect(withFormFilled(plain, new URL(`${SITE_URL}${SITE_CHECK_PAGE}`))).toBe(plain);
+  });
+
+  it("fills the hidden click id fields + click time from the URL's gclid, gbraid + wbraid, server-side", async () => {
+    const html = await text(await app.handle("GET", SITE_CHECK_PAGE));
+    for (const field of [CHECK_FIELD.gclid, CHECK_FIELD.gbraid, CHECK_FIELD.wbraid, CHECK_FIELD.clickedAt]) {
+      expect(html).toMatch(new RegExp(`<input[^>]*name="${field}"[^>]*type="hidden"|<input[^>]*type="hidden"[^>]*name="${field}"`));
+    }
+    const page = new Response(html, { headers: { "content-type": "text/html" } });
+    const now = new Date("2026-11-14T18:00:00.000Z");
+    const url = new URL(`${SITE_URL}${SITE_CHECK_PAGE}?gclid=Cj0KCQ_abc-123&wbraid=WB_9&utm_source=google`);
+    const filled = withFormFilled(page, url, now);
+    expect(filled.headers.get("cache-control")).toBe("private, no-store");
+    const out = await filled.text();
+    const valueOf = (name: string): string | undefined => new RegExp(`name="${name}"[^>]*value="([^"]*)"`).exec(out)?.[1];
+    expect(valueOf(CHECK_FIELD.gclid)).toBe("Cj0KCQ_abc-123");
+    expect(valueOf(CHECK_FIELD.wbraid)).toBe("WB_9");
+    expect(valueOf(CHECK_FIELD.gbraid)).toBe("");
+    expect(valueOf(CHECK_FIELD.clickedAt)).toBe(now.toISOString());
+    expect(valueOf(CHECK_FIELD.source)).toBe("utm_source=google");
+  });
+
+  it("drops a click id outside [A-Za-z0-9_-] or over 200 chars", async () => {
+    for (const bad of ['abc"><script>', "abc def", "abc.def", "a".repeat(CHECK_LIMIT.clickId + 1)]) {
+      const page = new Response('<input name="gclid" type="hidden" value=""/><input name="clicked_at" type="hidden" value=""/>', {
+        headers: { "content-type": "text/html" },
+      });
+      const url = new URL(`${SITE_URL}${SITE_CHECK_PAGE}`);
+      url.searchParams.set("gclid", bad);
+      const response = withFormFilled(page, url);
+      expect(response).toBe(page);
+      expect(cleanClickId(bad)).toBe("");
+    }
+    expect(cleanClickId("a".repeat(CHECK_LIMIT.clickId))).toHaveLength(CHECK_LIMIT.clickId);
+
+    const { env, stored } = checkFixture();
+    await handleCheck(checkPost({ ...VALID_CHECK, [CHECK_FIELD.gclid]: "bad id!", [CHECK_FIELD.clickedAt]: new Date().toISOString() }), env);
+    const record = JSON.parse([...stored.values()][0] ?? "{}") as Record<string, string>;
+    expect(record.gclid).toBe("");
+    expect(record.clickedAt).toBe("");
+  });
+
+  it("stores the click id + click time on the request and puts them in the email", async () => {
+    const { env, stored, sent } = checkFixture();
+    const clickedAt = new Date(Date.now() - 60_000).toISOString();
+    const { logged } = await captureLogs(() =>
+      handleCheck(checkPost({ ...VALID_CHECK, [CHECK_FIELD.gclid]: "Cj0KCQ_abc-123", [CHECK_FIELD.clickedAt]: clickedAt }), env),
+    );
+    const record = JSON.parse([...stored.values()][0] ?? "{}") as Record<string, string>;
+    expect(record.gclid).toBe("Cj0KCQ_abc-123");
+    expect(record.gbraid).toBe("");
+    expect(record.wbraid).toBe("");
+    expect(record.clickedAt).toBe(clickedAt);
+    expect(sent[0]?.text).toContain(`ad click: gclid Cj0KCQ_abc-123 (clicked ${clickedAt})`);
+    expect(logged).not.toContain("Cj0KCQ_abc-123");
+
+    const fromReferer = checkFixture();
+    await handleCheck(checkPost(VALID_CHECK, { referer: `${SITE_URL}${SITE_CHECK_PAGE}?gbraid=GB_1` }), fromReferer.env);
+    const refererRecord = JSON.parse([...fromReferer.stored.values()][0] ?? "{}") as Record<string, string>;
+    expect(refererRecord.gbraid).toBe("GB_1");
+    expect(refererRecord.clickedAt).toBe("");
+    expect(fromReferer.sent[0]?.text).toContain("ad click: gbraid GB_1\n");
+
+    const none = checkFixture();
+    await handleCheck(checkPost({ ...VALID_CHECK, [CHECK_FIELD.clickedAt]: clickedAt }), none.env);
+    expect(none.sent[0]?.text).toContain("ad click: (none)");
+    expect((JSON.parse([...none.stored.values()][0] ?? "{}") as Record<string, string>).clickedAt).toBe("");
+  });
+
+  it("keeps a click time only when it is a past ISO instant within 90 days of the request", () => {
+    const receivedAt = "2026-11-14T18:00:00.000Z";
+    expect(cleanClickedAt("2026-11-14T17:59:00.000Z", receivedAt)).toBe("2026-11-14T17:59:00.000Z");
+    for (const bad of ["2026-11-14T18:01:00.000Z", "2026-08-01T00:00:00.000Z", "yesterday", "2026-11-14 17:59:00", ""]) {
+      expect(cleanClickedAt(bad, receivedAt)).toBe("");
+    }
+  });
+
+  it("carries the click id fields through the retry page, escaped", async () => {
+    const fixture = checkFixture();
+    const { [TURNSTILE_RESPONSE_FIELD]: _token, ...withoutToken } = { ...VALID_CHECK, [CHECK_FIELD.gclid]: "Cj0_x" };
+    const html = await (await handleCheck(checkPost(withoutToken), fixture.env)).text();
+    expect(html).toContain(`<input name="${CHECK_FIELD.gclid}" type="hidden" value="Cj0_x" />`);
+    expect(html).toContain(`href="${PRIVACY_ROUTE}"`);
   });
 
   it("renders the thank-you page w/ the reply time the site states + a what-happens-next list, noindex", async () => {
@@ -1222,5 +1309,55 @@ describe("site check email", () => {
     await handleCheck(checkPost(VALID_CHECK), noMailer.env);
     expect(noMailer.sent).toHaveLength(0);
     expect(noMailer.stored.size).toBe(1);
+  });
+});
+
+describe("privacy page", () => {
+  it("renders the privacy page, linked from the footer + under the form, and lists it in the sitemap", async () => {
+    const response = await app.handle("GET", PRIVACY_ROUTE);
+    const html = decodeEntities(await text(response));
+    expect(response.status).toBe(200);
+    expect((html.match(/<h1[\s>]/g) ?? []).length).toBe(1);
+    expect(html).toContain(PRIVACY_LEDE);
+    expect(html).toContain(PRIVACY_DESCRIPTION);
+    for (const section of PRIVACY_SECTIONS) expect(html).toContain(section.title);
+    for (const phrase of ["cloudflare", "google ads", "no ad cookies", "turnstile", `mailto:${CONTACT_EMAIL}`]) expect(html).toContain(phrase);
+    const footer = html.slice(html.indexOf("<footer"));
+    expect(footer).toContain(`href="${PRIVACY_ROUTE}"`);
+    const form = decodeEntities(await text(await app.handle("GET", SITE_CHECK_PAGE)));
+    expect(form.slice(form.indexOf("<form"), form.indexOf("</form>"))).toContain(`href="${PRIVACY_ROUTE}"`);
+    expect(sitemapRoutes(await loadAllCaseStudies(), await loadAllArticles())).toContain(PRIVACY_ROUTE);
+  });
+});
+
+describe("ad lead export", () => {
+  it("formats a Google Ads offline conversion CSV in America/Los_Angeles time", () => {
+    const csv = conversionsCsv([
+      { receivedAt: "2026-11-14T18:05:09.123Z", gclid: "Cj0KCQ_abc-123", gbraid: "", wbraid: "" },
+      { receivedAt: "2026-07-04T03:00:00.000Z", gclid: "", gbraid: "GB_1", wbraid: "" },
+      { receivedAt: "2026-11-13T00:00:00.000Z", gclid: "", gbraid: "", wbraid: "" },
+      { receivedAt: "2026-11-13T00:00:00.000Z", gclid: "bad id!" },
+    ]);
+    expect(csv).toBe(
+      [
+        "Google Click ID,Conversion Name,Conversion Time,Conversion Value,Conversion Currency",
+        "Cj0KCQ_abc-123,site check lead,2026-11-14 10:05:09 America/Los_Angeles,,USD",
+        "GB_1,site check lead,2026-07-03 20:00:00 America/Los_Angeles,,USD",
+        "",
+      ].join("\n"),
+    );
+    expect(CSV_HEADER).toHaveLength(5);
+    expect(conversionsCsv([{ receivedAt: "2026-11-14T08:00:00.000Z", gclid: "x" }], 'lead, "form"')).toContain('x,"lead, ""form""",2026-11-14 00:00:00 America/Los_Angeles,,USD');
+    expect(googleAdsTime(new Date("2026-01-01T07:30:00.000Z"))).toBe("2025-12-31 23:30:00 America/Los_Angeles");
+    expect(clickIdOf({ gclid: "", wbraid: "WB_2" })).toBe("WB_2");
+  });
+
+  it("keeps only keys from the last N days + reads its flags", () => {
+    const now = new Date("2026-11-14T00:00:00.000Z");
+    const keys = ["check:2026-11-10T12:00:00.000Z:a1", "check:2026-10-01T12:00:00.000Z:b2", "other:2026-11-10T12:00:00.000Z:c3", "check:junk"];
+    expect(keysSince(keys, 30, now)).toEqual(["check:2026-11-10T12:00:00.000Z:a1"]);
+    expect(parseArgs([])).toEqual({ days: 30, conversionName: "site check lead" });
+    expect(parseArgs(["--days", "7", "--name", "lead"])).toEqual({ days: 7, conversionName: "lead" });
+    expect(() => parseArgs(["--days", "0"])).toThrow();
   });
 });

@@ -11,6 +11,7 @@ import {
   OG_IMAGE_HEIGHT,
   OG_IMAGE_PATH,
   OG_IMAGE_WIDTH,
+  PRIVACY_ROUTE,
   SERVICE_AREA_COPY,
   SERVICE_AREA_SHORT,
   SITE_NAME,
@@ -25,6 +26,7 @@ import { makeProcess } from "./ui/process";
 import { makeOrangeCounty, makeServicePage, makeServicesIndex, SERVICES_LEDE } from "./ui/service";
 import { ORANGE_COUNTY_ROUTE, serviceRoute, SERVICES, SERVICES_ROUTE } from "./services";
 import { makeCheckSent } from "./ui/check";
+import { makePrivacy, PRIVACY_DESCRIPTION, PRIVACY_TITLE } from "./ui/privacy";
 import { CHECK_SENT_ROUTE } from "./check";
 import { makeCaseStudy, makeWorkIndex, makeWorkRequest } from "./ui/work";
 import { previewDraftsFromEnv } from "./preview";
@@ -168,6 +170,12 @@ export async function buildAppConfig(
       metadata: () =>
         seoMetadata({ title: ORANGE_COUNTY_TITLE, description: ORANGE_COUNTY_DESCRIPTION, route: ORANGE_COUNTY_ROUTE, type: "website" }),
     });
+
+  app = app.page(PRIVACY_ROUTE, {
+    static: true,
+    component: makePrivacy(),
+    metadata: () => seoMetadata({ title: `${PRIVACY_TITLE} · ${SITE_NAME}`, description: PRIVACY_DESCRIPTION, route: PRIVACY_ROUTE, type: "website" }),
+  });
 
   app = app.page(CHECK_SENT_ROUTE, {
     static: true,

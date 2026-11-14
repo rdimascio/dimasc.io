@@ -1,6 +1,6 @@
 import type { ReactElement, ReactNode } from "react";
 
-import { ABOUT_ROUTE, CONTACT_EMAIL, GITHUB_URL, introCallHref, introCallLabel, SERVICE_AREA_COPY, SITE_NAME, SITE_NAME_PROPER } from "../site";
+import { ABOUT_ROUTE, CONTACT_EMAIL, GITHUB_URL, introCallHref, introCallLabel, PRIVACY_ROUTE, SERVICE_AREA_COPY, SITE_NAME, SITE_NAME_PROPER } from "../site";
 import { ARTICLES_ROUTE } from "../content";
 import { ORANGE_COUNTY_ROUTE, serviceRoute, SERVICES, SERVICES_ROUTE } from "../services";
 import { WORK_ROUTE } from "../work";
@@ -123,6 +123,7 @@ function Footer({ sections }: { sections: NavSections }): ReactElement {
     { label: "one-project jobs", href: "/process" },
     { label: "github", href: GITHUB_URL },
     { label: "email", href: `mailto:${CONTACT_EMAIL}` },
+    { label: "privacy", href: PRIVACY_ROUTE },
   ];
   const serviceLinks = [
     ...SERVICES.map((service) => ({ label: service.name, href: serviceRoute(service.slug) })),

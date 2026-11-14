@@ -14,6 +14,7 @@ export const SITE_TAGLINE = "website help for small businesses";
 export const CONTACT_EMAIL = "ryan@dimasc.io";
 export const GITHUB_URL = "https://github.com/rdimascio";
 export const ABOUT_ROUTE = "/about";
+export const PRIVACY_ROUTE = "/privacy";
 
 export const BOOKING_URL: string | null = null;
 export const MAX_SUBSCRIPTION_CLIENTS: number | null = null;

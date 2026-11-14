@@ -1,7 +1,20 @@
 import type { ReactElement } from "react";
 
-import { CHECK_FIELD, CHECK_INPUT_CLASS, CHECK_LABEL_CLASS, CHECK_LIMIT, CHECK_ROUTE, TURNSTILE_ACTION, TURNSTILE_APPEARANCE, TURNSTILE_SCRIPT_SRC, TURNSTILE_SITEKEY } from "../check";
-import { CONTACT_EMAIL, QUICK_FIX_MINUTES, SITE_CHECK_ANCHOR, SITE_CHECK_CTA } from "../site";
+import {
+  CHECK_FIELD,
+  CHECK_INPUT_CLASS,
+  CHECK_LABEL_CLASS,
+  CHECK_LIMIT,
+  CHECK_PRIVACY_LINE,
+  CHECK_PRIVACY_LINK,
+  CHECK_ROUTE,
+  CLICK_ID_PARAMS,
+  TURNSTILE_ACTION,
+  TURNSTILE_APPEARANCE,
+  TURNSTILE_SCRIPT_SRC,
+  TURNSTILE_SITEKEY,
+} from "../check";
+import { CONTACT_EMAIL, PRIVACY_ROUTE, QUICK_FIX_MINUTES, SITE_CHECK_ANCHOR, SITE_CHECK_CTA } from "../site";
 import { WORK_ROUTE } from "../work";
 import { ArrowLink, Eyebrow, HEADING, LEDE, PAGE } from "./layout";
 
@@ -64,6 +77,10 @@ export function CheckForm(): ReactElement {
           <textarea className={`${CHECK_INPUT_CLASS} min-h-[9rem]`} maxLength={CHECK_LIMIT.message} name={CHECK_FIELD.message} required rows={5} />
         </label>
         <input defaultValue="" name={CHECK_FIELD.source} type="hidden" />
+        {CLICK_ID_PARAMS.map((name) => (
+          <input defaultValue="" key={name} name={CHECK_FIELD[name]} type="hidden" />
+        ))}
+        <input defaultValue="" name={CHECK_FIELD.clickedAt} type="hidden" />
         <div aria-hidden="true" className="absolute -left-[9999px] w-px h-px overflow-hidden">
           <label>
             leave this empty
@@ -78,6 +95,12 @@ export function CheckForm(): ReactElement {
           </button>
         </div>
         <EmailFallback />
+        <p className="m-0 text-muted text-[0.92rem]">
+          {CHECK_PRIVACY_LINE}{" "}
+          <a className="link-underline text-ink" href={PRIVACY_ROUTE}>
+            {CHECK_PRIVACY_LINK}
+          </a>
+        </p>
       </form>
     </section>
   );
