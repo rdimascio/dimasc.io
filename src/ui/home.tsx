@@ -2,10 +2,12 @@ import type { CSSProperties, ReactElement } from "react";
 
 import { ARTICLES_ROUTE, type Article, type CaseStudy, type FaqItem, type Plan } from "../content";
 import { BRAND_LOGOS, logoSrc, opticalScale } from "../logos";
-import { fixRequestHref, introCallHref, MAX_SUBSCRIPTION_CLIENTS, planHref } from "../site";
+import { fixRequestHref, introCallHref, MAX_SUBSCRIPTION_CLIENTS, planHref, SERVICE_AREA_COPY, SERVICE_AREA_SHORT } from "../site";
+import { homeGraph } from "../structured-data";
 import { projectName, WORK_ROUTE } from "../work";
 import { ABOUT_ROUTE, ArrowLink, Eyebrow, SectionHead, WIDTH } from "./layout";
 import { ArticleList } from "./articles";
+import { JsonLd } from "./json-ld";
 import { CaseStudyGrid, RequestNote } from "./work";
 
 export const REFUND_RULE = "monthly help: not happy in the first 7 days? cancel and i refund 75% of your first payment, even if i already delivered work. care is cancel anytime.";
@@ -25,7 +27,7 @@ const HELP_WITH = [
 ] as const;
 
 const STEPS = [
-  { title: "pick a plan", body: "care, monthly help or one price for one project. you get one list for everything you ask for." },
+  { title: "pick a plan", body: "one fix, care, monthly help or one price for one project. you get one list for everything you ask for." },
   { title: "add jobs to your list", body: "what's broken or slowing you down: a fix, a page, a new tool." },
   { title: "check the finished work", body: "most small jobs come back in 2 business days. i keep going until it's right." },
 ] as const;
@@ -55,8 +57,25 @@ function sectionIndex(position: number): string {
 }
 
 export function lowestPrice(plans: readonly Plan[]): number | null {
-  const prices = plans.map((plan) => plan.price).filter((price): price is number => price !== null);
+  const prices = plans
+    .filter((plan) => plan.per === "month")
+    .map((plan) => plan.price)
+    .filter((price): price is number => price !== null);
   return prices.length === 0 ? null : Math.min(...prices);
+}
+
+export function fixPrice(plans: readonly Plan[]): number | null {
+  return plans.find((plan) => plan.per === "fix")?.price ?? null;
+}
+
+export function startingPricesLine(plans: readonly Plan[]): string | null {
+  const fix = fixPrice(plans);
+  const monthly = lowestPrice(plans);
+  const parts = [
+    ...(fix === null ? [] : [`one fix for ${formatPrice(fix)}`]),
+    ...(monthly === null ? [] : [`care from ${formatPrice(monthly)}/month`]),
+  ];
+  return parts.length === 0 ? null : `${parts.join(", ")}, or one project for one price.`;
 }
 
 function listNames(names: readonly string[]): string {
@@ -79,7 +98,7 @@ function PlanCard({ plan }: { plan: Plan }): ReactElement {
         <span className="text-[clamp(2.8rem,4.6vw,3.8rem)] leading-none tracking-[-0.055em] font-medium">
           {plan.price === null ? <span className="serif tracking-[-0.02em]">let's talk</span> : formatPrice(plan.price)}
         </span>
-        {plan.price === null ? null : <span className="text-muted">/month</span>}
+        {plan.price === null ? null : <span className="text-muted">{`/${plan.per}`}</span>}
       </p>
       <ul className="mt-9 mb-10 p-0 list-none flex flex-col border-t border-line">
         {plan.features.map((feature) => (
@@ -123,10 +142,10 @@ function ExampleBoard(): ReactElement {
 }
 
 function Hero({ plans }: { plans: readonly Plan[] }): ReactElement {
-  const fromPrice = lowestPrice(plans);
+  const pricesLine = startingPricesLine(plans);
   return (
     <section className={`${WIDTH} pt-10 sm:pt-16 pb-12 sm:pb-20`}>
-      <Eyebrow>for small businesses</Eyebrow>
+      <Eyebrow>{`for small businesses in ${SERVICE_AREA_COPY}`}</Eyebrow>
       <h1 className="mt-8 sm:mt-10 mb-0 font-semibold leading-[0.98] tracking-[-0.055em] text-[clamp(3rem,9vw,9.6rem)] max-w-[13ch] [text-wrap:balance]">
         <span className="hero-line">
           <span>
@@ -137,7 +156,7 @@ function Hero({ plans }: { plans: readonly Plan[] }): ReactElement {
       </h1>
       <div className="mt-12 sm:mt-16 grid gap-10 md:grid-cols-12 items-end">
         <p className="md:col-span-6 m-0 text-[clamp(1.25rem,2vw,1.6rem)] leading-[1.35] tracking-[-0.02em] max-w-[32rem] [text-wrap:pretty]">
-          i fix + improve your website and the tools behind it. most small fixes are done in 2 business days.
+          {`i fix + improve your website and the tools behind it. based in ${SERVICE_AREA_SHORT}, working w/ businesses here + anywhere in the us.`}
         </p>
         <div className="md:col-span-6 flex flex-col gap-5 md:items-end">
           <div className="flex flex-wrap items-center gap-3 md:justify-end">
@@ -148,11 +167,7 @@ function Hero({ plans }: { plans: readonly Plan[] }): ReactElement {
               see prices
             </a>
           </div>
-          {fromPrice === null ? null : (
-            <p className="m-0 text-[0.95rem] text-muted md:text-right">
-              from {formatPrice(fromPrice)}/month, or one project for one price. cancel anytime.
-            </p>
-          )}
+          {pricesLine === null ? null : <p className="m-0 text-[0.95rem] text-muted md:text-right">{`${pricesLine} cancel care anytime.`}</p>}
         </div>
       </div>
     </section>
@@ -240,11 +255,11 @@ function Pricing({ plans }: { plans: readonly Plan[] }): ReactElement {
         label="prices"
         title={
           <>
-            care, monthly help <span className="serif text-muted">or one project for one price.</span>
+            start w/ one fix. <span className="serif text-muted">then care, monthly help or one project.</span>
           </>
         }
       />
-      <div className="grid gap-5 lg:grid-cols-3 items-stretch">
+      <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-4 items-stretch">
         {plans.map((plan) => (
           <PlanCard key={plan.slug} plan={plan} />
         ))}
@@ -382,6 +397,7 @@ export function Home({
 }): ReactElement {
   return (
     <main>
+      <JsonLd data={homeGraph(plans, faq)} />
       <Hero plans={plans} />
       <LogoStrip />
       <HelpWith />

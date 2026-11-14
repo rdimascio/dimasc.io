@@ -1,6 +1,9 @@
 import type { ReactElement } from "react";
 
 import type { ProcessStep } from "../content";
+import { PROCESS_ROUTE } from "../sitemap";
+import { breadcrumbLd, pageGraph } from "../structured-data";
+import { JsonLd } from "./json-ld";
 import { Eyebrow, HEADING, LEDE, PAGE } from "./layout";
 
 function stepNumber(step: number): string {
@@ -27,6 +30,7 @@ export function ProcessRows({ steps }: { steps: readonly ProcessStep[] }): React
 function ProcessPage({ steps }: { steps: readonly ProcessStep[] }): ReactElement {
   return (
     <main className={PAGE}>
+      <JsonLd data={pageGraph(breadcrumbLd([{ name: "how a one-project job works", route: PROCESS_ROUTE }]))} />
       <Eyebrow>one-project jobs</Eyebrow>
       <h1 className={`${HEADING} mt-8`}>how a one‑project job works</h1>
       <p className={`${LEDE} mt-8`}>

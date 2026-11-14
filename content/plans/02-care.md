@@ -10,5 +10,5 @@ features:
   - "cancel anytime"
 cta: "ask about care"
 featured: false
-order: 1
+order: 2
 ---

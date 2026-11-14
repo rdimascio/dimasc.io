@@ -21,11 +21,12 @@ Ryan DiMascio's studio site: a static Lesto 0.2 app on Cloudflare Workers. Every
 - Articles: `content/articles/<slug>.md`, served at `/articles/<slug>`. Copy `_template.md`. `draft: true` keeps it off the public site; set `draft: false` to publish. The articles index, nav link, home section and `/articles/feed.xml` appear only once one article is published.
 - Preview drafts (articles and full case studies): `PREVIEW_DRAFTS=1 bun run build`, then `bunx wrangler dev`.
 - Work history: `content/experience/NN-company.md`, shown on `/` and `/about`. Unknown facts stay as `# TODO(ryan):` YAML comments and are never rendered. Demo videos live in `assets/demos` (clip under 4 MB, full video under 25 MB) and are served at `/media/demos`.
-- Studio pages ship no script. Motion is CSS only (view transitions, scroll-driven reveals) and is off under `prefers-reduced-motion`.
+- Studio pages ship no executable script. JSON-LD data blocks (`application/ld+json`, built in `src/structured-data.ts`) are allowed. Motion is CSS only (view transitions, scroll-driven reveals) and is off under `prefers-reduced-motion`.
 - Frontmatter schemas live in `lesto.content.ts`. A file that fails its schema fails the build.
 
 ## Rules
 
+- Never publish a phone number or a street address, in copy or in JSON-LD.
 - Never name a client without their permission. Leave `client` out instead.
 - Only numbers that can be proved. No invented results.
 - Never mention internal or employer work, its tools or its ticket ids.

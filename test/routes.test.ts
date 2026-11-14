@@ -4,7 +4,11 @@ import { createApp } from "@lesto/kernel";
 import type { App } from "@lesto/kernel";
 
 import appConfig from "../lesto.app";
-import { buildAppConfig } from "../src/app";
+import { buildAppConfig, HOME_TITLE, homeDescription } from "../src/app";
+import { canonicalRedirect } from "../src/redirect";
+import { NOINDEX_ROUTES, PROCESS_ROUTE, siteRoutes, sitemapRoutes } from "../src/sitemap";
+import { BUSINESS_ID, htmlToText, PERSON_ID } from "../src/structured-data";
+import { JSON_LD_TYPE } from "../src/ui/json-ld";
 import {
   ARTICLES_ROUTE,
   loadAllArticles,
@@ -32,10 +36,13 @@ import {
   OG_IMAGE_PATH,
   OG_IMAGE_SOURCE,
   OG_IMAGE_WIDTH,
+  SERVICE_AREA,
+  SERVICE_AREA_COPY,
   SITE_NAME_PROPER,
   SITE_URL,
+  WWW_HOST,
 } from "../src/site";
-import { formatPrice, REFUND_RULE, SINCE_YEAR, STAFF_LINE } from "../src/ui/home";
+import { fixPrice, formatPrice, REFUND_RULE, SINCE_YEAR, STAFF_LINE } from "../src/ui/home";
 import { BRAND_LOGOS, LOGO_SOURCE_DIR, logoSrc } from "../src/logos";
 import { articleRoutes, articlesFeed, FEED_ROUTE } from "../src/feed";
 import { SIGNATURE } from "../src/signature";
@@ -69,6 +76,38 @@ function decodeEntities(html: string): string {
   return html.replaceAll("&#x27;", "'").replaceAll("&amp;", "&");
 }
 
+const JSON_LD_BLOCK = new RegExp(`<script type="${RegExp.escape(JSON_LD_TYPE)}">([\\s\\S]*?)</script>`, "g");
+const STUDIO_ROUTES = ["/", ABOUT_ROUTE, PROCESS_ROUTE, WORK_ROUTE, WORK_REQUEST_ROUTE] as const;
+
+type LdNode = Record<string, unknown>;
+
+function jsonLdBlocks(html: string): string[] {
+  return [...html.matchAll(JSON_LD_BLOCK)].map((match) => match[1] ?? "");
+}
+
+function withoutJsonLd(html: string): string {
+  return html.replace(JSON_LD_BLOCK, "");
+}
+
+function ldNodes(html: string): LdNode[] {
+  return jsonLdBlocks(html).flatMap((block) => {
+    const parsed = JSON.parse(block) as { "@graph"?: LdNode[] };
+    return parsed["@graph"] ?? [parsed as LdNode];
+  });
+}
+
+function ldTypes(html: string): unknown[] {
+  return ldNodes(html).map((node) => node["@type"]);
+}
+
+function ldNode(html: string, type: string): LdNode | undefined {
+  return ldNodes(html).find((node) => node["@type"] === type);
+}
+
+function requestTo(url: string): Request {
+  return new Request(url);
+}
+
 function luxuryPresenceRoles(experience: Awaited<ReturnType<typeof loadExperience>>): readonly unknown[] {
   return experience.find((item) => item.company === "luxury presence")?.roles ?? [];
 }
@@ -100,8 +139,9 @@ describe("site routes", () => {
     const html = await text(await app.handle("GET", "/"));
     const plans = await loadPlans();
 
-    expect(plans.map((plan) => plan.name)).toEqual(["care", "monthly help", "one project"]);
-    expect(plans.map((plan) => plan.price)).toEqual([199, 1500, null]);
+    expect(plans.map((plan) => plan.name)).toEqual(["fix it", "care", "monthly help", "one project"]);
+    expect(plans.map((plan) => plan.price)).toEqual([500, 199, 1500, null]);
+    expect(plans.map((plan) => plan.per)).toEqual(["fix", "month", "month", "month"]);
     expect(html).toContain("from $199/month");
     expect(html).toContain("care from $199/month");
     for (const plan of plans) {
@@ -140,7 +180,9 @@ describe("site routes", () => {
   });
 
   it("keeps every claim on the care and monthly help plans and drops the old tiers", async () => {
-    const [care, monthly] = await loadPlans();
+    const plans = await loadPlans();
+    const care = plans.find((plan) => plan.name === "care");
+    const monthly = plans.find((plan) => plan.name === "monthly help");
     expect(care?.features).toEqual(
       expect.arrayContaining(["uptime + security monitoring", "up to 2 small fixes a month", "i reply within 1 business day", "cancel anytime"]),
     );
@@ -279,7 +321,7 @@ describe("site routes", () => {
   });
 
   it("never shows an open question or a phone number on a public page", async () => {
-    for (const route of ["/", ABOUT_ROUTE, "/process", WORK_ROUTE, WORK_REQUEST_ROUTE]) {
+    for (const route of STUDIO_ROUTES) {
       const html = await text(await app.handle("GET", route));
       expect(html).not.toContain("TODO");
       expect(html).not.toMatch(PHONE_NUMBER);
@@ -421,10 +463,143 @@ describe("site routes", () => {
     }
   });
 
-  it("ships no client script on the studio pages", async () => {
-    for (const route of ["/", ABOUT_ROUTE, "/process", WORK_ROUTE, WORK_REQUEST_ROUTE]) {
-      expect(await text(await app.handle("GET", route))).not.toContain("<script");
+  it("ships no client script on the studio pages, only JSON-LD data blocks", async () => {
+    for (const route of STUDIO_ROUTES) {
+      const html = await text(await app.handle("GET", route));
+      expect(withoutJsonLd(html)).not.toContain("<script");
+      for (const block of jsonLdBlocks(html)) {
+        expect(() => JSON.parse(block)).not.toThrow();
+        expect(block).not.toContain("<");
+      }
     }
+  });
+
+  it("offers one fixed-price fix first, paid upfront, w/ care after", async () => {
+    const plans = await loadPlans();
+    const fix = plans[0];
+    const care = plans.find((plan) => plan.name === "care");
+    expect(fix?.name).toBe("fix it");
+    expect(fix?.per).toBe("fix");
+    expect(fix?.price).toBe(500);
+    expect(fix?.features).toEqual(expect.arrayContaining(["one fix, one fixed price", "paid upfront, no hourly bills", "done in about a week"]));
+    expect(fix?.features.join(" ")).toContain(`care is ${formatPrice(care?.price ?? 0)}/month`);
+
+    const html = decodeEntities(await text(await app.handle("GET", "/")));
+    expect(html).toContain(`one fix for ${formatPrice(fixPrice(plans) ?? 0)}`);
+    expect(html).toContain("/fix</span>");
+    const faq = (await loadFaq()).find((item) => item.question.includes(formatPrice(fix?.price ?? 0)));
+    expect(faq).toBeDefined();
+    expect(htmlToText(faq?.html ?? "")).toContain(`care is ${formatPrice(care?.price ?? 0)}/month`);
+  });
+
+  it("names the service area in the title, description, hero, footer and FAQ", async () => {
+    const plans = await loadPlans();
+    const html = decodeEntities(await text(await app.handle("GET", "/")));
+    expect(HOME_TITLE.length).toBeLessThanOrEqual(60);
+    expect(HOME_TITLE).toContain("orange county");
+    expect(html).toContain(`<title>${HOME_TITLE}</title>`);
+    expect(homeDescription(plans).length).toBeLessThanOrEqual(155);
+    expect(homeDescription(plans)).toContain(SERVICE_AREA_COPY);
+    const hero = html.slice(html.indexOf("<main"), html.indexOf("</section>", html.indexOf("<main")));
+    expect(hero).toContain(`for small businesses in ${SERVICE_AREA_COPY}`);
+    const footer = html.slice(html.indexOf("<footer"));
+    expect(footer).toContain(SERVICE_AREA_COPY);
+    expect((await loadFaq()).some((item) => item.question.includes("orange county"))).toBe(true);
+  });
+
+  it("describes the business, owner and site in JSON-LD on the home page w/o an address or phone", async () => {
+    const html = await text(await app.handle("GET", "/"));
+    const business = ldNode(html, "ProfessionalService");
+    expect(ldTypes(html)).toEqual(["ProfessionalService", "Person", "WebSite", "FAQPage"]);
+    expect(business?.["@id"]).toBe(BUSINESS_ID);
+    expect(business?.founder).toEqual({ "@id": PERSON_ID });
+    const areas = JSON.stringify(business?.areaServed);
+    for (const place of [SERVICE_AREA.county, ...SERVICE_AREA.cities]) expect(areas).toContain(place);
+    const offers = business?.makesOffer as { price: string }[];
+    expect(offers.map((offer) => offer.price)).toEqual(["500", "199", "1500"]);
+    for (const block of jsonLdBlocks(html)) {
+      for (const banned of ["telephone", "address", "streetAddress", "postalCode"]) expect(block).not.toContain(`"${banned}"`);
+      expect(block).not.toMatch(PHONE_NUMBER);
+    }
+  });
+
+  it("marks up only the FAQ that is on the page, and only on the home page", async () => {
+    const html = await text(await app.handle("GET", "/"));
+    const faq = await loadFaq();
+    const questions = (ldNode(html, "FAQPage")?.mainEntity ?? []) as { name: string; acceptedAnswer: { text: string } }[];
+    expect(questions.length).toBe((html.match(/<details/g) ?? []).length);
+    expect(questions.map((question) => question.name)).toEqual(faq.map((item) => item.question));
+    for (const question of questions) expect(question.acceptedAnswer.text).not.toMatch(/<[a-z]/);
+    for (const route of STUDIO_ROUTES.slice(1)) {
+      expect(ldTypes(await text(await app.handle("GET", route)))).not.toContain("FAQPage");
+    }
+  });
+
+  it("adds a breadcrumb trail on every indexable sub-page", async () => {
+    for (const route of [ABOUT_ROUTE, PROCESS_ROUTE, WORK_ROUTE]) {
+      const crumbs = ldNode(await text(await app.handle("GET", route)), "BreadcrumbList");
+      const items = (crumbs?.itemListElement ?? []) as { position: number; item: string }[];
+      expect(items.map((item) => item.position)).toEqual([1, 2]);
+      expect(items.map((item) => item.item)).toEqual([`${SITE_URL}/`, `${SITE_URL}${route}`]);
+    }
+    expect(ldTypes(await text(await app.handle("GET", "/")))).not.toContain("BreadcrumbList");
+  });
+
+  it("marks up every article as a blog post by the site owner", async () => {
+    const preview = await createApp(await buildAppConfig({ previewDrafts: true }));
+    for (const article of await loadArticles(true)) {
+      const html = await text(await preview.handle("GET", article.route));
+      const post = ldNode(html, "BlogPosting");
+      expect(post?.headline).toBe(article.title);
+      expect(post?.datePublished).toBe(article.published);
+      expect(post?.mainEntityOfPage).toBe(`${SITE_URL}${article.route}`);
+      expect((post?.author as LdNode | undefined)?.["@id"]).toBe(PERSON_ID);
+      expect(ldTypes(html)).toContain("BreadcrumbList");
+    }
+  });
+
+  it("keeps the work request page out of search and out of the sitemap", async () => {
+    const html = await text(await app.handle("GET", WORK_REQUEST_ROUTE));
+    expect(html).toContain('<meta name="robots" content="noindex, follow"');
+    const studies = await loadAllCaseStudies();
+    const routes = sitemapRoutes(studies, await loadAllArticles());
+    for (const route of NOINDEX_ROUTES) expect(routes).not.toContain(route);
+    expect(routes).toContain(WORK_ROUTE);
+    for (const route of routes) {
+      const page = await text(await app.handle("GET", route));
+      expect(page).not.toContain('name="robots"');
+    }
+  });
+
+  it("never puts a draft or a full case study in the sitemap, even when previews are on", async () => {
+    const studies = await loadAllCaseStudies();
+    const all = await loadAllArticles();
+    const routes = sitemapRoutes(studies, all);
+    for (const draft of all.filter((article) => article.draft)) expect(routes).not.toContain(draft.route);
+    for (const study of studies) expect(routes).not.toContain(study.route);
+    if (all.every((article) => article.draft)) expect(routes).not.toContain(ARTICLES_ROUTE);
+    for (const route of routes) expect(siteRoutes(studies, all, true)).toContain(route);
+
+    const preview = await createApp(await buildAppConfig({ previewDrafts: true }));
+    const index = await text(await preview.handle("GET", ARTICLES_ROUTE));
+    expect(index.includes('content="noindex"')).toBe(all.every((article) => article.draft));
+  });
+
+  it("sends www and plain http to the https apex w/ a 301, keeping the path and query", () => {
+    for (const from of [`https://${WWW_HOST}/about?x=1`, `http://${WWW_HOST}/about?x=1`, "http://dimasc.io/about?x=1"]) {
+      const response = canonicalRedirect(requestTo(from));
+      expect(response?.status).toBe(301);
+      expect(response?.headers.get("location")).toBe(`${SITE_URL}/about?x=1`);
+    }
+    expect(canonicalRedirect(requestTo(`https://${WWW_HOST}/`))?.headers.get("location")).toBe(`${SITE_URL}/`);
+    for (const stay of [`${SITE_URL}/about`, "http://localhost:8787/about", "https://seo-dimasc-io.example.workers.dev/"]) {
+      expect(canonicalRedirect(requestTo(stay))).toBeNull();
+    }
+  });
+
+  it("runs the worker before static assets so the host redirect can fire", async () => {
+    const config = await Bun.file("wrangler.jsonc").text();
+    expect(config).toMatch(/"run_worker_first":\s*true/);
   });
 
   it("returns 404 for an unknown path", async () => {

@@ -1,6 +1,6 @@
 import type { ReactElement, ReactNode } from "react";
 
-import { ABOUT_ROUTE, CONTACT_EMAIL, GITHUB_URL, introCallHref, introCallLabel, SITE_NAME, SITE_NAME_PROPER } from "../site";
+import { ABOUT_ROUTE, CONTACT_EMAIL, GITHUB_URL, introCallHref, introCallLabel, SERVICE_AREA_COPY, SITE_NAME, SITE_NAME_PROPER } from "../site";
 import { ARTICLES_ROUTE } from "../content";
 import { WORK_ROUTE } from "../work";
 import { PixelWordmark } from "./pixel-wordmark";
@@ -80,7 +80,7 @@ function ContactBand(): ReactElement {
         </h2>
         <div className="mt-14 grid gap-8 md:grid-cols-12 items-end">
           <p className="md:col-span-5 m-0 text-muted text-[1.1rem] leading-relaxed max-w-[28rem]">
-            tell me what's broken or slowing you down. i'll tell you if monthly help or one project makes more sense, or if you need me at all.
+            tell me what's broken or slowing you down. i'll tell you if one fix, care, monthly help or one project makes sense, or if you need me at all.
           </p>
           <div className="md:col-span-7 flex flex-wrap gap-3 md:justify-end">
             <ArrowLink href={introCallHref()} tone="accent">
@@ -126,7 +126,9 @@ function Footer({ sections }: { sections: NavSections }): ReactElement {
     <footer className="night">
       <div className={`${WIDTH} pt-10`}>
         <div className="border-t border-line pt-8 grid gap-8 md:grid-cols-12">
-          <p className="md:col-span-5 m-0 text-muted max-w-[22rem]">website help for small businesses. built + tested by me.</p>
+          <p className="md:col-span-5 m-0 text-muted max-w-[22rem]">
+            {`website help for small businesses in ${SERVICE_AREA_COPY} + anywhere in the us. built + tested by me.`}
+          </p>
           <ul className="md:col-span-7 m-0 p-0 list-none flex flex-wrap gap-x-8 gap-y-1 md:justify-end">
             {links.map((link) => (
               <li key={link.label}>

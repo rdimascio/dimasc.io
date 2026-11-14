@@ -3,6 +3,8 @@ import type { ReactElement } from "react";
 import type { CaseStudy } from "../content";
 import { CONTACT_EMAIL } from "../site";
 import { projectName, requestAnchor, requestMailto, screenshotSrc, WORK_REQUEST_ROUTE, WORK_ROUTE } from "../work";
+import { breadcrumbLd, pageGraph } from "../structured-data";
+import { JsonLd } from "./json-ld";
 import { ArrowLink, Eyebrow, HEADING, LEDE, PAGE } from "./layout";
 
 export const REQUEST_LINE = "want to hear more about one of these? email me and i'll walk you through it.";
@@ -88,6 +90,7 @@ export function RequestNote(): ReactElement {
 function WorkIndex({ studies }: { studies: readonly CaseStudy[] }): ReactElement {
   return (
     <main className="night pb-28">
+      <JsonLd data={pageGraph(breadcrumbLd([{ name: "past work", route: WORK_ROUTE }]))} />
       <div className={PAGE}>
         <Eyebrow>past work · {String(studies.length).padStart(2, "0")}</Eyebrow>
         <h1 className={`${HEADING} mt-8`}>
