@@ -1,15 +1,22 @@
 import { staticAssetsWorker } from "@lesto/cloudflare";
 
+import { type CheckEnv, handleCheck, isCheckFormPage, isCheckRoute, withSourceFilled } from "./src/check";
 import { renderNotFound } from "./src/not-found";
 import { canonicalRedirect } from "./src/redirect";
 
 type AssetsWorker = ReturnType<typeof staticAssetsWorker>;
+type AssetsArgs = Parameters<AssetsWorker["fetch"]>;
+type SiteEnv = AssetsArgs[1] & CheckEnv;
 
 const assets = staticAssetsWorker({ notFound: renderNotFound });
 
 export default {
-  fetch(...[request, env, ctx]: Parameters<AssetsWorker["fetch"]>): Promise<Response> {
+  async fetch(request: Request, env: SiteEnv, ctx: AssetsArgs[2]): Promise<Response> {
     const redirect = canonicalRedirect(request);
-    return redirect === null ? assets.fetch(request, env, ctx) : Promise.resolve(redirect);
+    if (redirect !== null) return redirect;
+    const url = new URL(request.url);
+    if (isCheckRoute(url.pathname)) return handleCheck(request, env, ctx);
+    const response = await assets.fetch(request, env, ctx);
+    return isCheckFormPage(url.pathname) ? withSourceFilled(response, url) : response;
   },
-} satisfies AssetsWorker;
+};

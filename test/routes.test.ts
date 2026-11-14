@@ -7,6 +7,19 @@ import appConfig from "../lesto.app";
 import { buildAppConfig, HOME_TITLE, homeDescription, ORANGE_COUNTY_DESCRIPTION, ORANGE_COUNTY_TITLE, SERVICES_TITLE, serviceTitle } from "../src/app";
 import { ORANGE_COUNTY_ROUTE, PLAN_SERVICE, serviceRoute, serviceRoutes, SERVICES, SERVICES_ROUTE } from "../src/services";
 import { canonicalRedirect } from "../src/redirect";
+import {
+  CHECK_FIELD,
+  CHECK_LIMIT,
+  CHECK_ROUTE,
+  CHECK_SENT_ROUTE,
+  type CheckEmail,
+  type CheckEnv,
+  handleCheck,
+  MAX_CHECK_BODY_BYTES,
+  renderCheckProblem,
+  withSourceFilled,
+} from "../src/check";
+import { CHECK_NEXT_STEPS, CHECK_SENT_HEADLINE } from "../src/ui/check";
 import { NOINDEX_ROUTES, PROCESS_ROUTE, siteRoutes, sitemapRoutes } from "../src/sitemap";
 import { BUSINESS_ID, htmlToText, PERSON_ID } from "../src/structured-data";
 import { JSON_LD_TYPE } from "../src/ui/json-ld";
@@ -30,7 +43,9 @@ import {
   CONTACT_EMAIL,
   QUICK_FIX_MINUTES,
   SETUP_FEE,
+  SITE_CHECK_ANCHOR,
   SITE_CHECK_CTA,
+  SITE_CHECK_PAGE,
   siteCheckHref,
   planHref,
   introCallHref,
@@ -81,7 +96,7 @@ function decodeEntities(html: string): string {
 
 const JSON_LD_BLOCK = new RegExp(`<script type="${RegExp.escape(JSON_LD_TYPE)}">([\\s\\S]*?)</script>`, "g");
 const SERVICE_PAGE_ROUTES = SERVICES.map((service) => serviceRoute(service.slug));
-const STUDIO_ROUTES = ["/", ABOUT_ROUTE, PROCESS_ROUTE, WORK_ROUTE, WORK_REQUEST_ROUTE, ...serviceRoutes()] as const;
+const STUDIO_ROUTES = ["/", ABOUT_ROUTE, PROCESS_ROUTE, WORK_ROUTE, WORK_REQUEST_ROUTE, ...serviceRoutes(), CHECK_SENT_ROUTE] as const;
 const MAX_TITLE_LENGTH = 65;
 const MAX_DESCRIPTION_LENGTH = 155;
 
@@ -136,8 +151,10 @@ function caseStudyFixture(overrides: Pick<CaseStudy, "draft" | "html">): CaseStu
 
 let app: App;
 
+const RENDER_ONLY = { secure: false } as const;
+
 beforeAll(async () => {
-  app = await createApp(appConfig);
+  app = await createApp({ ...appConfig, ...RENDER_ONLY });
 });
 
 describe("site routes", () => {
@@ -670,7 +687,7 @@ describe("site routes", () => {
     expect(lede).toContain("the check is free");
     expect(lede).toContain(`under ${QUICK_FIX_MINUTES} min`);
     expect(lede).toContain(siteCheckHref());
-    expect(html).toContain("what happens after you email");
+    expect(html).toContain("what happens after you send it");
     expect(html).toContain("get quoted as one project");
   });
 
@@ -756,5 +773,192 @@ describe("site routes", () => {
 
   it("returns 404 for an unknown path", async () => {
     expect((await app.handle("GET", "/does/not/exist")).status).toBe(404);
+  });
+});
+
+interface CheckFixture {
+  readonly env: CheckEnv;
+  readonly stored: Map<string, string>;
+  readonly sent: CheckEmail[];
+}
+
+function checkFixture(options: { allow?: boolean; mailer?: boolean } = {}): CheckFixture {
+  const stored = new Map<string, string>();
+  const sent: CheckEmail[] = [];
+  const env: CheckEnv = {
+    REQUESTS: {
+      put: async (key, value) => {
+        stored.set(key, value);
+      },
+    },
+    CHECK_LIMITER: { limit: async () => ({ success: options.allow ?? true }) },
+    ...(options.mailer === false
+      ? {}
+      : {
+          EMAIL: {
+            send: async (message: CheckEmail) => {
+              sent.push(message);
+            },
+          },
+        }),
+  };
+  return { env, stored, sent };
+}
+
+const VALID_CHECK = {
+  [CHECK_FIELD.name]: "Pat Owner",
+  [CHECK_FIELD.email]: "pat@example.com",
+  [CHECK_FIELD.website]: "patsgym.com",
+  [CHECK_FIELD.message]: "the booking button does nothing on my phone",
+  [CHECK_FIELD.source]: "",
+  [CHECK_FIELD.trap]: "",
+};
+
+function checkPost(fields: Record<string, string>, init: { method?: string; referer?: string; body?: string } = {}): Request {
+  const headers = new Headers({ "content-type": "application/x-www-form-urlencoded", "cf-connecting-ip": "203.0.113.7" });
+  if (init.referer !== undefined) headers.set("referer", init.referer);
+  return new Request(`${SITE_URL}${CHECK_ROUTE}`, {
+    method: init.method ?? "POST",
+    headers,
+    body: init.body ?? new URLSearchParams(fields).toString(),
+  });
+}
+
+describe("site check form", () => {
+  it("shows the form on the fix page, posting to the worker w/ a honeypot, a source field + an email fallback", async () => {
+    const html = decodeEntities(await text(await app.handle("GET", SITE_CHECK_PAGE)));
+    expect(siteCheckHref()).toBe(`${SITE_CHECK_PAGE}#${SITE_CHECK_ANCHOR}`);
+    expect(html).toContain(`id="${SITE_CHECK_ANCHOR}"`);
+    expect(html).toContain(`action="${CHECK_ROUTE}"`);
+    expect(html).toMatch(/method="post"/i);
+    for (const field of [CHECK_FIELD.name, CHECK_FIELD.email, CHECK_FIELD.website, CHECK_FIELD.message]) {
+      expect(html).toContain(`name="${field}"`);
+    }
+    expect(html.toLowerCase()).toContain(`maxlength="${CHECK_LIMIT.message}"`);
+    expect(html).toMatch(new RegExp(`<input[^>]*name="${CHECK_FIELD.source}"[^>]*type="hidden"|<input[^>]*type="hidden"[^>]*name="${CHECK_FIELD.source}"`));
+    expect(html).toMatch(new RegExp(`<input[^>]*name="${CHECK_FIELD.trap}"[^>]*tabindex="-1"|<input[^>]*tabindex="-1"[^>]*name="${CHECK_FIELD.trap}"`, "i"));
+    const form = html.slice(html.indexOf("<form"), html.indexOf("</form>"));
+    expect(form).toContain(`href="mailto:${CONTACT_EMAIL}"`);
+  });
+
+  it("points every free site check CTA at the form, not a mailto", async () => {
+    for (const route of ["/", ABOUT_ROUTE, SITE_CHECK_PAGE]) {
+      const html = decodeEntities(await text(await app.handle("GET", route)));
+      expect(html).toContain(`href="${siteCheckHref()}"`);
+      expect(html).not.toContain("mailto:ryan@dimasc.io?subject=free%20site%20check");
+    }
+  });
+
+  it("stores a valid request, emails it to me w/ the sender as reply-to, + sends the visitor to the thank-you page", async () => {
+    const { env, stored, sent } = checkFixture();
+    const logged: string[] = [];
+    const original = console.log;
+    console.log = (...args: unknown[]) => logged.push(args.join(" "));
+    const response = await handleCheck(
+      checkPost(VALID_CHECK, { referer: `${SITE_URL}${SITE_CHECK_PAGE}?utm_source=google&utm_medium=organic&utm_campaign=gbp&x=1` }),
+      env,
+    );
+    console.log = original;
+    expect(response.status).toBe(303);
+    expect(response.headers.get("location")).toBe(CHECK_SENT_ROUTE);
+    expect(stored.size).toBe(1);
+    const record = JSON.parse([...stored.values()][0] ?? "{}") as Record<string, string>;
+    expect(record.name).toBe(VALID_CHECK.name);
+    expect(record.message).toBe(VALID_CHECK.message);
+    expect(record.source).toBe("utm_source=google&utm_medium=organic&utm_campaign=gbp");
+    expect(record.page).toBe(SITE_CHECK_PAGE);
+    expect(sent).toHaveLength(1);
+    expect(sent[0]?.to).toBe(CONTACT_EMAIL);
+    expect(sent[0]?.replyTo).toBe(VALID_CHECK.email);
+    expect(sent[0]?.text).toContain(VALID_CHECK.message);
+    expect(logged.join("\n")).not.toContain(VALID_CHECK.message);
+    expect(logged.join("\n")).not.toContain(VALID_CHECK.email);
+  });
+
+  it("still stores the request when no mailer is bound", async () => {
+    const { env, stored } = checkFixture({ mailer: false });
+    const response = await handleCheck(checkPost(VALID_CHECK), env);
+    expect(response.status).toBe(303);
+    expect(stored.size).toBe(1);
+  });
+
+  it("drops a honeypot hit quietly: same redirect, nothing stored or sent", async () => {
+    const { env, stored, sent } = checkFixture();
+    const response = await handleCheck(checkPost({ ...VALID_CHECK, [CHECK_FIELD.trap]: "http://spam.example" }), env);
+    expect(response.status).toBe(303);
+    expect(response.headers.get("location")).toBe(CHECK_SENT_ROUTE);
+    expect(stored.size).toBe(0);
+    expect(sent).toHaveLength(0);
+  });
+
+  it("refuses an oversize body or field w/ a 413 + stores nothing", async () => {
+    const { env, stored } = checkFixture();
+    const huge = await handleCheck(checkPost({}, { body: `message=${"a".repeat(MAX_CHECK_BODY_BYTES + 1)}` }), env);
+    expect(huge.status).toBe(413);
+    const longNote = await handleCheck(checkPost({ ...VALID_CHECK, [CHECK_FIELD.message]: "a".repeat(CHECK_LIMIT.message + 1) }), env);
+    expect(longNote.status).toBe(413);
+    const longName = await handleCheck(checkPost({ ...VALID_CHECK, [CHECK_FIELD.name]: "a".repeat(CHECK_LIMIT.name + 1) }), env);
+    expect(longName.status).toBe(413);
+    expect(stored.size).toBe(0);
+  });
+
+  it("rejects missing fields, a bad email + a header-injection name w/ a 4xx", async () => {
+    const { env, stored } = checkFixture();
+    expect((await handleCheck(checkPost({ ...VALID_CHECK, [CHECK_FIELD.message]: " " }), env)).status).toBe(400);
+    expect((await handleCheck(checkPost({ ...VALID_CHECK, [CHECK_FIELD.email]: "not-an-email" }), env)).status).toBe(400);
+    expect((await handleCheck(checkPost({ ...VALID_CHECK, [CHECK_FIELD.name]: "a\r\nBcc: x@example.com" }), env)).status).toBe(415);
+    expect(stored.size).toBe(0);
+  });
+
+  it("answers the wrong method w/ a 405, and sends a plain GET to the form", async () => {
+    const { env, stored } = checkFixture();
+    for (const method of ["PUT", "DELETE", "PATCH"]) {
+      const response = await handleCheck(checkPost(VALID_CHECK, { method }), env);
+      expect(response.status).toBe(405);
+      expect(response.headers.get("allow")).toContain("POST");
+    }
+    const get = await handleCheck(new Request(`${SITE_URL}${CHECK_ROUTE}`), env);
+    expect(get.status).toBe(303);
+    expect(get.headers.get("location")).toBe(siteCheckHref());
+    expect(stored.size).toBe(0);
+  });
+
+  it("limits requests per IP w/ a 429", async () => {
+    const { env, stored } = checkFixture({ allow: false });
+    const response = await handleCheck(checkPost(VALID_CHECK), env);
+    expect(response.status).toBe(429);
+    expect(stored.size).toBe(0);
+  });
+
+  it("fills the hidden source field on the form page from the URL's utm params, server-side", async () => {
+    const page = new Response('<form><input name="source" type="hidden" value=""/></form>', { headers: { "content-type": "text/html" } });
+    const url = new URL(`${SITE_URL}${SITE_CHECK_PAGE}?utm_source=email&utm_campaign=2026-12-oc-gyms"><b>`);
+    const html = await withSourceFilled(page, url).text();
+    const value = /value="([^"]*)"/.exec(html)?.[1] ?? "";
+    expect(value).toStartWith("utm_source=email&utm_campaign=2026-12-oc-gyms");
+    expect(value).toMatch(/^[\w.\-=&]+$/);
+    const plain = new Response("<p>x</p>", { headers: { "content-type": "text/html" } });
+    expect(withSourceFilled(plain, new URL(`${SITE_URL}${SITE_CHECK_PAGE}`))).toBe(plain);
+  });
+
+  it("renders the thank-you page w/ the reply time the site states + a what-happens-next list, noindex", async () => {
+    const response = await app.handle("GET", CHECK_SENT_ROUTE);
+    const html = decodeEntities(await text(response));
+    expect(response.status).toBe(200);
+    expect(html).toContain(CHECK_SENT_HEADLINE);
+    expect(CHECK_SENT_HEADLINE).toContain("1 business day, monday to friday");
+    expect(html).toContain("what happens next");
+    for (const step of CHECK_NEXT_STEPS) expect(html).toContain(step);
+    expect(html).toContain('<meta name="robots" content="noindex, follow"');
+    expect(sitemapRoutes(await loadAllCaseStudies(), await loadAllArticles())).not.toContain(CHECK_SENT_ROUTE);
+  });
+
+  it("ships no client script on any page, the error page included", async () => {
+    const routes = [...siteRoutes(await loadAllCaseStudies(), await loadArticles(false), false), CHECK_SENT_ROUTE];
+    for (const route of routes) {
+      const html = await text(await app.handle("GET", route));
+      expect(`${route}: ${withoutJsonLd(html)}`).not.toContain("<script");
+    }
+    expect(renderCheckProblem({ title: "x", detail: "y" })).not.toContain("<script");
   });
 });
