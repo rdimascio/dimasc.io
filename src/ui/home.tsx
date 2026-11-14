@@ -2,7 +2,18 @@ import type { CSSProperties, ReactElement } from "react";
 
 import { ARTICLES_ROUTE, type Article, type CaseStudy, type FaqItem, type Plan } from "../content";
 import { BRAND_LOGOS, logoSrc, opticalScale } from "../logos";
-import { fixRequestHref, introCallHref, MAX_SUBSCRIPTION_CLIENTS, planHref, SERVICE_AREA_COPY, SERVICE_AREA_SHORT } from "../site";
+import {
+  HIRE_ANCHOR,
+  introCallHref,
+  MAX_SUBSCRIPTION_CLIENTS,
+  planHref,
+  QUICK_FIX_MINUTES,
+  SERVICE_AREA_COPY,
+  SERVICE_AREA_SHORT,
+  SITE_CHECK_CTA,
+  SITE_CHECK_NAME,
+  siteCheckHref,
+} from "../site";
 import { homeGraph } from "../structured-data";
 import { PLAN_SERVICE, type PlanName, serviceBySlug, serviceRoute, SERVICES_ROUTE, type ServiceSlug } from "../services";
 import { projectName, WORK_ROUTE } from "../work";
@@ -12,8 +23,27 @@ import { JsonLd } from "./json-ld";
 import { CaseStudyGrid, RequestNote } from "./work";
 
 export const REFUND_RULE = "monthly help: not happy in the first 7 days? cancel and i refund 75% of your first payment, even if i already delivered work. care is cancel anytime.";
-export const STAFF_LINE = "monthly help is like having a website person on staff a few days a month, w/o hiring one. no hourly bills.";
+export const NO_CONTRACT_LINE = "no long-term contract + no hourly bills.";
+export const CAPACITY_LINE = "i only take a few clients at a time, so i can do all the work myself.";
+export const START_HERE_LABEL = "start here";
+export const STAFF_LINE = "monthly help is like having a senior software engineer on staff a few days a month, w/o hiring one. no hourly bills.";
 export const SINCE_YEAR = 2017;
+export const HERO_LEAD = "i built the platform behind 30k+ websites.";
+export const HERO_TURN = "now i fix yours";
+export const HERO_SUB = `i'm a senior software engineer in ${SERVICE_AREA_SHORT}, by day at every, a y combinator startup. since ${SINCE_YEAR} i've worked on sites for blackstone, stanford ecorner + serhant. now i fix + look after small-business sites myself.`;
+
+export const SITE_CHECK_FEATURES = [
+  "i look through your whole site",
+  "you get a plain list of what's broken",
+  `fixes under ${QUICK_FIX_MINUTES} min: free`,
+  "bigger fixes go on care or monthly help, or get quoted as one project",
+] as const;
+
+export function hireAnchorLine(plans: readonly Plan[]): string | null {
+  const monthly = plans.find((plan) => plan.name === "monthly help")?.price;
+  if (monthly === undefined || monthly === null) return null;
+  return `a full-time web developer costs about ${formatPrice(HIRE_ANCHOR.monthly)} a month in pay alone (${HIRE_ANCHOR.source}). monthly help is ${formatPrice(monthly)}.`;
+}
 const HOME_ARTICLE_COUNT = 3;
 
 const HELP_WITH: readonly { label: string; service?: ServiceSlug }[] = [
@@ -28,18 +58,21 @@ const HELP_WITH: readonly { label: string; service?: ServiceSlug }[] = [
 ];
 
 const STEPS = [
-  { title: "pick a plan", body: "one fix, care, monthly help or one price for one project. you get one list for everything you ask for." },
+  { title: "get a free site check", body: "i tell you what's broken. then pick care, monthly help or one price for one project. you get one list for everything you ask for." },
   { title: "add jobs to your list", body: "what's broken or slowing you down: a fix, a page, a new tool." },
   { title: "check the finished work", body: "most small jobs come back in 2 business days. i keep going until it's right." },
 ] as const;
 
 const WHAT_YOU_GET = [
   { title: "one list for everything", body: "everything you asked for + where each one stands. no chasing." },
-  { title: "one flat monthly price", body: "no hourly bills, no surprise invoices." },
+  { title: "one flat monthly price", body: "no hourly bills. you know the number before i start." },
   { title: "a reply within 1 business day", body: "monday to friday. no weekend or same-day emergency help." },
   { title: "pause anytime", body: "you're billed once a month. pause, and the unused days wait for you." },
   { title: "you own everything", body: "it all runs in your accounts, so you're never stuck w/ me." },
-  { title: "you work w/ me", body: "i do all the work myself + test every change. i use modern tools, including ai, to work faster." },
+  {
+    title: "i do the work",
+    body: "no juniors, no outsourcing. i set up ai coding tools for a team of 80 engineers, and i use the same kind on your site. i still read + test every change.",
+  },
 ] as const;
 
 const BOARD = [
@@ -65,18 +98,14 @@ export function lowestPrice(plans: readonly Plan[]): number | null {
   return prices.length === 0 ? null : Math.min(...prices);
 }
 
-export function fixPrice(plans: readonly Plan[]): number | null {
-  return plans.find((plan) => plan.per === "fix")?.price ?? null;
+export function startingPricesLine(plans: readonly Plan[]): string {
+  const monthly = lowestPrice(plans);
+  const parts = [SITE_CHECK_NAME, ...(monthly === null ? [] : [`care from ${formatPrice(monthly)}/month`])];
+  return `${parts.join(", ")}, or one project for one price.`;
 }
 
-export function startingPricesLine(plans: readonly Plan[]): string | null {
-  const fix = fixPrice(plans);
-  const monthly = lowestPrice(plans);
-  const parts = [
-    ...(fix === null ? [] : [`one fix for ${formatPrice(fix)}`]),
-    ...(monthly === null ? [] : [`care from ${formatPrice(monthly)}/month`]),
-  ];
-  return parts.length === 0 ? null : `${parts.join(", ")}, or one project for one price.`;
+export function setupLine(setup: number): string {
+  return `+ ${formatPrice(setup)} setup`;
 }
 
 function listNames(names: readonly string[]): string {
@@ -114,6 +143,7 @@ export function PlanCard({ plan, showMore = true }: { plan: Plan; showMore?: boo
         </span>
         {plan.price === null ? null : <span className="text-muted">{`/${plan.per}`}</span>}
       </p>
+      {plan.setup === undefined ? null : <p className="mt-3 mb-0 text-[0.92rem] text-muted">{setupLine(plan.setup)}</p>}
       <ul className="mt-9 mb-10 p-0 list-none flex flex-col border-t border-line">
         {plan.features.map((feature) => (
           <li className="flex gap-3 border-b border-line py-3" key={feature}>
@@ -133,6 +163,32 @@ export function PlanCard({ plan, showMore = true }: { plan: Plan; showMore?: boo
             {`more about ${serviceBySlug(more).name}`}
           </a>
         )}
+      </div>
+    </div>
+  );
+}
+
+function SiteCheckCard(): ReactElement {
+  return (
+    <div className="reveal flex flex-col rounded-[28px] border border-accent bg-card p-7 sm:p-9">
+      <span className="self-start rounded-full bg-accent px-3 py-1 text-[0.72rem] font-medium text-on-accent">{START_HERE_LABEL}</span>
+      <h3 className="mt-4 mb-0 text-[1.25rem] font-medium">{SITE_CHECK_NAME}</h3>
+      <p className="mt-2 mb-0 text-muted">i tell you what's broken, in plain words.</p>
+      <p className="mt-10 mb-0 text-[clamp(2.8rem,4.6vw,3.8rem)] leading-none tracking-[-0.055em] font-medium">free</p>
+      <ul className="mt-9 mb-10 p-0 list-none flex flex-col border-t border-line">
+        {SITE_CHECK_FEATURES.map((feature) => (
+          <li className="flex gap-3 border-b border-line py-3" key={feature}>
+            <span className="text-accent" aria-hidden="true">
+              ✓
+            </span>
+            <span>{feature}</span>
+          </li>
+        ))}
+      </ul>
+      <div className="mt-auto flex flex-col items-start gap-4">
+        <ArrowLink href={siteCheckHref()} tone="accent">
+          {SITE_CHECK_CTA}
+        </ArrowLink>
       </div>
     </div>
   );
@@ -168,25 +224,26 @@ function Hero({ plans }: { plans: readonly Plan[] }): ReactElement {
       <h1 className="mt-8 sm:mt-10 mb-0 font-semibold leading-[0.98] tracking-[-0.055em] text-[clamp(3rem,9vw,9.6rem)] max-w-[13ch] [text-wrap:balance]">
         <span className="hero-line">
           <span>
-            i make websites, <span className="serif font-normal tracking-[-0.02em] text-muted">and fix the one you have</span>
+            {`${HERO_LEAD} `}
+            <span className="serif font-normal tracking-[-0.02em] text-muted">{HERO_TURN}</span>
             <span className="text-accent-bright">.</span>
           </span>
         </span>
       </h1>
       <div className="mt-12 sm:mt-16 grid gap-10 md:grid-cols-12 items-end">
         <p className="md:col-span-6 m-0 text-[clamp(1.25rem,2vw,1.6rem)] leading-[1.35] tracking-[-0.02em] max-w-[32rem] [text-wrap:pretty]">
-          {`i fix + improve your website and the tools behind it. based in ${SERVICE_AREA_SHORT}, working w/ businesses here + anywhere in the us.`}
+          {HERO_SUB}
         </p>
         <div className="md:col-span-6 flex flex-col gap-5 md:items-end">
           <div className="flex flex-wrap items-center gap-3 md:justify-end">
-            <ArrowLink href={fixRequestHref()} tone="accent">
-              email me what's broken
+            <ArrowLink href={siteCheckHref()} tone="accent">
+              {SITE_CHECK_CTA}
             </ArrowLink>
-            <a className="inline-flex items-center rounded-full border border-line px-6 py-3 font-medium hover:border-ink transition-colors" href="#pricing">
+            <a className="link-underline inline-block py-2 text-muted hover:text-ink" href="#pricing">
               see prices
             </a>
           </div>
-          {pricesLine === null ? null : <p className="m-0 text-[0.95rem] text-muted md:text-right">{`${pricesLine} cancel care anytime.`}</p>}
+          <p className="m-0 text-[0.95rem] text-muted md:text-right">{`${pricesLine} cancel care anytime.`}</p>
         </div>
       </div>
     </section>
@@ -209,7 +266,7 @@ function LogoStrip(): ReactElement {
     </ul>
   );
   return (
-    <section aria-label="brands i've worked with" className="border-y border-line overflow-hidden py-7 sm:py-9">
+    <section aria-label="companies + clients i've built for"className="border-y border-line overflow-hidden py-7 sm:py-9">
       <div className="marquee">
         {track(false)}
         {track(true)}
@@ -282,6 +339,7 @@ function HowItWorks(): ReactElement {
 }
 
 function Pricing({ plans }: { plans: readonly Plan[] }): ReactElement {
+  const anchor = hireAnchorLine(plans);
   return (
     <section className={`${WIDTH} pb-24 sm:pb-32 scroll-mt-16`} id="pricing">
       <SectionHead
@@ -289,17 +347,20 @@ function Pricing({ plans }: { plans: readonly Plan[] }): ReactElement {
         label="prices"
         title={
           <>
-            start w/ one fix. <span className="serif text-muted">then care, monthly help or one project.</span>
+            start w/ a free site check. <span className="serif text-muted">then care, monthly help or one project.</span>
           </>
         }
       />
       <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-4 items-stretch">
+        <SiteCheckCard />
         {plans.map((plan) => (
           <PlanCard key={plan.slug} plan={plan} />
         ))}
       </div>
       <p className="mt-10 mb-0 text-center text-ink">{STAFF_LINE}</p>
-      <p className="mt-2 mb-0 text-center text-muted">{REFUND_RULE}</p>
+      {anchor === null ? null : <p className="mt-2 mb-0 text-center text-muted">{anchor}</p>}
+      <p className="mt-2 mb-0 text-center text-muted">{`${NO_CONTRACT_LINE} ${REFUND_RULE}`}</p>
+      <p className="mt-2 mb-0 text-center text-muted">{CAPACITY_LINE}</p>
       {MAX_SUBSCRIPTION_CLIENTS === null ? null : (
         <p className="mt-2 mb-0 text-center text-muted">i take {MAX_SUBSCRIPTION_CLIENTS} monthly clients max at a time.</p>
       )}
@@ -316,7 +377,7 @@ function WhatYouGet(): ReactElement {
           label="what you get"
           title={
             <>
-              a website person, <span className="serif">w/o hiring one.</span>
+              a senior engineer, <span className="serif">w/o hiring one.</span>
             </>
           }
         />
@@ -366,7 +427,7 @@ function SinceLine({ studies }: { studies: readonly CaseStudy[] }): ReactElement
     <section className={`${WIDTH} py-20 sm:py-28`}>
       <div className="border-t border-ink pt-8 flex flex-wrap items-end justify-between gap-6">
         <p className="m-0 text-[clamp(1.5rem,3vw,2.4rem)] leading-[1.15] tracking-[-0.035em] font-medium max-w-[34rem] [text-wrap:balance]">
-          {endSentence(`building websites since ${SINCE_YEAR}${names.length === 0 ? "" : `, for ${listNames(names)}`}`)}
+          {endSentence(`software engineer since ${SINCE_YEAR}.${names.length === 0 ? "" : ` sites for ${listNames(names)}`}`)}
         </p>
         <ArrowLink href={ABOUT_ROUTE} tone="ghost">
           about me
@@ -433,13 +494,13 @@ export function Home({
     <main>
       <JsonLd data={homeGraph(plans, faq)} />
       <Hero plans={plans} />
+      <SinceLine studies={studies} />
       <LogoStrip />
       <HelpWith />
       <HowItWorks />
       <Pricing plans={plans} />
       <WhatYouGet />
       <Work studies={studies} />
-      <SinceLine studies={studies} />
       <LatestArticles articles={articles} />
       <Faq faq={faq} />
     </main>

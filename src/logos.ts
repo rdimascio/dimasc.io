@@ -10,8 +10,6 @@ export interface BrandLogo {
 }
 
 export const BRAND_LOGOS: readonly BrandLogo[] = [
-  { slug: "microsoft", name: "Microsoft", ratio: 4.689 },
-  { slug: "starbucks", name: "Starbucks", ratio: 1 },
   { slug: "stanford", name: "Stanford", ratio: 4.772 },
   { slug: "blackstone", name: "Blackstone", ratio: 2.519, weightCompensation: 1.15 },
   { slug: "holt-international", name: "Holt International", ratio: 5.935, weightCompensation: 1.15 },

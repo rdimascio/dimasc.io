@@ -81,7 +81,7 @@ function ContactBand(): ReactElement {
         </h2>
         <div className="mt-14 grid gap-8 md:grid-cols-12 items-end">
           <p className="md:col-span-5 m-0 text-muted text-[1.1rem] leading-relaxed max-w-[28rem]">
-            tell me what's broken or slowing you down. i'll tell you if one fix, care, monthly help or one project makes sense, or if you need me at all.
+            tell me what's broken or slowing you down. i'll tell you if a quick fix, care, monthly help or one project makes sense, or if you need me at all.
           </p>
           <div className="md:col-span-7 flex flex-wrap gap-3 md:justify-end">
             <ArrowLink href={introCallHref()} tone="accent">
@@ -133,7 +133,7 @@ function Footer({ sections }: { sections: NavSections }): ReactElement {
       <div className={`${WIDTH} pt-10`}>
         <div className="border-t border-line pt-8 grid gap-8 md:grid-cols-12">
           <p className="md:col-span-5 m-0 text-muted max-w-[22rem]">
-            {`website help for small businesses in ${SERVICE_AREA_COPY} + anywhere in the us. built + tested by me.`}
+            {`website help from a senior software engineer, for small businesses in ${SERVICE_AREA_COPY} + anywhere in the us. built + tested by me.`}
           </p>
           <div className="md:col-span-7 flex flex-col gap-4">
             <ul className="m-0 p-0 list-none flex flex-wrap gap-x-8 gap-y-1 md:justify-end">

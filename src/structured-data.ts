@@ -7,6 +7,7 @@ import {
   OG_IMAGE_PATH,
   SERVICE_AREA,
   SERVICE_AREA_LABEL,
+  SITE_CHECK_NAME,
   SITE_NAME_PROPER,
   SITE_URL,
 } from "./site";
@@ -23,7 +24,9 @@ export const PERSON_ID = `${SITE_URL}/#person`;
 export const WEBSITE_ID = `${SITE_URL}/#website`;
 
 const OG_IMAGE_URL = `${SITE_URL}${OG_IMAGE_PATH}`;
-const BUSINESS_DESCRIPTION = `Website help for small businesses in ${SERVICE_AREA_LABEL}: fixes, care, monthly help and one-off projects.`;
+const BUSINESS_DESCRIPTION = `Website help from a senior software engineer, for small businesses in ${SERVICE_AREA_LABEL}: a free site check, care, monthly help and one-off projects.`;
+const SITE_CHECK_DESCRIPTION = "i look through your site + tell you what's broken. fixes under 30 min are free.";
+const JOB_TITLE = "Senior software engineer";
 
 const HTML_ENTITIES: Readonly<Record<string, string>> = {
   "&amp;": "&",
@@ -66,17 +69,39 @@ function priceRange(plans: readonly Plan[]): string | undefined {
   return `${usd(Math.min(...prices))}-${usd(Math.max(...prices))}`;
 }
 
+function monthlyPriceLd(price: string): JsonLd {
+  return { "@type": "UnitPriceSpecification", price, priceCurrency: CURRENCY, unitText: "MONTH" };
+}
+
+function setupFeeLd(setup: number): JsonLd {
+  return {
+    "@type": "UnitPriceSpecification",
+    priceComponentType: "https://schema.org/ActivationFee",
+    price: String(setup),
+    priceCurrency: CURRENCY,
+    description: "one-time setup fee",
+  };
+}
+
+function priceSpecificationLd(plan: Plan & { price: number }): JsonLd {
+  const monthly = monthlyPriceLd(String(plan.price));
+  if (plan.setup === undefined) return monthly;
+  return { "@type": "CompoundPriceSpecification", priceComponent: [monthly, setupFeeLd(plan.setup)] };
+}
+
 function offerLd(plan: Plan & { price: number }): JsonLd {
-  const price = String(plan.price);
-  const monthly = plan.per === "month";
   return {
     "@type": "Offer",
     name: plan.name,
     description: plan.summary,
-    price,
+    price: String(plan.price),
     priceCurrency: CURRENCY,
-    ...(monthly ? { priceSpecification: { "@type": "UnitPriceSpecification", price, priceCurrency: CURRENCY, unitText: "MONTH" } } : {}),
+    priceSpecification: priceSpecificationLd(plan),
   };
+}
+
+export function siteCheckOfferLd(): JsonLd {
+  return { "@type": "Offer", name: SITE_CHECK_NAME, description: SITE_CHECK_DESCRIPTION, price: "0", priceCurrency: CURRENCY };
 }
 
 export function businessLd(plans: readonly Plan[]): JsonLd {
@@ -93,7 +118,7 @@ export function businessLd(plans: readonly Plan[]): JsonLd {
     areaServed: areaServed(),
     founder: ref(PERSON_ID),
     ...(range === undefined ? {} : { priceRange: range }),
-    makesOffer: pricedPlans(plans).map(offerLd),
+    makesOffer: [siteCheckOfferLd(), ...pricedPlans(plans).map(offerLd)],
   };
 }
 
@@ -104,7 +129,7 @@ export function personLd(): JsonLd {
     name: SITE_NAME_PROPER,
     url: canonicalUrl(ABOUT_ROUTE),
     email: CONTACT_EMAIL,
-    jobTitle: "Web developer",
+    jobTitle: JOB_TITLE,
     sameAs: [GITHUB_URL],
     worksFor: ref(BUSINESS_ID),
   };
@@ -180,6 +205,7 @@ function providerLd(): JsonLd {
 export function serviceLd(input: ServiceLdInput): JsonLd {
   const plan = input.plan;
   const priced = plan !== undefined && plan.price !== null ? { ...plan, price: plan.price } : undefined;
+  const offers = plan === undefined ? siteCheckOfferLd() : priced === undefined ? undefined : offerLd(priced);
   return {
     "@type": "Service",
     name: input.name,
@@ -188,7 +214,7 @@ export function serviceLd(input: ServiceLdInput): JsonLd {
     url: canonicalUrl(input.route),
     provider: providerLd(),
     areaServed: areaServed(),
-    ...(priced === undefined ? {} : { offers: offerLd(priced) }),
+    ...(offers === undefined ? {} : { offers }),
   };
 }
 

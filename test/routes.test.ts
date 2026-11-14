@@ -28,7 +28,10 @@ import {
   ABOUT_ROUTE,
   BOOKING_URL,
   CONTACT_EMAIL,
-  fixRequestHref,
+  QUICK_FIX_MINUTES,
+  SETUP_FEE,
+  SITE_CHECK_CTA,
+  siteCheckHref,
   planHref,
   introCallHref,
   introCallLabel,
@@ -43,7 +46,7 @@ import {
   SITE_URL,
   WWW_HOST,
 } from "../src/site";
-import { fixPrice, formatPrice, REFUND_RULE, SINCE_YEAR, STAFF_LINE } from "../src/ui/home";
+import { formatPrice, HERO_LEAD, hireAnchorLine, REFUND_RULE, setupLine, SINCE_YEAR, STAFF_LINE, START_HERE_LABEL } from "../src/ui/home";
 import { BRAND_LOGOS, LOGO_SOURCE_DIR, logoSrc } from "../src/logos";
 import { articleRoutes, articlesFeed, FEED_ROUTE } from "../src/feed";
 import { SIGNATURE } from "../src/signature";
@@ -66,8 +69,7 @@ import {
 const CASE_STUDY_SLUGS = ["stanford-ecorner", "blackstone", "holt-international", "serhant"];
 const MAX_SCREENSHOT_BYTES = 300 * 1024;
 const PHONE_NUMBER = /\(?\d{3}\)?[\s.-]\d{3}[\s.-]\d{4}/;
-const MAX_CLIP_BYTES = 4 * 1024 * 1024;
-const MAX_WORKER_ASSET_BYTES = 25 * 1024 * 1024;
+const MAX_CLIP_BYTES = 4 * 1024 * 1024;const MAX_WORKER_ASSET_BYTES = 25 * 1024 * 1024;
 
 async function text(response: { body: unknown }): Promise<string> {
   return new Response(response.body as BodyInit).text();
@@ -143,9 +145,10 @@ describe("site routes", () => {
     const html = await text(await app.handle("GET", "/"));
     const plans = await loadPlans();
 
-    expect(plans.map((plan) => plan.name)).toEqual(["fix it", "care", "monthly help", "one project"]);
-    expect(plans.map((plan) => plan.price)).toEqual([500, 199, 1500, null]);
-    expect(plans.map((plan) => plan.per)).toEqual(["fix", "month", "month", "month"]);
+    expect(plans.map((plan) => plan.name)).toEqual(["care", "monthly help", "one project"]);
+    expect(plans.map((plan) => plan.price)).toEqual([199, 1500, null]);
+    expect(plans.map((plan) => plan.setup)).toEqual([SETUP_FEE, SETUP_FEE, undefined]);
+    expect(plans.map((plan) => plan.per)).toEqual(["month", "month", "month"]);
     expect(html).toContain("from $199/month");
     expect(html).toContain("care from $199/month");
     for (const plan of plans) {
@@ -167,7 +170,7 @@ describe("site routes", () => {
     for (const plan of (await loadPlans()).filter((candidate) => candidate.price !== null)) {
       expect(html).toContain(planHref(plan.name));
     }
-    expect(html).toContain(fixRequestHref());
+    expect(html).toContain(siteCheckHref());
   });
 
   it("makes no claim the review flagged as unprovable", async () => {
@@ -188,7 +191,7 @@ describe("site routes", () => {
     const care = plans.find((plan) => plan.name === "care");
     const monthly = plans.find((plan) => plan.name === "monthly help");
     expect(care?.features).toEqual(
-      expect.arrayContaining(["uptime + security monitoring", "up to 2 small fixes a month", "i reply within 1 business day", "cancel anytime"]),
+      expect.arrayContaining(["uptime + security monitoring", "up to 2 small fixes a month, done by me", "i reply within 1 business day", "cancel anytime"]),
     );
     expect(monthly?.features).toEqual(
       expect.arrayContaining([
@@ -300,10 +303,14 @@ describe("site routes", () => {
     }
   });
 
-  it("points the home page at the about page with the since line instead of the timeline", async () => {
+  it("puts the proof in the hero + the since line right under it, linked to the about page", async () => {
     const home = decodeEntities(await text(await app.handle("GET", "/")));
     expect(home).toContain(`href="${ABOUT_ROUTE}"`);
-    expect(home).toContain(`building websites since ${SINCE_YEAR}`);
+    expect(home).toContain(HERO_LEAD);
+    expect(home).toContain("y combinator");
+    const since = home.indexOf(`software engineer since ${SINCE_YEAR}`);
+    expect(since).toBeGreaterThan(0);
+    expect(since).toBeLessThan(home.indexOf("things i can help with"));
     expect(home).not.toContain("<video");
   });
 
@@ -329,6 +336,15 @@ describe("site routes", () => {
       const html = await text(await app.handle("GET", route));
       expect(html).not.toContain("TODO");
       expect(html).not.toMatch(PHONE_NUMBER);
+    }
+  });
+
+  it("shows only logos of companies + clients the resume backs", async () => {
+    const home = decodeEntities(await text(await app.handle("GET", "/")));
+    for (const gone of ["microsoft", "starbucks"]) {
+      expect(BRAND_LOGOS.map((logo) => logo.slug)).not.toContain(gone);
+      expect(home.toLowerCase()).not.toContain(gone);
+      expect(await Bun.file(`${LOGO_SOURCE_DIR}/${gone}.svg`).exists()).toBe(false);
     }
   });
 
@@ -478,22 +494,23 @@ describe("site routes", () => {
     }
   });
 
-  it("offers one fixed-price fix first, paid upfront, w/ care after", async () => {
+  it("starts w/ a free site check + shows the setup fee next to the monthly prices", async () => {
     const plans = await loadPlans();
-    const fix = plans[0];
-    const care = plans.find((plan) => plan.name === "care");
-    expect(fix?.name).toBe("fix it");
-    expect(fix?.per).toBe("fix");
-    expect(fix?.price).toBe(500);
-    expect(fix?.features).toEqual(expect.arrayContaining(["one fix, one fixed price", "paid upfront, no hourly bills", "done in about a week"]));
-    expect(fix?.features.join(" ")).toContain(`care is ${formatPrice(care?.price ?? 0)}/month`);
-
     const html = decodeEntities(await text(await app.handle("GET", "/")));
-    expect(html).toContain(`one fix for ${formatPrice(fixPrice(plans) ?? 0)}`);
-    expect(html).toContain("/fix</span>");
-    const faq = (await loadFaq()).find((item) => item.question.includes(formatPrice(fix?.price ?? 0)));
+    expect(html).toContain(SITE_CHECK_CTA);
+    expect(html).toContain(START_HERE_LABEL);
+    expect(html).toContain(`fixes under ${QUICK_FIX_MINUTES} min: free`);
+    for (const plan of plans.filter((candidate) => candidate.setup !== undefined)) {
+      expect(html).toContain(setupLine(plan.setup ?? 0));
+    }
+    expect(setupLine(SETUP_FEE)).toBe(`+ ${formatPrice(SETUP_FEE)} setup`);
+    for (const gone of ["fix it", "you get your $500 back", "/fix</span>"]) expect(html).not.toContain(gone);
+    const anchor = hireAnchorLine(plans);
+    expect(anchor).not.toBeNull();
+    expect(html).toContain(anchor ?? "");
+    const faq = (await loadFaq()).find((item) => item.question.includes(formatPrice(SETUP_FEE)));
     expect(faq).toBeDefined();
-    expect(htmlToText(faq?.html ?? "")).toContain(`care is ${formatPrice(care?.price ?? 0)}/month`);
+    expect(htmlToText(faq?.html ?? "")).toContain("backups");
   });
 
   it("names the service area in the title, description, hero, footer and FAQ", async () => {
@@ -520,7 +537,9 @@ describe("site routes", () => {
     const areas = JSON.stringify(business?.areaServed);
     for (const place of [SERVICE_AREA.county, ...SERVICE_AREA.cities]) expect(areas).toContain(place);
     const offers = business?.makesOffer as { price: string }[];
-    expect(offers.map((offer) => offer.price)).toEqual(["500", "199", "1500"]);
+    expect(offers.map((offer) => offer.price)).toEqual(["0", "199", "1500"]);
+    const setupFees = JSON.stringify(offers).match(/ActivationFee/g) ?? [];
+    expect(setupFees).toHaveLength(2);
     for (const block of jsonLdBlocks(html)) {
       for (const banned of ["telephone", "address", "streetAddress", "postalCode"]) expect(block).not.toContain(`"${banned}"`);
       expect(block).not.toMatch(PHONE_NUMBER);
@@ -632,9 +651,10 @@ describe("site routes", () => {
       expect(service.faq.length).toBeLessThanOrEqual(4);
       for (const item of service.faq) expect(html).toContain(item.question);
       const plan = plans.find((candidate) => candidate.name === service.plan);
-      expect(plan).toBeDefined();
+      expect(plan === undefined).toBe(service.plan === null);
       if (plan?.price !== null && plan?.price !== undefined) expect(html).toContain(formatPrice(plan.price));
-      expect(html).toContain(plan?.price === null ? introCallHref() : planHref(plan?.name ?? ""));
+      const cta = plan === undefined ? siteCheckHref() : plan.price === null ? introCallHref() : planHref(plan.name);
+      expect(html).toContain(cta);
       expect(html).toContain(`href="${WORK_ROUTE}"`);
       for (const related of service.related) expect(html).toContain(`href="${serviceRoute(related)}"`);
       titles.add(title);
@@ -644,14 +664,14 @@ describe("site routes", () => {
     expect(descriptions.size).toBe(SERVICES.length);
   });
 
-  it("leads the fix page w/ the $500 fix + the money-back rule", async () => {
-    const plans = await loadPlans();
-    const fix = plans.find((plan) => plan.per === "fix");
+  it("leads the fix page w/ the free site check + free quick fixes", async () => {
     const html = decodeEntities(await text(await app.handle("GET", serviceRoute("fix-my-website"))));
     const lede = html.slice(html.indexOf("<h1"), html.indexOf("what i can do"));
-    expect(lede).toContain(formatPrice(fix?.price ?? 0));
-    expect(lede).toContain("you get your $500 back");
-    expect(lede).toContain(planHref(fix?.name ?? ""));
+    expect(lede).toContain("the check is free");
+    expect(lede).toContain(`under ${QUICK_FIX_MINUTES} min`);
+    expect(lede).toContain(siteCheckHref());
+    expect(html).toContain("what happens after you email");
+    expect(html).toContain("get quoted as one project");
   });
 
   it("marks up every service page as a Service from the business, serving orange county, w/ a breadcrumb", async () => {
@@ -666,7 +686,8 @@ describe("site routes", () => {
       expect(JSON.stringify(node?.areaServed)).toContain(SERVICE_AREA.county);
       const plan = plans.find((candidate) => candidate.name === service.plan);
       const offer = node?.offers as { price: string } | undefined;
-      expect(offer?.price).toBe(plan?.price === null ? undefined : String(plan?.price));
+      const expected = plan === undefined ? "0" : plan.price === null ? undefined : String(plan.price);
+      expect(offer?.price).toBe(expected);
       const crumbs = (ldNode(html, "BreadcrumbList")?.itemListElement ?? []) as { item: string }[];
       expect(crumbs.map((crumb) => crumb.item)).toEqual([`${SITE_URL}/`, `${SITE_URL}${SERVICES_ROUTE}`, `${SITE_URL}${route}`]);
       for (const block of jsonLdBlocks(html)) {
@@ -712,6 +733,25 @@ describe("site routes", () => {
   it("puts every service page + the orange county page in the sitemap", async () => {
     const routes = sitemapRoutes(await loadAllCaseStudies(), await loadAllArticles());
     for (const route of serviceRoutes()) expect(routes).toContain(route);
+  });
+
+  it("shows how care differs from a plugin-update plan on the care page only", async () => {
+    for (const service of SERVICES) {
+      const html = decodeEntities(await text(await app.handle("GET", serviceRoute(service.slug))));
+      expect(html.includes("how it's different")).toBe(service.slug === "website-care");
+    }
+    const care = decodeEntities(await text(await app.handle("GET", serviceRoute("website-care"))));
+    for (const row of SERVICES.find((service) => service.slug === "website-care")?.comparison ?? []) expect(care).toContain(row.mine);
+  });
+
+  it("never advertises a setup fee waiver in the built public HTML", async () => {
+    const publicApp = await createApp(await buildAppConfig({ previewDrafts: false }));
+    const routes = sitemapRoutes(await loadAllCaseStudies(), await loadAllArticles());
+    expect(routes.length).toBeGreaterThan(0);
+    for (const route of [...routes, ...NOINDEX_ROUTES]) {
+      const html = await text(await publicApp.handle("GET", route));
+      expect(`${route}: ${html}`.toLowerCase()).not.toContain("waive");
+    }
   });
 
   it("returns 404 for an unknown path", async () => {

@@ -40,9 +40,21 @@ export function planHref(planName: string): string {
   return mailto(planName);
 }
 
-export function fixRequestHref(): string {
-  return mailto("something's broken");
+export const SETUP_FEE = 500;
+export const QUICK_FIX_MINUTES = 30;
+export const SITE_CHECK_NAME = "free site check";
+export const SITE_CHECK_CTA = "get a free site check";
+
+const SITE_CHECK_EMAIL_BODY = ["your website:", "", "what's broken or bugging you:", ""].join("\n");
+
+export function siteCheckHref(): string {
+  return mailto(SITE_CHECK_NAME, SITE_CHECK_EMAIL_BODY);
 }
+
+export const HIRE_ANCHOR = {
+  monthly: 7_700,
+  source: "us bureau of labor statistics, median web developer pay, may 2025",
+} as const;
 
 export const OG_IMAGE_PATH = "/og.png";
 export const OG_IMAGE_SOURCE = "assets/og.png";

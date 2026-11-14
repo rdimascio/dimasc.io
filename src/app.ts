@@ -80,7 +80,7 @@ const NOINDEX_FOLLOW = { name: "robots", content: "noindex, follow" } as const;
 
 export const SERVICES_TITLE = `website services for small businesses · ${SITE_NAME}`;
 export const ORANGE_COUNTY_TITLE = `small business website help, ${SERVICE_AREA_SHORT} ca · ${SITE_NAME}`;
-export const ORANGE_COUNTY_DESCRIPTION = `i'm based in ${SERVICE_AREA_COPY} + fix, build + look after websites for small businesses here. anywhere else in the us works too.`;
+export const ORANGE_COUNTY_DESCRIPTION = `senior software engineer based in ${SERVICE_AREA_COPY}. i fix, build + look after websites for small businesses here, and meet in person around oc.`;
 
 export function serviceTitle(title: string): string {
   return `${title} · ${SITE_NAME}`;
@@ -99,7 +99,7 @@ function routeMetadata(input: Parameters<typeof seoMetadata>[0]): PageMetadata {
 
 export function homeDescription(plans: readonly Plan[]): string {
   const prices = startingPricesLine(plans);
-  return `i fix + improve websites for small businesses in ${SERVICE_AREA_COPY}.${prices === null ? "" : ` ${prices}`}`;
+  return `senior engineer in ${SERVICE_AREA_COPY}. i fix + look after small-business sites myself. ${prices}`;
 }
 
 export async function buildAppConfig(
@@ -135,7 +135,8 @@ export async function buildAppConfig(
       metadata: () =>
         seoMetadata({
           title: `about · web developer in ${SERVICE_AREA_SHORT} · ${SITE_NAME}`,
-          description: "i've been building websites since 2017, at agencies, startups and product companies. you work directly w/ me.",
+          description:
+            "senior software engineer since 2017. i built the platform behind 30k+ websites + led front-end work for blackstone. now i look after small-business sites.",
           route: ABOUT_ROUTE,
           type: "website",
         }),
