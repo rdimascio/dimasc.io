@@ -4,7 +4,8 @@ import { createApp } from "@lesto/kernel";
 import type { App } from "@lesto/kernel";
 
 import appConfig from "../lesto.app";
-import { buildAppConfig, HOME_TITLE, homeDescription } from "../src/app";
+import { buildAppConfig, HOME_TITLE, homeDescription, ORANGE_COUNTY_DESCRIPTION, ORANGE_COUNTY_TITLE, SERVICES_TITLE, serviceTitle } from "../src/app";
+import { ORANGE_COUNTY_ROUTE, PLAN_SERVICE, serviceRoute, serviceRoutes, SERVICES, SERVICES_ROUTE } from "../src/services";
 import { canonicalRedirect } from "../src/redirect";
 import { NOINDEX_ROUTES, PROCESS_ROUTE, siteRoutes, sitemapRoutes } from "../src/sitemap";
 import { BUSINESS_ID, htmlToText, PERSON_ID } from "../src/structured-data";
@@ -77,7 +78,10 @@ function decodeEntities(html: string): string {
 }
 
 const JSON_LD_BLOCK = new RegExp(`<script type="${RegExp.escape(JSON_LD_TYPE)}">([\\s\\S]*?)</script>`, "g");
-const STUDIO_ROUTES = ["/", ABOUT_ROUTE, PROCESS_ROUTE, WORK_ROUTE, WORK_REQUEST_ROUTE] as const;
+const SERVICE_PAGE_ROUTES = SERVICES.map((service) => serviceRoute(service.slug));
+const STUDIO_ROUTES = ["/", ABOUT_ROUTE, PROCESS_ROUTE, WORK_ROUTE, WORK_REQUEST_ROUTE, ...serviceRoutes()] as const;
+const MAX_TITLE_LENGTH = 65;
+const MAX_DESCRIPTION_LENGTH = 155;
 
 type LdNode = Record<string, unknown>;
 
@@ -600,6 +604,114 @@ describe("site routes", () => {
   it("runs the worker before static assets so the host redirect can fire", async () => {
     const config = await Bun.file("wrangler.jsonc").text();
     expect(config).toMatch(/"run_worker_first":\s*true/);
+  });
+
+  it("renders one page per service w/ a unique title, description, one h1, its plan's price + CTA and FAQs", async () => {
+    const plans = await loadPlans();
+    const titles = new Set<string>();
+    const descriptions = new Set<string>();
+    expect(SERVICES.map((service) => service.slug)).toEqual([
+      "fix-my-website",
+      "new-website",
+      "online-booking",
+      "online-store",
+      "website-care",
+      "monthly-help",
+    ]);
+    for (const service of SERVICES) {
+      const response = await app.handle("GET", serviceRoute(service.slug));
+      const html = decodeEntities(await text(response));
+      const title = serviceTitle(service.title);
+      expect(response.status).toBe(200);
+      expect(title.length).toBeLessThanOrEqual(MAX_TITLE_LENGTH);
+      expect(service.description.length).toBeLessThanOrEqual(MAX_DESCRIPTION_LENGTH);
+      expect(html).toContain(`<title>${title}</title>`);
+      expect(html).toContain(`<link rel="canonical" href="${SITE_URL}${serviceRoute(service.slug)}"`);
+      expect((html.match(/<h1[\s>]/g) ?? []).length).toBe(1);
+      expect(service.faq.length).toBeGreaterThanOrEqual(2);
+      expect(service.faq.length).toBeLessThanOrEqual(4);
+      for (const item of service.faq) expect(html).toContain(item.question);
+      const plan = plans.find((candidate) => candidate.name === service.plan);
+      expect(plan).toBeDefined();
+      if (plan?.price !== null && plan?.price !== undefined) expect(html).toContain(formatPrice(plan.price));
+      expect(html).toContain(plan?.price === null ? introCallHref() : planHref(plan?.name ?? ""));
+      expect(html).toContain(`href="${WORK_ROUTE}"`);
+      for (const related of service.related) expect(html).toContain(`href="${serviceRoute(related)}"`);
+      titles.add(title);
+      descriptions.add(service.description);
+    }
+    expect(titles.size).toBe(SERVICES.length);
+    expect(descriptions.size).toBe(SERVICES.length);
+  });
+
+  it("leads the fix page w/ the $500 fix + the money-back rule", async () => {
+    const plans = await loadPlans();
+    const fix = plans.find((plan) => plan.per === "fix");
+    const html = decodeEntities(await text(await app.handle("GET", serviceRoute("fix-my-website"))));
+    const lede = html.slice(html.indexOf("<h1"), html.indexOf("what i can do"));
+    expect(lede).toContain(formatPrice(fix?.price ?? 0));
+    expect(lede).toContain("you get your $500 back");
+    expect(lede).toContain(planHref(fix?.name ?? ""));
+  });
+
+  it("marks up every service page as a Service from the business, serving orange county, w/ a breadcrumb", async () => {
+    const plans = await loadPlans();
+    for (const service of SERVICES) {
+      const route = serviceRoute(service.slug);
+      const html = await text(await app.handle("GET", route));
+      const node = ldNode(html, "Service");
+      expect(node?.name).toBe(service.name);
+      expect(node?.url).toBe(`${SITE_URL}${route}`);
+      expect((node?.provider as LdNode | undefined)?.["@id"]).toBe(BUSINESS_ID);
+      expect(JSON.stringify(node?.areaServed)).toContain(SERVICE_AREA.county);
+      const plan = plans.find((candidate) => candidate.name === service.plan);
+      const offer = node?.offers as { price: string } | undefined;
+      expect(offer?.price).toBe(plan?.price === null ? undefined : String(plan?.price));
+      const crumbs = (ldNode(html, "BreadcrumbList")?.itemListElement ?? []) as { item: string }[];
+      expect(crumbs.map((crumb) => crumb.item)).toEqual([`${SITE_URL}/`, `${SITE_URL}${SERVICES_ROUTE}`, `${SITE_URL}${route}`]);
+      for (const block of jsonLdBlocks(html)) {
+        for (const banned of ["telephone", "address", "streetAddress", "postalCode"]) expect(block).not.toContain(`"${banned}"`);
+      }
+    }
+  });
+
+  it("lists every service on the services index, linked from the nav, footer and home", async () => {
+    const index = decodeEntities(await text(await app.handle("GET", SERVICES_ROUTE)));
+    expect(index).toContain(`<title>${SERVICES_TITLE}</title>`);
+    for (const route of SERVICE_PAGE_ROUTES) expect(index).toContain(`href="${route}"`);
+    const home = decodeEntities(await text(await app.handle("GET", "/")));
+    const header = home.slice(home.indexOf("<header"), home.indexOf("</header>"));
+    const footer = home.slice(home.indexOf("<footer"));
+    expect(header).toContain(`href="${SERVICES_ROUTE}"`);
+    for (const route of [...SERVICE_PAGE_ROUTES, ORANGE_COUNTY_ROUTE]) expect(footer).toContain(`href="${route}"`);
+    const main = home.slice(home.indexOf("<main"), home.indexOf("</main>"));
+    for (const slug of Object.values(PLAN_SERVICE)) expect(main).toContain(`href="${serviceRoute(slug)}"`);
+  });
+
+  it("renders one honest orange county page w/o an address, a phone or a city list", async () => {
+    const response = await app.handle("GET", ORANGE_COUNTY_ROUTE);
+    const html = decodeEntities(await text(response));
+    expect(response.status).toBe(200);
+    expect(ORANGE_COUNTY_TITLE.length).toBeLessThanOrEqual(MAX_TITLE_LENGTH);
+    expect(ORANGE_COUNTY_DESCRIPTION.length).toBeLessThanOrEqual(MAX_DESCRIPTION_LENGTH);
+    expect(html).toContain(`<title>${ORANGE_COUNTY_TITLE}</title>`);
+    expect((html.match(/<h1[\s>]/g) ?? []).length).toBe(1);
+    const main = withoutJsonLd(html.slice(html.indexOf("<main"), html.indexOf("</main>")));
+    expect(main).toContain("anywhere else in the us");
+    for (const city of ["irvine", "santa ana", "anaheim", "costa mesa", "huntington beach", "newport beach"]) {
+      expect(main.toLowerCase()).not.toContain(city);
+    }
+    for (const route of SERVICE_PAGE_ROUTES) expect(main).toContain(`href="${route}"`);
+    expect(main).toContain(`href="${WORK_ROUTE}"`);
+    expect(ldTypes(html)).toEqual(["ProfessionalService", "BreadcrumbList"]);
+    for (const block of jsonLdBlocks(html)) {
+      for (const banned of ["telephone", "address", "streetAddress", "postalCode"]) expect(block).not.toContain(`"${banned}"`);
+    }
+  });
+
+  it("puts every service page + the orange county page in the sitemap", async () => {
+    const routes = sitemapRoutes(await loadAllCaseStudies(), await loadAllArticles());
+    for (const route of serviceRoutes()) expect(routes).toContain(route);
   });
 
   it("returns 404 for an unknown path", async () => {

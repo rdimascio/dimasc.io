@@ -22,6 +22,8 @@ import { makeHome, startingPricesLine } from "./ui/home";
 import { ABOUT_ROUTE, makeSiteLayout } from "./ui/layout";
 import { NOINDEX_ROUTES, PROCESS_ROUTE } from "./sitemap";
 import { makeProcess } from "./ui/process";
+import { makeOrangeCounty, makeServicePage, makeServicesIndex, SERVICES_LEDE } from "./ui/service";
+import { ORANGE_COUNTY_ROUTE, serviceRoute, SERVICES, SERVICES_ROUTE } from "./services";
 import { makeCaseStudy, makeWorkIndex, makeWorkRequest } from "./ui/work";
 import { previewDraftsFromEnv } from "./preview";
 import { WORK_REQUEST_ROUTE, WORK_ROUTE } from "./work";
@@ -75,6 +77,14 @@ function withFeedLink(metadata: PageMetadata): PageMetadata {
 
 const NOINDEX = { name: "robots", content: "noindex" } as const;
 const NOINDEX_FOLLOW = { name: "robots", content: "noindex, follow" } as const;
+
+export const SERVICES_TITLE = `website services for small businesses · ${SITE_NAME}`;
+export const ORANGE_COUNTY_TITLE = `small business website help, ${SERVICE_AREA_SHORT} ca · ${SITE_NAME}`;
+export const ORANGE_COUNTY_DESCRIPTION = `i'm based in ${SERVICE_AREA_COPY} + fix, build + look after websites for small businesses here. anywhere else in the us works too.`;
+
+export function serviceTitle(title: string): string {
+  return `${title} · ${SITE_NAME}`;
+}
 
 export const HOME_TITLE = `small business website help in ${SERVICE_AREA_SHORT} · ${SITE_NAME}`;
 
@@ -141,6 +151,29 @@ export async function buildAppConfig(
           type: "website",
         }),
     });
+
+  app = app
+    .page(SERVICES_ROUTE, {
+      static: true,
+      component: makeServicesIndex(plans),
+      metadata: () =>
+        seoMetadata({ title: SERVICES_TITLE, description: SERVICES_LEDE, route: SERVICES_ROUTE, type: "website" }),
+    })
+    .page(ORANGE_COUNTY_ROUTE, {
+      static: true,
+      component: makeOrangeCounty(plans),
+      metadata: () =>
+        seoMetadata({ title: ORANGE_COUNTY_TITLE, description: ORANGE_COUNTY_DESCRIPTION, route: ORANGE_COUNTY_ROUTE, type: "website" }),
+    });
+
+  for (const service of SERVICES) {
+    const route = serviceRoute(service.slug);
+    app = app.page(route, {
+      static: true,
+      component: makeServicePage(service, plans),
+      metadata: () => seoMetadata({ title: serviceTitle(service.title), description: service.description, route, type: "website" }),
+    });
+  }
 
   if (studies.length > 0) {
     app = app

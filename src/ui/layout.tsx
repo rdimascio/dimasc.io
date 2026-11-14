@@ -2,6 +2,7 @@ import type { ReactElement, ReactNode } from "react";
 
 import { ABOUT_ROUTE, CONTACT_EMAIL, GITHUB_URL, introCallHref, introCallLabel, SERVICE_AREA_COPY, SITE_NAME, SITE_NAME_PROPER } from "../site";
 import { ARTICLES_ROUTE } from "../content";
+import { ORANGE_COUNTY_ROUTE, serviceRoute, SERVICES, SERVICES_ROUTE } from "../services";
 import { WORK_ROUTE } from "../work";
 import { PixelWordmark } from "./pixel-wordmark";
 import { Signature } from "./signature";
@@ -104,6 +105,7 @@ export interface NavSections {
 type NavSection = keyof NavSections | "always";
 
 const NAV: readonly { label: string; href: string; section: NavSection; hideNarrow: boolean }[] = [
+  { label: "services", href: SERVICES_ROUTE, section: "always", hideNarrow: true },
   { label: "past work", href: WORK_ROUTE, section: "work", hideNarrow: true },
   { label: "articles", href: ARTICLES_ROUTE, section: "articles", hideNarrow: true },
   { label: "how it works", href: "/#how-it-works", section: "always", hideNarrow: true },
@@ -122,6 +124,10 @@ function Footer({ sections }: { sections: NavSections }): ReactElement {
     { label: "github", href: GITHUB_URL },
     { label: "email", href: `mailto:${CONTACT_EMAIL}` },
   ];
+  const serviceLinks = [
+    ...SERVICES.map((service) => ({ label: service.name, href: serviceRoute(service.slug) })),
+    { label: SERVICE_AREA_COPY, href: ORANGE_COUNTY_ROUTE },
+  ];
   return (
     <footer className="night">
       <div className={`${WIDTH} pt-10`}>
@@ -129,15 +135,26 @@ function Footer({ sections }: { sections: NavSections }): ReactElement {
           <p className="md:col-span-5 m-0 text-muted max-w-[22rem]">
             {`website help for small businesses in ${SERVICE_AREA_COPY} + anywhere in the us. built + tested by me.`}
           </p>
-          <ul className="md:col-span-7 m-0 p-0 list-none flex flex-wrap gap-x-8 gap-y-1 md:justify-end">
-            {links.map((link) => (
-              <li key={link.label}>
-                <a className="link-underline inline-block py-2 text-ink" href={link.href}>
-                  {link.label}
-                </a>
-              </li>
-            ))}
-          </ul>
+          <div className="md:col-span-7 flex flex-col gap-4">
+            <ul className="m-0 p-0 list-none flex flex-wrap gap-x-8 gap-y-1 md:justify-end">
+              {links.map((link) => (
+                <li key={link.label}>
+                  <a className="link-underline inline-block py-2 text-ink" href={link.href}>
+                    {link.label}
+                  </a>
+                </li>
+              ))}
+            </ul>
+            <ul aria-label="services" className="m-0 p-0 list-none flex flex-wrap gap-x-6 gap-y-1 md:justify-end text-[0.92rem]">
+              {serviceLinks.map((link) => (
+                <li key={link.href}>
+                  <a className="link-underline inline-block py-2 text-muted hover:text-ink" href={link.href}>
+                    {link.label}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </div>
         </div>
       </div>
       <div className="mt-14 sm:mt-20">
