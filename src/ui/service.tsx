@@ -1,12 +1,31 @@
 import type { ReactElement } from "react";
 
 import type { Plan } from "../content";
-import { CONTACT_EMAIL, SERVICE_AREA_COPY, SERVICE_AREA_SHORT, SITE_CHECK_CTA, SITE_CHECK_PAGE, siteCheckHref } from "../site";
-import { type ComparisonRow, ORANGE_COUNTY_ROUTE, serviceBySlug, serviceRoute, SERVICES, SERVICES_ROUTE, type Service, type ServiceFaq } from "../services";
+import {
+  CONTACT_EMAIL,
+  QUICK_FIX_MINUTES,
+  SERVICE_AREA_COPY,
+  SERVICE_AREA_SHORT,
+  SITE_CHECK_CTA,
+  SITE_CHECK_NAME,
+  SITE_CHECK_PAGE,
+  siteCheckHref,
+} from "../site";
+import {
+  type ComparisonRow,
+  ORANGE_COUNTY_ROUTE,
+  serviceBySlug,
+  serviceRoute,
+  SERVICES,
+  SERVICES_ROUTE,
+  type Service,
+  type ServiceFaq,
+  type StayOrMove,
+} from "../services";
 import { CheckForm } from "./check";
-import { breadcrumbLd, businessLd, pageGraph, serviceLd } from "../structured-data";
+import { breadcrumbLd, businessLd, faqPageLd, pageGraph, serviceLd } from "../structured-data";
 import { WORK_ROUTE } from "../work";
-import { PlanCard, planCtaHref, startingPricesLine } from "./home";
+import { formatPrice, PlanCard, planCtaHref, startingPricesLine } from "./home";
 import { JsonLd } from "./json-ld";
 import { ArrowLink, Eyebrow, HEADING, LEDE, PAGE, SectionHead } from "./layout";
 
@@ -20,6 +39,20 @@ export const SERVICES_LEDE =
 export const WHY_ME_LINE =
   "a lot of local web help is an agency selling seo, or someone who updates plugins. i'm neither. i've been a software engineer since 2017. i built + scaled the platform behind 30k+ websites, and led front-end work on sites for blackstone + stanford ecorner. now i do it for businesses down the street.";
 export const DEFAULT_STEPS_LABEL = "how it works";
+export const PROJECT_PRICE_COPY = "quoted up front, paid step by step";
+export const STAY_LABEL = "stay on your platform if";
+export const MOVE_LABEL = "think about moving if";
+
+function planPriceCopy(plan: Plan): string {
+  if (plan.price === null) return `${plan.name}: ${PROJECT_PRICE_COPY}`;
+  const monthly = `${plan.name} ${formatPrice(plan.price)}/${plan.per}`;
+  return plan.setup === undefined ? monthly : `${monthly} + ${formatPrice(plan.setup)} setup`;
+}
+
+export function servicePriceLine(plans: readonly Plan[]): string {
+  const free = [SITE_CHECK_NAME, `fixes under ${QUICK_FIX_MINUTES} min free`];
+  return [...free, ...plans.map(planPriceCopy)].join(" · ");
+}
 
 export function findPlan(plans: readonly Plan[], name: string): Plan | undefined {
   return plans.find((plan) => plan.name === name);
@@ -78,6 +111,21 @@ function Questions({ faq }: { faq: readonly ServiceFaq[] }): ReactElement {
           <p className="mt-4 mb-0 max-w-[40rem] text-muted">{item.answer}</p>
         </details>
       ))}
+    </div>
+  );
+}
+
+function StayOrMoveLists({ advice }: { advice: StayOrMove }): ReactElement {
+  return (
+    <div className="grid gap-8">
+      <div>
+        <h3 className="m-0 mb-3 text-[1.1rem] font-medium">{STAY_LABEL}</h3>
+        <List items={advice.stay} />
+      </div>
+      <div>
+        <h3 className="m-0 mb-3 text-[1.1rem] font-medium">{MOVE_LABEL}</h3>
+        <List items={advice.move} />
+      </div>
     </div>
   );
 }
@@ -161,6 +209,7 @@ function ServicePage({ service, plans }: { service: Service; plans: readonly Pla
         data={pageGraph(
           serviceLd({ name: service.name, description: service.description, route, plan }),
           breadcrumbLd([SERVICES_CRUMB, { name: service.name, route }]),
+          faqPageLd(service.faq),
         )}
       />
       <a className="inline-block py-2 font-mono text-[0.78rem] tracking-[0.04em] text-muted hover:text-ink" href={SERVICES_ROUTE}>
@@ -171,6 +220,9 @@ function ServicePage({ service, plans }: { service: Service; plans: readonly Pla
       </div>
       <h1 className={`${HEADING} mt-8`}>{service.name}</h1>
       <p className={`${LEDE} mt-8`}>{service.lede}</p>
+      <p className="mt-4 mb-0 max-w-[38rem] font-mono text-[0.85rem] leading-relaxed" data-price-line="">
+        {servicePriceLine(plans)}
+      </p>
       <p className="mt-4 mb-0 text-muted max-w-[38rem]">{service.who}</p>
       <p className="mt-4 mb-0 max-w-[38rem]">{PAST_WORK_LINE}</p>
       <PrimaryCta plan={plan} />
@@ -183,6 +235,12 @@ function ServicePage({ service, plans }: { service: Service; plans: readonly Pla
       {service.comparison === undefined ? null : (
         <Section label="how it's different">
           <Comparison rows={service.comparison} />
+        </Section>
+      )}
+
+      {service.stayOrMove === undefined ? null : (
+        <Section label="stay or move">
+          <StayOrMoveLists advice={service.stayOrMove} />
         </Section>
       )}
 
