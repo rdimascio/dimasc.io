@@ -9,6 +9,9 @@ export const PRIVACY_TITLE = "privacy";
 export const PRIVACY_LEDE = "short version: i keep what you send me through the site check form, and not much else.";
 export const PRIVACY_DESCRIPTION = "what the site check form collects, where it goes, how google ad clicks are measured + how to get your info deleted.";
 
+export const NO_SCRIPTS_LINE = "no analytics scripts, no ad tracking scripts + no ad cookies. the site doesn't set any cookies of its own.";
+export const SERVER_COUNTING_LINE = "i count page views + form use on the server, with no cookies + no personal data.";
+
 interface PrivacySection {
   readonly title: string;
   readonly body: ReactNode;
@@ -45,7 +48,11 @@ export const PRIVACY_SECTIONS: readonly PrivacySection[] = [
   },
   {
     title: "no tracking scripts",
-    body: <>no analytics, no ad tracking scripts + no ad cookies. the site doesn't set any cookies of its own.</>,
+    body: (
+      <>
+        {NO_SCRIPTS_LINE} {SERVER_COUNTING_LINE}
+      </>
+    ),
   },
   {
     title: "bot checks",
