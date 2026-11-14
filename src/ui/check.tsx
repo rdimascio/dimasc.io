@@ -1,6 +1,6 @@
 import type { ReactElement } from "react";
 
-import { CHECK_FIELD, CHECK_LIMIT, CHECK_ROUTE } from "../check";
+import { CHECK_FIELD, CHECK_INPUT_CLASS, CHECK_LABEL_CLASS, CHECK_LIMIT, CHECK_ROUTE, TURNSTILE_ACTION, TURNSTILE_APPEARANCE, TURNSTILE_SCRIPT_SRC, TURNSTILE_SITEKEY } from "../check";
 import { CONTACT_EMAIL, QUICK_FIX_MINUTES, SITE_CHECK_ANCHOR, SITE_CHECK_CTA } from "../site";
 import { WORK_ROUTE } from "../work";
 import { ArrowLink, Eyebrow, HEADING, LEDE, PAGE } from "./layout";
@@ -16,8 +16,6 @@ export const CHECK_NEXT_STEPS = [
 ] as const;
 export const CHECK_EMAIL_FALLBACK = "rather email? write me at";
 
-const INPUT = "w-full rounded-xl border border-line bg-bg px-4 py-3 text-[1.05rem] text-ink focus:border-ink focus:outline-none";
-const LABEL = "grid gap-2 text-[0.95rem] font-medium";
 const HINT = "font-normal text-muted";
 
 function EmailFallback(): ReactElement {
@@ -39,20 +37,20 @@ export function CheckForm(): ReactElement {
         {CHECK_FORM_TITLE}
       </h2>
       <form className="mt-8 grid gap-5" action={CHECK_ROUTE} method="post">
-        <label className={LABEL}>
+        <label className={CHECK_LABEL_CLASS}>
           your name
-          <input className={INPUT} autoComplete="name" maxLength={CHECK_LIMIT.name} name={CHECK_FIELD.name} required type="text" />
+          <input className={CHECK_INPUT_CLASS} autoComplete="name" maxLength={CHECK_LIMIT.name} name={CHECK_FIELD.name} required type="text" />
         </label>
-        <label className={LABEL}>
+        <label className={CHECK_LABEL_CLASS}>
           your email
-          <input className={INPUT} autoComplete="email" maxLength={CHECK_LIMIT.email} name={CHECK_FIELD.email} required type="email" />
+          <input className={CHECK_INPUT_CLASS} autoComplete="email" maxLength={CHECK_LIMIT.email} name={CHECK_FIELD.email} required type="email" />
         </label>
-        <label className={LABEL}>
+        <label className={CHECK_LABEL_CLASS}>
           <span>
             your website <span className={HINT}>(optional)</span>
           </span>
           <input
-            className={INPUT}
+            className={CHECK_INPUT_CLASS}
             autoComplete="url"
             inputMode="url"
             maxLength={CHECK_LIMIT.website}
@@ -61,9 +59,9 @@ export function CheckForm(): ReactElement {
             type="text"
           />
         </label>
-        <label className={LABEL}>
+        <label className={CHECK_LABEL_CLASS}>
           what's broken or bugging you
-          <textarea className={`${INPUT} min-h-[9rem]`} maxLength={CHECK_LIMIT.message} name={CHECK_FIELD.message} required rows={5} />
+          <textarea className={`${CHECK_INPUT_CLASS} min-h-[9rem]`} maxLength={CHECK_LIMIT.message} name={CHECK_FIELD.message} required rows={5} />
         </label>
         <input defaultValue="" name={CHECK_FIELD.source} type="hidden" />
         <div aria-hidden="true" className="absolute -left-[9999px] w-px h-px overflow-hidden">
@@ -72,6 +70,8 @@ export function CheckForm(): ReactElement {
             <input autoComplete="off" name={CHECK_FIELD.trap} tabIndex={-1} type="text" />
           </label>
         </div>
+        <script async defer src={TURNSTILE_SCRIPT_SRC} />
+        <div className="cf-turnstile" data-action={TURNSTILE_ACTION} data-appearance={TURNSTILE_APPEARANCE} data-sitekey={TURNSTILE_SITEKEY} />
         <div className="flex flex-wrap items-center gap-4">
           <button className="rounded-full bg-accent px-7 py-3 font-medium text-on-accent hover:opacity-90" type="submit">
             {CHECK_SUBMIT_LABEL}

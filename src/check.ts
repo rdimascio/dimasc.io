@@ -20,6 +20,25 @@ export const CHECK_LIMIT = {
   source: 300,
 } as const;
 
+export const TURNSTILE_SITEKEY = "0x4AAAAAAGBM8jO7arL9_5TM";
+export const TURNSTILE_SCRIPT_SRC = "https://challenges.cloudflare.com/turnstile/v0/api.js";
+export const TURNSTILE_VERIFY_URL = "https://challenges.cloudflare.com/turnstile/v0/siteverify";
+export const TURNSTILE_ACTION = "turnstile-spin-v1";
+export const TURNSTILE_RESPONSE_FIELD = "cf-turnstile-response";
+export const TURNSTILE_APPEARANCE = "interaction-only";
+export const CHECK_INPUT_CLASS = "w-full rounded-xl border border-line bg-bg px-4 py-3 text-[1.05rem] text-ink focus:border-ink focus:outline-none";
+export const CHECK_LABEL_CLASS = "grid gap-2 text-[0.95rem] font-medium";
+export const TURNSTILE_HOSTNAMES = [
+  "dimasc.io",
+  "www.dimasc.io",
+  "dimasc-io.markd-site.workers.dev",
+  "turnstile-dimasc-io.markd-site.workers.dev",
+  "localhost",
+  "127.0.0.1",
+] as const;
+const MAX_TURNSTILE_TOKEN_LENGTH = 2048;
+const TURNSTILE_TIMEOUT_MS = 5000;
+
 export const MAX_CHECK_BODY_BYTES = 16 * 1024;
 export const CHECK_KEY_PREFIX = "check:";
 export const CHECK_SENDER = `site@${SITE_HOST}`;
@@ -58,6 +77,7 @@ export interface CheckEnv {
   readonly REQUESTS: CheckStore;
   readonly CHECK_LIMITER?: CheckRateLimiter;
   readonly EMAIL?: CheckMailer;
+  readonly TURNSTILE_SECRET_KEY?: string;
 }
 
 export interface CheckContext {
@@ -83,7 +103,48 @@ const PROBLEMS = {
   missing: { status: 400, title: "a few things are missing", detail: "i need your name, your email + what's broken." },
   badEmail: { status: 400, title: "check your email address", detail: "i need a real email address to reply to." },
   tooMany: { status: 429, title: "slow down a sec", detail: "a lot of requests came from your connection. wait a minute + try again." },
+  notHuman: { status: 403, title: "couldn't confirm you're human", detail: "i couldn't confirm you're human." },
 } as const satisfies Record<string, Problem>;
+
+interface SiteverifyResult {
+  readonly success?: unknown;
+  readonly hostname?: unknown;
+  readonly "error-codes"?: unknown;
+}
+
+type HumanCheck = { ok: true } | { ok: false; event: string; codes: readonly string[] };
+
+const ALLOWED_TURNSTILE_HOSTS: ReadonlySet<string> = new Set(TURNSTILE_HOSTNAMES);
+
+function errorCodes(result: SiteverifyResult): string[] {
+  const codes = result["error-codes"];
+  return Array.isArray(codes) ? codes.filter((code): code is string => typeof code === "string") : [];
+}
+
+export async function verifyHuman(token: string, secret: string | undefined, remoteip: string | null, idempotencyKey: string): Promise<HumanCheck> {
+  if (token === "" || token.length > MAX_TURNSTILE_TOKEN_LENGTH) return { ok: false, event: "turnstile_missing", codes: [] };
+  if (secret === undefined || secret === "") return { ok: false, event: "turnstile_unconfigured", codes: [] };
+  const body: Record<string, string> = { secret, response: token, idempotency_key: idempotencyKey };
+  if (remoteip !== null) body.remoteip = remoteip;
+  let result: SiteverifyResult;
+  try {
+    const response = await fetch(TURNSTILE_VERIFY_URL, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(body),
+      signal: AbortSignal.timeout(TURNSTILE_TIMEOUT_MS),
+    });
+    if (!response.ok) return { ok: false, event: "turnstile_unreachable", codes: [`http_${response.status}`] };
+    result = (await response.json()) as SiteverifyResult;
+  } catch {
+    return { ok: false, event: "turnstile_unreachable", codes: [] };
+  }
+  if (result.success !== true) return { ok: false, event: "turnstile_failed", codes: errorCodes(result) };
+  if (typeof result.hostname !== "string" || !ALLOWED_TURNSTILE_HOSTS.has(result.hostname)) {
+    return { ok: false, event: "turnstile_wrong_host", codes: [] };
+  }
+  return { ok: true };
+}
 
 export function sourceFromQuery(params: URLSearchParams): string {
   const kept = new URLSearchParams();
@@ -194,6 +255,63 @@ export function renderCheckProblem(problem: Pick<Problem, "title" | "detail">): 
 </html>`;
 }
 
+const HTML_ESCAPES: Record<string, string> = { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" };
+
+export function escapeHtml(value: string): string {
+  return value.replace(/[&<>"']/g, (character) => HTML_ESCAPES[character] ?? character);
+}
+
+export type CheckDraft = Pick<CheckRequest, "name" | "email" | "website" | "message" | "source">;
+
+export function renderCheckRetry(problem: Pick<Problem, "title" | "detail">, draft: CheckDraft): string {
+  const value = (text: string): string => `value="${escapeHtml(text)}"`;
+  return `<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex" />
+    <title>${problem.title} · ${SITE_NAME}</title>
+    <link rel="stylesheet" href="/styles.css" />
+    <script async defer src="${TURNSTILE_SCRIPT_SRC}"></script>
+  </head>
+  <body>
+    <main class="max-w-[40rem] mx-auto py-28 px-6">
+      <h1 class="text-4xl mb-4 tracking-[-0.04em] font-semibold">${problem.title}</h1>
+      <p class="text-muted">${problem.detail} your note is still here. hit send again.</p>
+      <form class="mt-8 grid gap-5" action="${CHECK_ROUTE}" method="post">
+        <label class="${CHECK_LABEL_CLASS}">your name
+          <input class="${CHECK_INPUT_CLASS}" autocomplete="name" maxlength="${CHECK_LIMIT.name}" name="${CHECK_FIELD.name}" required type="text" ${value(draft.name)} />
+        </label>
+        <label class="${CHECK_LABEL_CLASS}">your email
+          <input class="${CHECK_INPUT_CLASS}" autocomplete="email" maxlength="${CHECK_LIMIT.email}" name="${CHECK_FIELD.email}" required type="email" ${value(draft.email)} />
+        </label>
+        <label class="${CHECK_LABEL_CLASS}">your website (optional)
+          <input class="${CHECK_INPUT_CLASS}" autocomplete="url" inputmode="url" maxlength="${CHECK_LIMIT.website}" name="${CHECK_FIELD.website}" type="text" ${value(draft.website)} />
+        </label>
+        <label class="${CHECK_LABEL_CLASS}">what's broken or bugging you
+          <textarea class="${CHECK_INPUT_CLASS} min-h-[9rem]" maxlength="${CHECK_LIMIT.message}" name="${CHECK_FIELD.message}" required rows="5">${escapeHtml(draft.message)}</textarea>
+        </label>
+        <input name="${CHECK_FIELD.source}" type="hidden" ${value(draft.source)} />
+        <div aria-hidden="true" class="absolute -left-[9999px] w-px h-px overflow-hidden">
+          <label>leave this empty <input autocomplete="off" name="${CHECK_FIELD.trap}" tabindex="-1" type="text" /></label>
+        </div>
+        <div class="cf-turnstile" data-action="${TURNSTILE_ACTION}" data-appearance="${TURNSTILE_APPEARANCE}" data-sitekey="${TURNSTILE_SITEKEY}"></div>
+        <div><button class="rounded-full bg-accent px-7 py-3 font-medium text-on-accent hover:opacity-90" type="submit">send it</button></div>
+      </form>
+      <p class="mt-8 text-muted">or email me at <a class="underline underline-offset-4" href="mailto:${CONTACT_EMAIL}">${CONTACT_EMAIL}</a>.</p>
+    </main>
+  </body>
+</html>`;
+}
+
+function retryResponse(problem: Problem, draft: CheckDraft): Response {
+  return new Response(renderCheckRetry(problem, draft), {
+    status: problem.status,
+    headers: { "content-type": "text/html; charset=utf-8", "cache-control": "no-store" },
+  });
+}
+
 function problemResponse(problem: Problem, headers: Record<string, string> = {}): Response {
   return new Response(renderCheckProblem(problem), {
     status: problem.status,
@@ -268,6 +386,13 @@ export async function handleCheck(request: Request, env: CheckEnv, ctx?: CheckCo
 
   const parsed = parseCheck(params, request);
   if (!("id" in parsed)) return problemResponse(parsed);
+
+  const token = (params.get(TURNSTILE_RESPONSE_FIELD) ?? "").trim();
+  const human = await verifyHuman(token, env.TURNSTILE_SECRET_KEY, request.headers.get("cf-connecting-ip"), parsed.id);
+  if (!human.ok) {
+    console.log(JSON.stringify({ event: human.event, codes: human.codes }));
+    return retryResponse(PROBLEMS.notHuman, parsed);
+  }
 
   await env.REQUESTS.put(checkKey(parsed), JSON.stringify(parsed));
   console.log(JSON.stringify({ event: "check_stored", id: parsed.id, mailer: env.EMAIL !== undefined }));
