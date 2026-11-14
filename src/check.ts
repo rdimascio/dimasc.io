@@ -1,4 +1,5 @@
-import { CONTACT_EMAIL, PRIVACY_ROUTE, SITE_CHECK_NAME, SITE_CHECK_PAGE, SITE_HOST, SITE_NAME, siteCheckHref } from "./site";
+import { type EventEnv, formContext, recordEvent, SITE_EVENT, type SiteEvent } from "./measure";
+import { CONTACT_EMAIL, PRIVACY_ROUTE, SITE_CHECK_NAME, SITE_CHECK_PAGE, SITE_HOST, SITE_NAME, SITE_URL, siteCheckHref } from "./site";
 
 export const CHECK_ROUTE = "/check";
 export const CHECK_SENT_ROUTE = "/check/sent";
@@ -88,7 +89,7 @@ export interface CheckMailer {
   send(message: CheckEmail): Promise<unknown>;
 }
 
-export interface CheckEnv {
+export interface CheckEnv extends EventEnv {
   readonly REQUESTS: CheckStore;
   readonly CHECK_LIMITER?: CheckRateLimiter;
   readonly EMAIL?: CheckMailer;
@@ -412,10 +413,11 @@ export async function readBoundedBody(request: Request, maxBytes = MAX_CHECK_BOD
   return new TextDecoder().decode(bytes);
 }
 
-async function deliver(mailer: CheckMailer, record: CheckRequest): Promise<void> {
+async function deliver(mailer: CheckMailer, record: CheckRequest, onDelivered: () => void): Promise<void> {
   try {
     await mailer.send(checkEmail(record));
     console.log(JSON.stringify({ event: "check_delivered", id: record.id }));
+    onDelivered();
   } catch (error) {
     const code = (error as { code?: unknown }).code;
     console.log(JSON.stringify({ event: "check_delivery_failed", id: record.id, code: typeof code === "string" ? code : "unknown" }));
@@ -434,6 +436,8 @@ export async function handleCheck(request: Request, env: CheckEnv, ctx?: CheckCo
   const params = new URLSearchParams(body);
 
   if ((params.get(CHECK_FIELD.trap) ?? "") !== "") return seeOther(CHECK_SENT_ROUTE);
+  const record = (event: SiteEvent): void => recordEvent(env, event, () => formContext(request, params));
+  record(SITE_EVENT.formSubmit);
 
   const client = request.headers.get("cf-connecting-ip") ?? UNKNOWN_CLIENT;
   if (env.CHECK_LIMITER !== undefined) {
@@ -448,14 +452,16 @@ export async function handleCheck(request: Request, env: CheckEnv, ctx?: CheckCo
   const human = await verifyHuman(token, env.TURNSTILE_SECRET_KEY, request.headers.get("cf-connecting-ip"), parsed.id);
   if (!human.ok) {
     console.log(JSON.stringify({ event: human.event, codes: human.codes }));
+    record(SITE_EVENT.turnstileFail);
     return retryResponse(PROBLEMS.notHuman, parsed);
   }
 
   await env.REQUESTS.put(checkKey(parsed), JSON.stringify(parsed));
   console.log(JSON.stringify({ event: "check_stored", id: parsed.id, mailer: env.EMAIL !== undefined }));
+  record(SITE_EVENT.stored);
 
   if (env.EMAIL !== undefined) {
-    const delivery = deliver(env.EMAIL, parsed);
+    const delivery = deliver(env.EMAIL, parsed, () => record(SITE_EVENT.emailed));
     if (ctx === undefined) await delivery;
     else ctx.waitUntil(delivery);
   }
@@ -479,14 +485,58 @@ export function formFills(url: URL, now: Date = new Date()): Record<string, stri
   for (const name of CLICK_ID_PARAMS) {
     if (clickIds[name] !== "") fills[CHECK_FIELD[name]] = clickIds[name];
   }
-  if (hasClickId(clickIds)) fills[CHECK_FIELD.clickedAt] = now.toISOString();
+  if (hasClickId(clickIds)) fills[CHECK_FIELD.clickedAt] = clickedAtFromQuery(url.searchParams, now);
   return fills;
+}
+
+function clickedAtFromQuery(params: URLSearchParams, now: Date): string {
+  const carried = cleanClickedAt(params.get(CHECK_FIELD.clickedAt) ?? "", now.toISOString());
+  return carried !== "" ? carried : now.toISOString();
+}
+
+export function carriedQuery(url: URL, now: Date = new Date()): string {
+  const carried = new URLSearchParams(sourceFromQuery(url.searchParams));
+  const clickIds = clickIdsFromQuery(url.searchParams);
+  for (const name of CLICK_ID_PARAMS) {
+    if (clickIds[name] !== "") carried.set(CHECK_FIELD[name], clickIds[name]);
+  }
+  if (hasClickId(clickIds)) carried.set(CHECK_FIELD.clickedAt, clickedAtFromQuery(url.searchParams, now));
+  return carried.toString();
+}
+
+export function formHrefWithQuery(href: string, query: string): string {
+  const target = new URL(href, SITE_URL);
+  if (target.origin !== SITE_URL || target.pathname !== SITE_CHECK_PAGE) return href;
+  for (const [name, value] of new URLSearchParams(query)) target.searchParams.set(name, value);
+  return `${target.pathname}${target.search}${target.hash}`;
+}
+
+function isHtmlResponse(response: Response): boolean {
+  return (response.headers.get("content-type") ?? "").includes("text/html");
+}
+
+function privateCopy(response: Response): Response {
+  const headers = new Headers(response.headers);
+  headers.set("cache-control", "private, no-store");
+  headers.delete("etag");
+  return new Response(response.body, { status: response.status, statusText: response.statusText, headers });
+}
+
+export function withParamsCarried(response: Response, url: URL, now: Date = new Date()): Response {
+  const query = carriedQuery(url, now);
+  if (query === "" || !isHtmlResponse(response)) return response;
+  const rewriter = new HTMLRewriter().on(`a[href^="${SITE_CHECK_PAGE}"]`, {
+    element(element) {
+      const href = element.getAttribute("href");
+      if (href !== null) element.setAttribute("href", formHrefWithQuery(href, query));
+    },
+  });
+  return privateCopy(rewriter.transform(response));
 }
 
 export function withFormFilled(response: Response, url: URL, now: Date = new Date()): Response {
   const fills = Object.entries(formFills(url, now));
-  const isHtml = (response.headers.get("content-type") ?? "").includes("text/html");
-  if (fills.length === 0 || !isHtml) return response;
+  if (fills.length === 0 || !isHtmlResponse(response)) return response;
   const rewriter = new HTMLRewriter();
   for (const [name, fill] of fills) {
     rewriter.on(`input[name="${name}"]`, {
@@ -495,8 +545,5 @@ export function withFormFilled(response: Response, url: URL, now: Date = new Dat
       },
     });
   }
-  const filled = rewriter.transform(response);
-  const headers = new Headers(filled.headers);
-  headers.set("cache-control", "private, no-store");
-  return new Response(filled.body, { status: filled.status, statusText: filled.statusText, headers });
+  return privateCopy(rewriter.transform(response));
 }
