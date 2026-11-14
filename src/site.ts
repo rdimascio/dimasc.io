@@ -1,3 +1,5 @@
+import { serviceRoute } from "./services";
+
 export const SITE_HOST = "dimasc.io";
 export const SITE_URL = `https://${SITE_HOST}`;
 export const WWW_HOST = `www.${SITE_HOST}`;
@@ -45,10 +47,11 @@ export const QUICK_FIX_MINUTES = 30;
 export const SITE_CHECK_NAME = "free site check";
 export const SITE_CHECK_CTA = "get a free site check";
 
-const SITE_CHECK_EMAIL_BODY = ["your website:", "", "what's broken or bugging you:", ""].join("\n");
+export const SITE_CHECK_PAGE = serviceRoute("fix-my-website");
+export const SITE_CHECK_ANCHOR = "check";
 
 export function siteCheckHref(): string {
-  return mailto(SITE_CHECK_NAME, SITE_CHECK_EMAIL_BODY);
+  return `${SITE_CHECK_PAGE}#${SITE_CHECK_ANCHOR}`;
 }
 
 export const HIRE_ANCHOR = {

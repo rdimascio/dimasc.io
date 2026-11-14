@@ -1,8 +1,9 @@
 import type { ReactElement } from "react";
 
 import type { Plan } from "../content";
-import { CONTACT_EMAIL, SERVICE_AREA_COPY, SERVICE_AREA_SHORT, SITE_CHECK_CTA, siteCheckHref } from "../site";
+import { CONTACT_EMAIL, SERVICE_AREA_COPY, SERVICE_AREA_SHORT, SITE_CHECK_CTA, SITE_CHECK_PAGE, siteCheckHref } from "../site";
 import { type ComparisonRow, ORANGE_COUNTY_ROUTE, serviceBySlug, serviceRoute, SERVICES, SERVICES_ROUTE, type Service, type ServiceFaq } from "../services";
+import { CheckForm } from "./check";
 import { breadcrumbLd, businessLd, pageGraph, serviceLd } from "../structured-data";
 import { WORK_ROUTE } from "../work";
 import { PlanCard, planCtaHref, startingPricesLine } from "./home";
@@ -173,6 +174,7 @@ function ServicePage({ service, plans }: { service: Service; plans: readonly Pla
       <p className="mt-4 mb-0 text-muted max-w-[38rem]">{service.who}</p>
       <p className="mt-4 mb-0 max-w-[38rem]">{PAST_WORK_LINE}</p>
       <PrimaryCta plan={plan} />
+      {route === SITE_CHECK_PAGE ? <CheckForm /> : null}
 
       <Section label="what i can do">
         <List items={service.includes} />

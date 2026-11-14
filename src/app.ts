@@ -24,6 +24,8 @@ import { NOINDEX_ROUTES, PROCESS_ROUTE } from "./sitemap";
 import { makeProcess } from "./ui/process";
 import { makeOrangeCounty, makeServicePage, makeServicesIndex, SERVICES_LEDE } from "./ui/service";
 import { ORANGE_COUNTY_ROUTE, serviceRoute, SERVICES, SERVICES_ROUTE } from "./services";
+import { makeCheckSent } from "./ui/check";
+import { CHECK_SENT_ROUTE } from "./check";
 import { makeCaseStudy, makeWorkIndex, makeWorkRequest } from "./ui/work";
 import { previewDraftsFromEnv } from "./preview";
 import { WORK_REQUEST_ROUTE, WORK_ROUTE } from "./work";
@@ -166,6 +168,18 @@ export async function buildAppConfig(
       metadata: () =>
         seoMetadata({ title: ORANGE_COUNTY_TITLE, description: ORANGE_COUNTY_DESCRIPTION, route: ORANGE_COUNTY_ROUTE, type: "website" }),
     });
+
+  app = app.page(CHECK_SENT_ROUTE, {
+    static: true,
+    component: makeCheckSent(),
+    metadata: () =>
+      routeMetadata({
+        title: `got it · ${SITE_NAME}`,
+        description: "your site check request is in. i reply within 1 business day, monday to friday.",
+        route: CHECK_SENT_ROUTE,
+        type: "website",
+      }),
+  });
 
   for (const service of SERVICES) {
     const route = serviceRoute(service.slug);

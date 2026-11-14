@@ -49,9 +49,9 @@ export const SERVICES: readonly Service[] = [
       "a button that does nothing when you tap it",
       "something that used to work + now doesn't",
     ],
-    stepsLabel: "what happens after you email",
+    stepsLabel: "what happens after you send it",
     steps: [
-      "you email me your site + what's bugging you",
+      "you send me your site + what's bugging you",
       "i reply within 1 business day",
       "i look through your site for free + send you a plain list of what's broken",
       "fixes under 30 min: i just do them, free",

@@ -14,5 +14,8 @@
 		"binding": "ASSETS",
 		"html_handling": "drop-trailing-slash",
 		"run_worker_first": true
-	}
+	},
+	"kv_namespaces": [{ "binding": "REQUESTS", "id": "b938d58bab00429588aab3165649c280" }],
+	"send_email": [{ "name": "EMAIL", "allowed_sender_addresses": ["site@dimasc.io"] }],
+	"ratelimits": [{ "name": "CHECK_LIMITER", "namespace_id": "4101", "simple": { "limit": 5, "period": 60 } }]
 }

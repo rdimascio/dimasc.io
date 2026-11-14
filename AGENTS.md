@@ -1,6 +1,6 @@
 # dimasc.io
 
-Ryan DiMascio's studio site: a static Lesto 0.2 app on Cloudflare Workers. Every page is prerendered by `lesto build` into `out/www`, and `worker.ts` only serves those files and a 404.
+Ryan DiMascio's studio site: a static Lesto 0.2 app on Cloudflare Workers. Every page is prerendered by `lesto build` into `out/www`. `worker.ts` serves those files and a 404, and handles one form: `POST /check`.
 
 ## Commands
 
@@ -22,6 +22,8 @@ Ryan DiMascio's studio site: a static Lesto 0.2 app on Cloudflare Workers. Every
 - Preview drafts (articles and full case studies): `PREVIEW_DRAFTS=1 bun run build`, then `bunx wrangler dev`.
 - Work history: `content/experience/NN-company.md`, shown on `/` and `/about`. Unknown facts stay as `# TODO(ryan):` YAML comments and are never rendered. Demo videos live in `assets/demos` (clip under 4 MB, full video under 25 MB) and are served at `/media/demos`.
 - Studio pages ship no executable script. JSON-LD data blocks (`application/ld+json`, built in `src/structured-data.ts`) are allowed. Motion is CSS only (view transitions, scroll-driven reveals) and is off under `prefers-reduced-motion`.
+- Site check form: shown on `/services/fix-my-website#check`, posts to `/check` (`src/check.ts`), plain HTML, no script. Each request is stored in the `REQUESTS` KV namespace under `check:<iso time>:<id>`, then emailed to `ryan@dimasc.io` when an `EMAIL` (`send_email`) binding exists. Per-IP limit: the `CHECK_LIMITER` binding. Never log a request's fields; log only its id.
+- Read stored requests: `bunx wrangler kv key list --binding REQUESTS --remote --prefix check:`, then `bunx wrangler kv key get --binding REQUESTS --remote "<key>"`.
 - Frontmatter schemas live in `lesto.content.ts`. A file that fails its schema fails the build.
 
 ## Rules
