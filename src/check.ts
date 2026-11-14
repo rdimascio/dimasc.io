@@ -1,7 +1,9 @@
-import { CONTACT_EMAIL, SITE_CHECK_NAME, SITE_CHECK_PAGE, SITE_HOST, SITE_NAME, siteCheckHref } from "./site";
+import { CONTACT_EMAIL, PRIVACY_ROUTE, SITE_CHECK_NAME, SITE_CHECK_PAGE, SITE_HOST, SITE_NAME, siteCheckHref } from "./site";
 
 export const CHECK_ROUTE = "/check";
 export const CHECK_SENT_ROUTE = "/check/sent";
+export const CHECK_PRIVACY_LINE = "what i do w/ what you send:";
+export const CHECK_PRIVACY_LINK = "privacy";
 
 export const CHECK_FIELD = {
   name: "name",
@@ -9,6 +11,10 @@ export const CHECK_FIELD = {
   website: "website",
   message: "message",
   source: "source",
+  gclid: "gclid",
+  gbraid: "gbraid",
+  wbraid: "wbraid",
+  clickedAt: "clicked_at",
   trap: "fax",
 } as const;
 
@@ -18,7 +24,16 @@ export const CHECK_LIMIT = {
   website: 300,
   message: 4000,
   source: 300,
+  clickId: 200,
 } as const;
+
+export const CLICK_ID_PARAMS = ["gclid", "gbraid", "wbraid"] as const;
+export type ClickIdName = (typeof CLICK_ID_PARAMS)[number];
+export type ClickIds = Readonly<Record<ClickIdName, string>>;
+const CLICK_ID_SHAPE = new RegExp(`^[A-Za-z0-9_-]{1,${CHECK_LIMIT.clickId}}$`);
+const ISO_INSTANT_SHAPE = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{1,3})?Z$/;
+const MAX_CLICK_AGE_MS = 90 * 24 * 60 * 60 * 1000;
+const NO_CLICK_IDS: ClickIds = { gclid: "", gbraid: "", wbraid: "" };
 
 export const TURNSTILE_SITEKEY = "0x4AAAAAAGBM8jO7arL9_5TM";
 export const TURNSTILE_SCRIPT_SRC = "https://challenges.cloudflare.com/turnstile/v0/api.js";
@@ -84,7 +99,7 @@ export interface CheckContext {
   waitUntil(promise: Promise<unknown>): void;
 }
 
-export interface CheckRequest {
+export interface CheckRequest extends ClickIds {
   readonly id: string;
   readonly receivedAt: string;
   readonly name: string;
@@ -93,6 +108,7 @@ export interface CheckRequest {
   readonly message: string;
   readonly source: string;
   readonly page: string;
+  readonly clickedAt: string;
 }
 
 type Problem = { status: number; title: string; detail: string };
@@ -159,6 +175,37 @@ function cleanSource(value: string): string {
   return value.replace(SOURCE_UNSAFE, "").slice(0, CHECK_LIMIT.source);
 }
 
+export function cleanClickId(value: string | null): string {
+  return value !== null && CLICK_ID_SHAPE.test(value) ? value : "";
+}
+
+function readClickIds(read: (name: ClickIdName) => string | null): ClickIds {
+  return { gclid: cleanClickId(read("gclid")), gbraid: cleanClickId(read("gbraid")), wbraid: cleanClickId(read("wbraid")) };
+}
+
+export function clickIdsFromQuery(params: URLSearchParams): ClickIds {
+  return readClickIds((name) => params.get(name));
+}
+
+export function hasClickId(ids: ClickIds): boolean {
+  return CLICK_ID_PARAMS.some((name) => ids[name] !== "");
+}
+
+export function cleanClickedAt(value: string, receivedAt: string): string {
+  if (!ISO_INSTANT_SHAPE.test(value)) return "";
+  const clicked = Date.parse(value);
+  const received = Date.parse(receivedAt);
+  if (Number.isNaN(clicked) || clicked > received || received - clicked > MAX_CLICK_AGE_MS) return "";
+  return value;
+}
+
+export function adClickLine(record: ClickIds & { clickedAt: string }): string {
+  const ids = CLICK_ID_PARAMS.filter((name) => record[name] !== "").map((name) => `${name} ${record[name]}`);
+  if (ids.length === 0) return "ad click: (none)";
+  const when = record.clickedAt === "" ? "" : ` (clicked ${record.clickedAt})`;
+  return `ad click: ${ids.join(", ")}${when}`;
+}
+
 function refererUrl(request: Request): URL | null {
   const referer = request.headers.get("referer");
   if (referer === null) return null;
@@ -193,15 +240,21 @@ export function parseCheck(params: URLSearchParams, request: Request): CheckRequ
 
   const referer = refererUrl(request);
   const source = postedSource !== "" ? postedSource : referer === null ? "" : sourceFromQuery(referer.searchParams);
+  const postedClickIds = readClickIds((name) => field(CHECK_FIELD[name]));
+  const clickIds = hasClickId(postedClickIds) || referer === null ? postedClickIds : clickIdsFromQuery(referer.searchParams);
+  const receivedAt = new Date().toISOString();
+  const clickedAt = hasClickId(clickIds) ? cleanClickedAt(field(CHECK_FIELD.clickedAt), receivedAt) : "";
   return {
     id: crypto.randomUUID(),
-    receivedAt: new Date().toISOString(),
+    receivedAt,
     name,
     email,
     website,
     message,
     source,
     page: referer?.pathname ?? "",
+    ...clickIds,
+    clickedAt,
   };
 }
 
@@ -216,6 +269,7 @@ export function checkEmail(record: CheckRequest): CheckEmail {
     `website: ${record.website === "" ? "(none)" : record.website}`,
     `source: ${record.source === "" ? "(direct)" : record.source}`,
     `page: ${record.page === "" ? "(unknown)" : record.page}`,
+    adClickLine(record),
     `received: ${record.receivedAt}`,
     `id: ${record.id}`,
     "",
@@ -261,7 +315,7 @@ export function escapeHtml(value: string): string {
   return value.replace(/[&<>"']/g, (character) => HTML_ESCAPES[character] ?? character);
 }
 
-export type CheckDraft = Pick<CheckRequest, "name" | "email" | "website" | "message" | "source">;
+export type CheckDraft = Pick<CheckRequest, "name" | "email" | "website" | "message" | "source" | ClickIdName | "clickedAt">;
 
 export function renderCheckRetry(problem: Pick<Problem, "title" | "detail">, draft: CheckDraft): string {
   const value = (text: string): string => `value="${escapeHtml(text)}"`;
@@ -293,6 +347,8 @@ export function renderCheckRetry(problem: Pick<Problem, "title" | "detail">, dra
           <textarea class="${CHECK_INPUT_CLASS} min-h-[9rem]" maxlength="${CHECK_LIMIT.message}" name="${CHECK_FIELD.message}" required rows="5">${escapeHtml(draft.message)}</textarea>
         </label>
         <input name="${CHECK_FIELD.source}" type="hidden" ${value(draft.source)} />
+        ${CLICK_ID_PARAMS.map((name) => `<input name="${CHECK_FIELD[name]}" type="hidden" ${value(draft[name])} />`).join("\n        ")}
+        <input name="${CHECK_FIELD.clickedAt}" type="hidden" ${value(draft.clickedAt)} />
         <div aria-hidden="true" class="absolute -left-[9999px] w-px h-px overflow-hidden">
           <label>leave this empty <input autocomplete="off" name="${CHECK_FIELD.trap}" tabindex="-1" type="text" /></label>
         </div>
@@ -300,6 +356,7 @@ export function renderCheckRetry(problem: Pick<Problem, "title" | "detail">, dra
         <div><button class="rounded-full bg-accent px-7 py-3 font-medium text-on-accent hover:opacity-90" type="submit">send it</button></div>
       </form>
       <p class="mt-8 text-muted">or email me at <a class="underline underline-offset-4" href="mailto:${CONTACT_EMAIL}">${CONTACT_EMAIL}</a>.</p>
+      <p class="text-muted">${CHECK_PRIVACY_LINE} <a class="underline underline-offset-4" href="${PRIVACY_ROUTE}">${CHECK_PRIVACY_LINK}</a></p>
     </main>
   </body>
 </html>`;
@@ -414,15 +471,32 @@ export function isCheckFormPage(pathname: string): boolean {
   return pathname === SITE_CHECK_PAGE;
 }
 
-export function withSourceFilled(response: Response, url: URL): Response {
+export function formFills(url: URL, now: Date = new Date()): Record<string, string> {
+  const fills: Record<string, string> = {};
   const source = sourceFromQuery(url.searchParams);
+  if (source !== "") fills[CHECK_FIELD.source] = source;
+  const clickIds = clickIdsFromQuery(url.searchParams);
+  for (const name of CLICK_ID_PARAMS) {
+    if (clickIds[name] !== "") fills[CHECK_FIELD[name]] = clickIds[name];
+  }
+  if (hasClickId(clickIds)) fills[CHECK_FIELD.clickedAt] = now.toISOString();
+  return fills;
+}
+
+export function withFormFilled(response: Response, url: URL, now: Date = new Date()): Response {
+  const fills = Object.entries(formFills(url, now));
   const isHtml = (response.headers.get("content-type") ?? "").includes("text/html");
-  if (source === "" || !isHtml) return response;
-  return new HTMLRewriter()
-    .on(`input[name="${CHECK_FIELD.source}"]`, {
+  if (fills.length === 0 || !isHtml) return response;
+  const rewriter = new HTMLRewriter();
+  for (const [name, fill] of fills) {
+    rewriter.on(`input[name="${name}"]`, {
       element(element) {
-        element.setAttribute("value", source);
+        element.setAttribute("value", fill);
       },
-    })
-    .transform(response);
+    });
+  }
+  const filled = rewriter.transform(response);
+  const headers = new Headers(filled.headers);
+  headers.set("cache-control", "private, no-store");
+  return new Response(filled.body, { status: filled.status, statusText: filled.statusText, headers });
 }

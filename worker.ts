@@ -1,6 +1,6 @@
 import { staticAssetsWorker } from "@lesto/cloudflare";
 
-import { type CheckEnv, handleCheck, isCheckFormPage, isCheckRoute, withSourceFilled } from "./src/check";
+import { type CheckEnv, handleCheck, isCheckFormPage, isCheckRoute, withFormFilled } from "./src/check";
 import { renderNotFound } from "./src/not-found";
 import { canonicalRedirect } from "./src/redirect";
 
@@ -17,6 +17,6 @@ export default {
     const url = new URL(request.url);
     if (isCheckRoute(url.pathname)) return handleCheck(request, env, ctx);
     const response = await assets.fetch(request, env, ctx);
-    return isCheckFormPage(url.pathname) ? withSourceFilled(response, url) : response;
+    return isCheckFormPage(url.pathname) ? withFormFilled(response, url) : response;
   },
 };
