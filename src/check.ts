@@ -205,11 +205,35 @@ function methodNotAllowed(): Response {
   return new Response("method not allowed", { status: 405, headers: { allow: ALLOWED_METHODS } });
 }
 
-async function readBoundedBody(request: Request): Promise<string | null> {
-  const declared = Number(request.headers.get("content-length") ?? "0");
-  if (declared > MAX_CHECK_BODY_BYTES) return null;
-  const bytes = await request.arrayBuffer();
-  if (bytes.byteLength > MAX_CHECK_BODY_BYTES) return null;
+function declaredLength(request: Request): number | null {
+  const header = request.headers.get("content-length");
+  if (header === null || !/^\d+$/.test(header.trim())) return null;
+  return Number(header);
+}
+
+export async function readBoundedBody(request: Request, maxBytes = MAX_CHECK_BODY_BYTES): Promise<string | null> {
+  const declared = declaredLength(request);
+  if (declared !== null && declared > maxBytes) return null;
+  if (request.body === null) return "";
+  const reader = request.body.getReader();
+  const chunks: Uint8Array[] = [];
+  let total = 0;
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    total += value.byteLength;
+    if (total > maxBytes) {
+      await reader.cancel();
+      return null;
+    }
+    chunks.push(value);
+  }
+  const bytes = new Uint8Array(total);
+  let offset = 0;
+  for (const chunk of chunks) {
+    bytes.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
   return new TextDecoder().decode(bytes);
 }
 

@@ -11,6 +11,7 @@ import {
   CHECK_FIELD,
   CHECK_LIMIT,
   CHECK_ROUTE,
+  CHECK_SENDER,
   CHECK_SENT_ROUTE,
   type CheckEmail,
   type CheckEnv,
@@ -960,5 +961,74 @@ describe("site check form", () => {
       expect(`${route}: ${withoutJsonLd(html)}`).not.toContain("<script");
     }
     expect(renderCheckProblem({ title: "x", detail: "y" })).not.toContain("<script");
+  });
+});
+
+function streamedPost(body: string, headers: Record<string, string> = {}): Request {
+  const bytes = new TextEncoder().encode(body);
+  const half = Math.floor(bytes.byteLength / 2);
+  const stream = new ReadableStream<Uint8Array>({
+    start(controller) {
+      controller.enqueue(bytes.slice(0, half));
+      controller.enqueue(bytes.slice(half));
+      controller.close();
+    },
+  });
+  return new Request(`${SITE_URL}${CHECK_ROUTE}`, {
+    method: "POST",
+    headers: { "content-type": "application/x-www-form-urlencoded", "cf-connecting-ip": "203.0.113.7", ...headers },
+    body: stream,
+    duplex: "half",
+  } as RequestInit);
+}
+
+function paddedTo(bytes: number): string {
+  const base = new URLSearchParams(VALID_CHECK).toString();
+  const prefix = `${base}&pad=`;
+  return `${prefix}${"a".repeat(bytes - new TextEncoder().encode(prefix).byteLength)}`;
+}
+
+describe("site check body cap", () => {
+  it("returns 413 for an oversize streamed body w/ no content-length", async () => {
+    const { env, stored } = checkFixture();
+    const request = streamedPost(paddedTo(MAX_CHECK_BODY_BYTES + 1));
+    expect(request.headers.get("content-length")).toBeNull();
+    expect((await handleCheck(request, env)).status).toBe(413);
+    expect(stored.size).toBe(0);
+  });
+
+  it("returns 413 when the content-length lies about a bigger body", async () => {
+    const { env, stored } = checkFixture();
+    for (const declared of ["100", "not-a-number"]) {
+      const response = await handleCheck(streamedPost(paddedTo(MAX_CHECK_BODY_BYTES + 1), { "content-length": declared }), env);
+      expect(response.status).toBe(413);
+    }
+    expect(stored.size).toBe(0);
+  });
+
+  it("accepts a body exactly at the limit", async () => {
+    const { env, stored } = checkFixture();
+    const body = paddedTo(MAX_CHECK_BODY_BYTES);
+    expect(new TextEncoder().encode(body).byteLength).toBe(MAX_CHECK_BODY_BYTES);
+    const response = await handleCheck(streamedPost(body), env);
+    expect(response.status).toBe(303);
+    expect(stored.size).toBe(1);
+  });
+});
+
+describe("site check email", () => {
+  it("sends one email from the site address to me when env.EMAIL exists, + none when it does not", async () => {
+    const withMailer = checkFixture();
+    await handleCheck(checkPost(VALID_CHECK), withMailer.env);
+    expect(withMailer.sent).toHaveLength(1);
+    expect(withMailer.sent[0]?.from.email).toBe(CHECK_SENDER);
+    expect(CHECK_SENDER).toBe("site@dimasc.io");
+    expect(withMailer.sent[0]?.to).toBe(CONTACT_EMAIL);
+    expect(withMailer.sent[0]?.subject).toContain(VALID_CHECK.name);
+
+    const noMailer = checkFixture({ mailer: false });
+    await handleCheck(checkPost(VALID_CHECK), noMailer.env);
+    expect(noMailer.sent).toHaveLength(0);
+    expect(noMailer.stored.size).toBe(1);
   });
 });
