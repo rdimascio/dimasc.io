@@ -12,7 +12,7 @@ import { ArrowLink, Eyebrow, HEADING, LEDE, PAGE, SectionHead } from "./layout";
 export const SERVICES_CRUMB = { name: "services", route: SERVICES_ROUTE } as const;
 export const ORANGE_COUNTY_CRUMB = { name: SERVICE_AREA_SHORT, route: ORANGE_COUNTY_ROUTE } as const;
 export const PAST_WORK_LINE = "i've built websites for stanford, blackstone, holt international + serhant, while at 10up + luxury presence.";
-export const AREA_LINE = `i'm based in ${SERVICE_AREA_COPY} + work w/ businesses around here, like in tustin + corona. anywhere else in the us works too, over email + video.`;
+export const AREA_LINE = `i'm based in ${SERVICE_AREA_COPY} + work w/ businesses around here, like in tustin + corona. happy to meet in person around oc. anywhere else in the us works too, over email + video.`;
 export const SERVICES_LEDE = "website help for small businesses: one fix, a new site, booking, a store, or someone keeping an eye on it all.";
 
 export function findPlan(plans: readonly Plan[], name: string): Plan | undefined {
