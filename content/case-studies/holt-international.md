@@ -1,6 +1,6 @@
 ---
 title: "sponsorship, adoption and giving for holt international"
-summary: "led the front end of the site where families sponsor + adopt kids, while at 10up."
+summary: "tech lead on the site where families sponsor + adopt kids, while at 10up."
 client: "holt international"
 industry: "nonprofit"
 year: 2021
@@ -24,7 +24,7 @@ Live site: [holtinternational.org](https://www.holtinternational.org/)
 
 ## My role
 
-I led frontend development and served as tech lead on Holt International while I was a Senior Frontend Engineer at 10up, between January 2021 and April 2022.
+I was tech lead on Holt International while I was a Senior Frontend Engineer at 10up, between January 2021 and April 2022.
 
 ## Open questions
 

@@ -1,10 +1,10 @@
 ---
 title: "the public website for blackstone"
-summary: "led the front end of blackstone's public website, while at 10up."
+summary: "front-end engineer on blackstone's public website, while at 10up."
 client: "blackstone"
 industry: "financial services"
 year: 2021
-services: ["Frontend development", "Technical leadership"]
+services: ["Frontend development"]
 stack: ["WordPress", "Cloudflare"]
 order: 20
 draft: true
@@ -24,7 +24,7 @@ Live site: [blackstone.com](https://www.blackstone.com/)
 
 ## My role
 
-I led frontend development and served as tech lead on Blackstone while I was a Senior Frontend Engineer at 10up, between January 2021 and April 2022.
+I was a front-end engineer on Blackstone while I was a Senior Frontend Engineer at 10up, between January 2021 and April 2022.
 
 ## Open questions
 

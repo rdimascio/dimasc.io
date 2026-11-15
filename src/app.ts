@@ -140,7 +140,7 @@ export async function buildAppConfig(
         seoMetadata({
           title: `about · web developer in ${SERVICE_AREA_SHORT} · ${SITE_NAME}`,
           description:
-            "senior software engineer since 2017. i built the platform behind 30k+ websites + led front-end work for blackstone. now i look after small-business sites.",
+            "senior software engineer since 2017. i built the platform behind 30k+ websites + was tech lead on serhant.com's mls search. now i help small businesses.",
           route: ABOUT_ROUTE,
           type: "website",
         }),

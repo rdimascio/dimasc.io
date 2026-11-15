@@ -1,10 +1,10 @@
 ---
 title: "listing search for serhant."
-summary: "built ryan serhant's website template in 30 days, while at luxury presence."
+summary: "tech lead on the mls home search behind serhant.com, which ran every luxury presence customer's listing search."
 client: "serhant."
 industry: "real estate"
-year: 2022 # TODO(ryan): Was the SERHANT. template delivered in 2022?
-services: ["Website template", "Technical leadership"]
+year: 2022 # TODO(ryan): Did the MLS home search ship in 2022?
+services: ["Listing search", "Technical leadership"]
 stack: ["Luxury Presence", "Cloudflare"]
 order: 50
 draft: true
@@ -25,7 +25,7 @@ Live site: [serhant.com](https://serhant.com/home-search/listings/). The listing
 
 ## My role
 
-I was a Senior UI Engineer and tech lead at Luxury Presence, which I joined in May 2022. I delivered a production-ready website template for the Ryan Serhant partnership within 30 days.
+I joined Luxury Presence in May 2022 as a Senior UI Engineer. I was tech lead on the MLS home search app on serhant.com. The same app ran the MLS listing search for every other Luxury Presence customer.
 
 Later, as a Senior Software Engineer, I built and scaled the multi-tenant Next.js platform behind Luxury Presence sites. It serves 30K+ websites, for clients that include Ryan Serhant.
 
