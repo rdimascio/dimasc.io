@@ -12,6 +12,7 @@ import { articlesFeed, FEED_ROUTE } from "./src/feed";
 import { SIGNATURE_INITIAL } from "./src/signature";
 import { sitemapRoutes } from "./src/sitemap";
 import { STATIC_ASSET_DIRS } from "./src/work";
+import { inlineStylesheetInSite } from "./src/inline-css";
 
 const FAVICON_SIZE = 64;
 const FAVICON_INSET = 9;
@@ -50,7 +51,7 @@ async function bundle(entry: string): Promise<string> {
   return output.text();
 }
 
-const onBuilt: BuildHook = async ({ sites }) => {
+const onBuilt: BuildHook = async ({ outDir, sites }) => {
   const site = sites.find((candidate) => candidate.name === "www");
   if (site === undefined) return;
 
@@ -84,6 +85,8 @@ const onBuilt: BuildHook = async ({ sites }) => {
     await site.sink(page.script.slice(1), await bundle(page.entry));
     await site.sink(outputPathFor(page.route), personalPageHtml(page));
   }
+
+  await inlineStylesheetInSite(path.join(outDir, site.name));
 };
 
 export default onBuilt;

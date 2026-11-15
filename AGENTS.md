@@ -29,6 +29,7 @@ Ryan DiMascio's studio site: a static Lesto 0.2 app on Cloudflare Workers. Every
 - Weekly report: `DIMASC_CF_ACCOUNT_ID=... DIMASC_ANALYTICS_TOKEN=... node scripts/weekly-report.mjs` prints visits, form views, submits, leads + top sources, last 7 days vs the 7 before. The token needs only Account Analytics:Read.
 - Read stored requests: `bunx wrangler kv key list --binding REQUESTS --remote --prefix check:`, then `bunx wrangler kv key get --binding REQUESTS --remote "<key>"`.
 - Frontmatter schemas live in `lesto.content.ts`. A file that fails its schema fails the build.
+- CSS is inlined: after `lesto build`, `lesto.build.ts` replaces the `/styles.css` link in every built HTML page with a `<style>` block (`src/inline-css.ts`), so pages need no render-blocking stylesheet request. `/styles.css` is still emitted for the Worker-rendered pages (form retry, 404). Fonts stay external, preloaded via the `Link` header in `_headers`, with size-matched local fallbacks and `font-display: optional`.
 
 ## Rules
 
