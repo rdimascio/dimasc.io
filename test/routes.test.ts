@@ -73,7 +73,7 @@ import {
   SITE_URL,
   WWW_HOST,
 } from "../src/site";
-import { formatPrice, HERO_LEAD, hireAnchorLine, REFUND_RULE, SINCE_YEAR, STAFF_LINE, START_HERE_LABEL } from "../src/ui/home";
+import { CREDENTIALS, formatPrice, HERO_LEAD, hireAnchorLine, PRICING_TERMS, QUICK_FIX_LINE, SINCE_YEAR, SITE_CHECK_LINE, START_HERE_LABEL } from "../src/ui/home";
 import { BRAND_LOGOS, LOGO_SOURCE_DIR, logoSrc } from "../src/logos";
 import { articleRoutes, articlesFeed, FEED_ROUTE } from "../src/feed";
 import { SIGNATURE } from "../src/signature";
@@ -106,6 +106,7 @@ function decodeEntities(html: string): string {
   return html.replaceAll("&#x27;", "'").replaceAll("&amp;", "&");
 }
 
+const REFUND_LINE = "refund 75% of your first payment, even if i already delivered work";
 const FRONT_END_ONLY_CLIENT = /blackstone|stanford/i;
 const LEAD_ROLE_CLAIM = /tech lead|led front-end work|led frontend|led the front/i;
 const SENTENCE_END = /(?<=[.!?])\s+/;
@@ -206,8 +207,8 @@ describe("site routes", () => {
     }
     expect(html).toContain('id="pricing"');
     const decoded = html.replaceAll("&#x27;", "'");
-    expect(decoded).toContain(REFUND_RULE);
-    expect(decoded).toContain(STAFF_LINE);
+    expect(decoded).toContain(REFUND_LINE);
+    expect(decoded).toContain(PRICING_TERMS);
     for (const item of await loadFaq()) expect(decoded).toContain(item.question);
   });
 
@@ -231,7 +232,7 @@ describe("site routes", () => {
 
   it("states one refund rule that covers delivered work", async () => {
     const html = (await text(await app.handle("GET", "/"))).replaceAll("&#x27;", "'");
-    expect(html).toContain(REFUND_RULE);
+    expect(html).toContain(REFUND_LINE);
     expect(html).not.toContain("no refunds for finished work");
   });
 
@@ -352,15 +353,26 @@ describe("site routes", () => {
     }
   });
 
-  it("puts the proof in the hero + the since line right under it, linked to the about page", async () => {
+  it("puts the proof + credentials in the hero once, linked to the about page", async () => {
     const home = decodeEntities(await text(await app.handle("GET", "/")));
-    expect(home).toContain(`href="${ABOUT_ROUTE}"`);
-    expect(home).toContain(HERO_LEAD);
-    expect(home).toContain("y combinator");
-    const since = home.indexOf(`software engineer since ${SINCE_YEAR}`);
-    expect(since).toBeGreaterThan(0);
-    expect(since).toBeLessThan(home.indexOf("things i can help with"));
+    const main = home.slice(home.indexOf("<main"), home.indexOf("</main>"));
+    const hero = main.slice(0, main.indexOf("things i can help with"));
+    expect(hero).toContain(`href="${ABOUT_ROUTE}"`);
+    expect(hero).toContain(HERO_LEAD);
+    for (const line of CREDENTIALS) expect(hero).toContain(line);
+    for (const fact of ["holt international", "serhant.com mls home search", "blackstone", "stanford ecorner", "y combinator", `since ${SINCE_YEAR}`]) {
+      expect(hero).toContain(fact);
+    }
+    expect(htmlToText(main.slice(main.indexOf("things i can help with"))).toLowerCase()).not.toContain("y combinator");
     expect(home).not.toContain("<video");
+  });
+
+  it("shows the logo marquee at the bottom of the hero", async () => {
+    const home = decodeEntities(await text(await app.handle("GET", "/")));
+    const main = home.slice(home.indexOf("<main"));
+    const strip = main.indexOf("companies + clients i've built for");
+    expect(strip).toBeGreaterThan(main.indexOf(HERO_LEAD));
+    expect(strip).toBeLessThan(main.indexOf("things i can help with"));
   });
 
   it("ships every demo file at web size", async () => {
@@ -549,6 +561,12 @@ describe("site routes", () => {
     expect(html).toContain(SITE_CHECK_CTA);
     expect(html).toContain(START_HERE_LABEL);
     expect(html).toContain(`fixes under ${QUICK_FIX_MINUTES} min: free`);
+    const pricing = html.slice(html.indexOf('id="pricing"'));
+    const band = pricing.indexOf(SITE_CHECK_LINE);
+    expect(band).toBeGreaterThan(0);
+    expect(pricing).toContain(QUICK_FIX_LINE);
+    expect(pricing.indexOf(`href="${siteCheckHref()}"`)).toBeGreaterThan(band);
+    for (const plan of plans) expect(pricing.indexOf(`>${plan.name}</h3>`)).toBeGreaterThan(band);
     for (const plan of plans.filter((candidate) => candidate.price !== null)) {
       expect(html).toContain(formatPrice(plan.price ?? 0));
     }

@@ -13,7 +13,7 @@ function indexLabel(position: number): string {
   return String(position + 1).padStart(2, "0");
 }
 
-function CaseStudyCard({ study, position }: { study: CaseStudy; position: number }): ReactElement {
+function CaseStudyCard({ study, position, compact }: { study: CaseStudy; position: number; compact: boolean }): ReactElement {
   return (
     <li className="reveal md:[&:nth-child(even)]:mt-32">
       <a className="work-card block rounded-[26px]" href={requestAnchor(study)}>
@@ -41,9 +41,13 @@ function CaseStudyCard({ study, position }: { study: CaseStudy; position: number
           <span className="card-arrow text-[1.2rem] text-muted" aria-hidden="true">
             ↗
           </span>
-          <span />
-          <p className="m-0 mt-2 text-muted leading-relaxed max-w-[34rem]">{study.summary}</p>
-          <span />
+          {compact ? null : (
+            <>
+              <span />
+              <p className="m-0 mt-2 text-muted leading-relaxed max-w-[34rem]">{study.summary}</p>
+              <span />
+            </>
+          )}
           <span />
           <p className="m-0 mt-4 font-mono text-[0.7rem] tracking-[0.04em] text-muted">{study.industry}</p>
         </div>
@@ -52,7 +56,7 @@ function CaseStudyCard({ study, position }: { study: CaseStudy; position: number
   );
 }
 
-export function CaseStudyGrid({ studies }: { studies: readonly CaseStudy[] }): ReactElement {
+export function CaseStudyGrid({ studies, compact = false }: { studies: readonly CaseStudy[]; compact?: boolean }): ReactElement {
   if (studies.length === 0) {
     return (
       <div className="border border-dashed border-line rounded-2xl p-8 sm:p-10 grid gap-4 md:grid-cols-[minmax(0,2fr)_minmax(0,1fr)] items-center">
@@ -68,7 +72,7 @@ export function CaseStudyGrid({ studies }: { studies: readonly CaseStudy[] }): R
   return (
     <ul className="m-0 p-0 list-none grid gap-x-8 lg:gap-x-12 gap-y-16 md:grid-cols-2">
       {studies.map((study, position) => (
-        <CaseStudyCard key={study.slug} position={position} study={study} />
+        <CaseStudyCard compact={compact} key={study.slug} position={position} study={study} />
       ))}
     </ul>
   );
