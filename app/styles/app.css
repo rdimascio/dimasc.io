@@ -5,7 +5,7 @@
   font-family: "Geist";
   src: url("/fonts/Geist-Variable.woff2") format("woff2");
   font-weight: 100 900;
-  font-display: swap;
+  font-display: optional;
 }
 @font-face {
   font-family: "Geist Mono";
@@ -16,17 +16,23 @@
 @font-face {
   font-family: "Geist Fallback";
   src: local("Arial"), local("Helvetica Neue"), local("Helvetica");
-  size-adjust: 101%;
+  size-adjust: 102.6%;
   ascent-override: 100%;
   descent-override: 28.7%;
   line-gap-override: 0%;
+}
+@font-face {
+  font-family: "Instrument Serif Fallback";
+  src: local("Times New Roman Italic"), local("TimesNewRomanPS-ItalicMT"), local("Times-Italic");
+  font-style: italic;
+  size-adjust: 88.7%;
 }
 @font-face {
   font-family: "Instrument Serif";
   src: url("/fonts/InstrumentSerif-Italic.woff2") format("woff2");
   font-weight: 400;
   font-style: italic;
-  font-display: swap;
+  font-display: optional;
 }
 
 :root {
@@ -104,7 +110,7 @@
   --color-sky: var(--sky);
   --font-sans: "Geist", "Geist Fallback", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   --font-mono: "Geist Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  --font-serif: "Instrument Serif", ui-serif, Georgia, "Times New Roman", serif;
+  --font-serif: "Instrument Serif", "Instrument Serif Fallback", ui-serif, Georgia, "Times New Roman", serif;
 }
 
 @layer base {
