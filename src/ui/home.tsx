@@ -69,10 +69,7 @@ const WHAT_YOU_GET = [
   { title: "a reply within 1 business day", body: "monday to friday. no weekend or same-day emergency help." },
   { title: "pause anytime", body: "you're billed once a month. pause, and the unused days wait for you." },
   { title: "you own everything", body: "it all runs in your accounts, so you're never stuck w/ me." },
-  {
-    title: "i do the work",
-    body: "no juniors, no outsourcing. i set up ai coding tools for a team of 80 engineers, and i use the same kind on your site. i still read + test every change.",
-  },
+  { title: "i do the work", body: "no juniors, no agency. you deal with me, and i test every change." },
 ] as const;
 
 const BOARD = [
@@ -102,10 +99,6 @@ export function startingPricesLine(plans: readonly Plan[]): string {
   const monthly = lowestPrice(plans);
   const parts = [SITE_CHECK_NAME, ...(monthly === null ? [] : [`care from ${formatPrice(monthly)}/month`])];
   return `${parts.join(", ")}, or one project for one price.`;
-}
-
-export function setupLine(setup: number): string {
-  return `+ ${formatPrice(setup)} setup`;
 }
 
 function listNames(names: readonly string[]): string {
@@ -143,7 +136,6 @@ export function PlanCard({ plan, showMore = true }: { plan: Plan; showMore?: boo
         </span>
         {plan.price === null ? null : <span className="text-muted">{`/${plan.per}`}</span>}
       </p>
-      {plan.setup === undefined ? null : <p className="mt-3 mb-0 text-[0.92rem] text-muted">{setupLine(plan.setup)}</p>}
       <ul className="mt-9 mb-10 p-0 list-none flex flex-col border-t border-line">
         {plan.features.map((feature) => (
           <li className="flex gap-3 border-b border-line py-3" key={feature}>

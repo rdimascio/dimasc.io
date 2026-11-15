@@ -43,7 +43,6 @@ export function planHref(planName: string): string {
   return mailto(planName);
 }
 
-export const SETUP_FEE = 500;
 export const QUICK_FIX_MINUTES = 30;
 export const SITE_CHECK_NAME = "free site check";
 export const SITE_CHECK_CTA = "get a free site check";

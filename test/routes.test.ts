@@ -54,7 +54,6 @@ import {
   BOOKING_URL,
   CONTACT_EMAIL,
   QUICK_FIX_MINUTES,
-  SETUP_FEE,
   SITE_CHECK_ANCHOR,
   SITE_CHECK_CTA,
   SITE_CHECK_PAGE,
@@ -74,7 +73,7 @@ import {
   SITE_URL,
   WWW_HOST,
 } from "../src/site";
-import { formatPrice, HERO_LEAD, hireAnchorLine, REFUND_RULE, setupLine, SINCE_YEAR, STAFF_LINE, START_HERE_LABEL } from "../src/ui/home";
+import { formatPrice, HERO_LEAD, hireAnchorLine, REFUND_RULE, SINCE_YEAR, STAFF_LINE, START_HERE_LABEL } from "../src/ui/home";
 import { BRAND_LOGOS, LOGO_SOURCE_DIR, logoSrc } from "../src/logos";
 import { articleRoutes, articlesFeed, FEED_ROUTE } from "../src/feed";
 import { SIGNATURE } from "../src/signature";
@@ -198,7 +197,6 @@ describe("site routes", () => {
 
     expect(plans.map((plan) => plan.name)).toEqual(["care", "monthly help", "one project"]);
     expect(plans.map((plan) => plan.price)).toEqual([199, 1500, null]);
-    expect(plans.map((plan) => plan.setup)).toEqual([SETUP_FEE, SETUP_FEE, undefined]);
     expect(plans.map((plan) => plan.per)).toEqual(["month", "month", "month"]);
     expect(html).toContain("from $199/month");
     expect(html).toContain("care from $199/month");
@@ -545,23 +543,21 @@ describe("site routes", () => {
     }
   });
 
-  it("starts w/ a free site check + shows the setup fee next to the monthly prices", async () => {
+  it("starts w/ a free site check + shows the monthly prices w/o a setup fee", async () => {
     const plans = await loadPlans();
     const html = decodeEntities(await text(await app.handle("GET", "/")));
     expect(html).toContain(SITE_CHECK_CTA);
     expect(html).toContain(START_HERE_LABEL);
     expect(html).toContain(`fixes under ${QUICK_FIX_MINUTES} min: free`);
-    for (const plan of plans.filter((candidate) => candidate.setup !== undefined)) {
-      expect(html).toContain(setupLine(plan.setup ?? 0));
+    for (const plan of plans.filter((candidate) => candidate.price !== null)) {
+      expect(html).toContain(formatPrice(plan.price ?? 0));
     }
-    expect(setupLine(SETUP_FEE)).toBe(`+ ${formatPrice(SETUP_FEE)} setup`);
-    for (const gone of ["fix it", "you get your $500 back", "/fix</span>"]) expect(html).not.toContain(gone);
+    for (const gone of ["fix it", "you get your $500 back", "/fix</span>", "$500", "setup fee", " setup<"]) expect(html).not.toContain(gone);
     const anchor = hireAnchorLine(plans);
     expect(anchor).not.toBeNull();
     expect(html).toContain(anchor ?? "");
-    const faq = (await loadFaq()).find((item) => item.question.includes(formatPrice(SETUP_FEE)));
-    expect(faq).toBeDefined();
-    expect(htmlToText(faq?.html ?? "")).toContain("backups");
+    const faq = await loadFaq();
+    expect(faq.some((item) => `${item.question} ${htmlToText(item.html)}`.toLowerCase().includes("setup fee"))).toBe(false);
   });
 
   it("names the service area in the title, description, hero, footer and FAQ", async () => {
@@ -589,8 +585,8 @@ describe("site routes", () => {
     for (const place of [SERVICE_AREA.county, ...SERVICE_AREA.cities]) expect(areas).toContain(place);
     const offers = business?.makesOffer as { price: string }[];
     expect(offers.map((offer) => offer.price)).toEqual(["0", "199", "1500"]);
-    const setupFees = JSON.stringify(offers).match(/ActivationFee/g) ?? [];
-    expect(setupFees).toHaveLength(2);
+    const offersJson = JSON.stringify(offers);
+    for (const gone of ["ActivationFee", "CompoundPriceSpecification", "setup fee"]) expect(offersJson).not.toContain(gone);
     for (const block of jsonLdBlocks(html)) {
       for (const banned of ["telephone", "address", "streetAddress", "postalCode"]) expect(block).not.toContain(`"${banned}"`);
       expect(block).not.toMatch(PHONE_NUMBER);
@@ -801,9 +797,10 @@ describe("site routes", () => {
       const html = decodeEntities(await text(await app.handle("GET", serviceRoute(service.slug))));
       const top = html.slice(html.indexOf("<h1"), html.indexOf("what i can do"));
       expect(top).toContain(servicePriceLine(await loadPlans()));
-      for (const price of ["free site check", `under ${QUICK_FIX_MINUTES} min free`, "$199/month + $500 setup", "$1,500/month + $500 setup", PROJECT_PRICE_COPY]) {
+      for (const price of ["free site check", `under ${QUICK_FIX_MINUTES} min free`, "care $199/month", "monthly help $1,500/month", PROJECT_PRICE_COPY]) {
         expect(top).toContain(price);
       }
+      for (const gone of ["setup", "$500"]) expect(top).not.toContain(gone);
     }
   });
 
@@ -835,13 +832,15 @@ describe("site routes", () => {
     for (const row of SERVICES.find((service) => service.slug === "website-care")?.comparison ?? []) expect(care).toContain(row.mine);
   });
 
-  it("never advertises a setup fee waiver in the built public HTML", async () => {
+  it("ships no setup fee, waiver or ai tool mention in the built public HTML", async () => {
     const publicApp = await createApp(await buildAppConfig({ previewDrafts: false }));
     const routes = sitemapRoutes(await loadAllCaseStudies(), await loadAllArticles());
     expect(routes.length).toBeGreaterThan(0);
     for (const route of [...routes, ...NOINDEX_ROUTES]) {
-      const html = await text(await publicApp.handle("GET", route));
-      expect(`${route}: ${html}`.toLowerCase()).not.toContain("waive");
+      const html = decodeEntities(await text(await publicApp.handle("GET", route))).toLowerCase();
+      for (const banned of ["waive", "setup fee", "$500 setup", "ai coding", "ai tools", "ai-assisted", "claude"]) {
+        expect(`${route}: ${html}`).not.toContain(banned);
+      }
     }
   });
 

@@ -1,7 +1,6 @@
 ---
 name: "monthly help"
 price: 1500
-setup: 500
 summary: "one job at a time, as many as you need."
 features:
   - "one job at a time"

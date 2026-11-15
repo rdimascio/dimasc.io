@@ -73,22 +73,6 @@ function monthlyPriceLd(price: string): JsonLd {
   return { "@type": "UnitPriceSpecification", price, priceCurrency: CURRENCY, unitText: "MONTH" };
 }
 
-function setupFeeLd(setup: number): JsonLd {
-  return {
-    "@type": "UnitPriceSpecification",
-    priceComponentType: "https://schema.org/ActivationFee",
-    price: String(setup),
-    priceCurrency: CURRENCY,
-    description: "one-time setup fee",
-  };
-}
-
-function priceSpecificationLd(plan: Plan & { price: number }): JsonLd {
-  const monthly = monthlyPriceLd(String(plan.price));
-  if (plan.setup === undefined) return monthly;
-  return { "@type": "CompoundPriceSpecification", priceComponent: [monthly, setupFeeLd(plan.setup)] };
-}
-
 function offerLd(plan: Plan & { price: number }): JsonLd {
   return {
     "@type": "Offer",
@@ -96,7 +80,7 @@ function offerLd(plan: Plan & { price: number }): JsonLd {
     description: plan.summary,
     price: String(plan.price),
     priceCurrency: CURRENCY,
-    priceSpecification: priceSpecificationLd(plan),
+    priceSpecification: monthlyPriceLd(String(plan.price)),
   };
 }
 
