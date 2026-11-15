@@ -1,10 +1,10 @@
 ---
 title: "a library of entrepreneurship talks for stanford"
-summary: "led the front end of stanford's library of talks on starting companies, while at 10up."
+summary: "front-end engineer on stanford's library of talks on starting companies, while at 10up."
 client: "stanford"
 industry: "higher education"
 year: 2021
-services: ["Frontend development", "Technical leadership"]
+services: ["Frontend development"]
 stack: ["Drupal 11"]
 order: 10
 draft: true
@@ -24,7 +24,7 @@ Live site: [stvp.stanford.edu/ecorner](https://stvp.stanford.edu/ecorner/)
 
 ## My role
 
-I led frontend development and served as tech lead on Stanford eCorner, the media library of the Stanford Technology Ventures Program, while I was a Senior Frontend Engineer at 10up, between January 2021 and April 2022.
+I was a front-end engineer on Stanford eCorner, the media library of the Stanford Technology Ventures Program, while I was a Senior Frontend Engineer at 10up, between January 2021 and April 2022.
 
 ## Open questions
 

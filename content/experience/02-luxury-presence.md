@@ -28,7 +28,7 @@ roles:
       - "built the ui component library + design system w/ typescript, react, radix, vite and storybook."
   - title: "senior ui engineer, tech lead"
     points:
-      - "delivered a production-ready website template for the ryan serhant partnership within 30 days."
+      - "tech lead on the mls home search app behind serhant.com. it also ran the listing search for every other luxury presence customer."
       - "made template work 20% faster w/ a token-based design system."
       - "built tools for the creative team: a git-to-postgres sync, a vite + react preview app and a deploy cli."
 demos:

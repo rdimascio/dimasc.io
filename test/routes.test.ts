@@ -107,6 +107,20 @@ function decodeEntities(html: string): string {
   return html.replaceAll("&#x27;", "'").replaceAll("&amp;", "&");
 }
 
+const FRONT_END_ONLY_CLIENT = /blackstone|stanford/i;
+const LEAD_ROLE_CLAIM = /tech lead|led front-end work|led frontend|led the front/i;
+const SENTENCE_END = /(?<=[.!?])\s+/;
+const ATTRIBUTE_VALUE = /="([^"]*)"/g;
+
+function visibleAndAttributeText(html: string): string {
+  const attributeValues = [...html.matchAll(ATTRIBUTE_VALUE)].map((match) => match[1] ?? "");
+  return [htmlToText(html), ...attributeValues.map((value) => htmlToText(value))].join(". ");
+}
+
+function leadClaimsOnFrontEndOnlyClients(copy: string): string[] {
+  return copy.split(SENTENCE_END).filter((sentence) => FRONT_END_ONLY_CLIENT.test(sentence) && LEAD_ROLE_CLAIM.test(sentence));
+}
+
 const JSON_LD_BLOCK = new RegExp(`<script type="${RegExp.escape(JSON_LD_TYPE)}">([\\s\\S]*?)</script>`, "g");
 const SERVICE_PAGE_ROUTES = SERVICES.map((service) => serviceRoute(service.slug));
 const STUDIO_ROUTES = ["/", ABOUT_ROUTE, PROCESS_ROUTE, WORK_ROUTE, WORK_REQUEST_ROUTE, ...serviceRoutes(), PRIVACY_ROUTE, CHECK_SENT_ROUTE] as const;
@@ -828,6 +842,25 @@ describe("site routes", () => {
     for (const route of [...routes, ...NOINDEX_ROUTES]) {
       const html = await text(await publicApp.handle("GET", route));
       expect(`${route}: ${html}`.toLowerCase()).not.toContain("waive");
+    }
+  });
+
+  it("never claims a lead role on blackstone or stanford in the built HTML", async () => {
+    expect(leadClaimsOnFrontEndOnlyClients("i led front-end work for blackstone.")).toHaveLength(1);
+    expect(leadClaimsOnFrontEndOnlyClients("i was tech lead at 10up on stanford ecorner.")).toHaveLength(1);
+    expect(leadClaimsOnFrontEndOnlyClients("i was tech lead on holt. i was a front-end engineer on blackstone.")).toEqual([]);
+
+    const publicApp = await createApp(await buildAppConfig({ previewDrafts: false }));
+    const preview = await createApp(await buildAppConfig({ previewDrafts: true }));
+    const studies = await loadAllCaseStudies();
+    const publicRoutes = [...sitemapRoutes(studies, await loadAllArticles()), ...NOINDEX_ROUTES];
+    const pages = [
+      ...publicRoutes.map((route) => ({ app: publicApp, route })),
+      ...studies.map((study) => ({ app: preview, route: study.route })),
+    ];
+    for (const { app: site, route } of pages) {
+      const html = await text(await site.handle("GET", route));
+      expect({ route, claims: leadClaimsOnFrontEndOnlyClients(visibleAndAttributeText(html)) }).toEqual({ route, claims: [] });
     }
   });
 

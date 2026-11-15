@@ -9,7 +9,7 @@ import { Signature } from "./signature";
 import { ArrowLink, Eyebrow, HEADING, PAGE, SectionHead, WIDTH } from "./layout";
 
 export const ABOUT_PARAGRAPHS = [
-  "at luxury presence i built + scaled the platform that runs 30k+ real estate websites and 10 million+ requests a day. i cut load time on its property pages by 87% and cut how often it broke by 60%. before that i was tech lead at 10up on sites for blackstone, stanford ecorner and holt international.",
+  "at luxury presence i built + scaled the platform that runs 30k+ real estate websites and 10 million+ requests a day. i cut load time on its property pages by 87% and cut how often it broke by 60%. i was also tech lead on the mls home search behind serhant.com, which ran every luxury presence customer's listing search. before that, at 10up, i was tech lead on holt international's site. i was also a front-end engineer on blackstone + stanford ecorner.",
   "i also set up the ai coding tools for a team of 80 engineers there. i use the same kind of tools on your site. it's how one person can do this. i still read + test every change before you see it.",
   "a lot of website care is someone logging in once a month to click update on plugins. that works till something breaks. finding out why it broke is my actual job.",
   "i still have a full-time job as a software engineer, so i only take a few clients. i reply within 1 business day, monday to friday. you always deal w/ me.",

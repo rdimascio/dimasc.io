@@ -87,7 +87,7 @@ export const SERVICES: readonly Service[] = [
       {
         question: "who looks at my site?",
         answer:
-          "me. i've been a software engineer since 2017. i was a tech lead at 10up on sites for blackstone + stanford ecorner, and i built the platform behind 30k+ websites at luxury presence. by day i'm a senior engineer at every, a y combinator startup.",
+          "me. i've been a software engineer since 2017. at 10up i was tech lead on holt international's site. i was a front-end engineer there on blackstone + stanford ecorner. at luxury presence i built the platform behind 30k+ websites + was tech lead on the mls home search behind serhant.com. by day i'm a senior engineer at every, a y combinator startup.",
       },
       { question: "how fast do you reply?", answer: "within 1 business day, monday to friday. no weekend or same-day emergency help." },
     ],
@@ -99,7 +99,7 @@ export const SERVICES: readonly Service[] = [
     title: "small business website design, orange county",
     description: "a new website for your small business, built in small steps. you see one price per step before i start + can stop after any step.",
     summary: "a new site, built in small steps. one price per step, agreed before i start.",
-    lede: "your site is old, slow or hard to update, + fixing it piece by piece doesn't make sense anymore. i build you a new one, in small steps, w/ one price per step. i led the front end on sites for blackstone + stanford ecorner. yours gets built the same way: tested before you see it, and yours to keep.",
+    lede: "your site is old, slow or hard to update, + fixing it piece by piece doesn't make sense anymore. i build you a new one, in small steps, w/ one price per step. i was tech lead on holt international's site. i was a front-end engineer on blackstone + stanford ecorner. yours gets built the same way: tested before you see it, and yours to keep.",
     who: "for owners who've outgrown their site, or never had a real one.",
     includes: [
       "a site that works on phones",
