@@ -297,7 +297,7 @@
   }
 
   .marquee {
-    animation: marquee 48s linear infinite;
+    animation: marquee 192s linear infinite;
   }
 
   .pixel-wordmark .pixel {
@@ -361,7 +361,8 @@
     justify-content: center;
     row-gap: 1.75rem;
   }
-  .marquee-track[aria-hidden="true"] {
+  .marquee-track[aria-hidden="true"],
+  .marquee-repeat {
     display: none;
   }
   .logo-strip {
