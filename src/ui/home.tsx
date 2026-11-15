@@ -153,19 +153,31 @@ function SiteCheckBand(): ReactElement {
   );
 }
 
+export const LOGO_COPIES_PER_TRACK = 4;
+
 function LogoStrip(): ReactElement {
+  const copies = Array.from({ length: LOGO_COPIES_PER_TRACK }, (_, copy) => copy);
   const track = (hidden: boolean): ReactElement => (
     <ul className="marquee-track m-0 p-0 list-none" aria-hidden={hidden ? "true" : undefined}>
-      {BRAND_LOGOS.map((logo) => (
-        <li className="flex items-center px-5 sm:px-10" key={logo.slug}>
-          <span
-            aria-label={hidden ? undefined : logo.name}
-            className="brand-logo"
-            role={hidden ? undefined : "img"}
-            style={{ "--logo": `url(${logoSrc(logo)})`, "--logo-scale": opticalScale(logo), aspectRatio: logo.ratio } as CSSProperties}
-          />
-        </li>
-      ))}
+      {copies.flatMap((copy) =>
+        BRAND_LOGOS.map((logo) => {
+          const isRepeat = hidden || copy > 0;
+          return (
+            <li
+              aria-hidden={!hidden && isRepeat ? "true" : undefined}
+              className={`flex items-center px-5 sm:px-10${copy > 0 ? " marquee-repeat" : ""}`}
+              key={`${copy}-${logo.slug}`}
+            >
+              <span
+                aria-label={isRepeat ? undefined : logo.name}
+                className="brand-logo"
+                role={isRepeat ? undefined : "img"}
+                style={{ "--logo": `url(${logoSrc(logo)})`, "--logo-scale": opticalScale(logo), aspectRatio: logo.ratio } as CSSProperties}
+              />
+            </li>
+          );
+        }),
+      )}
     </ul>
   );
   return (
