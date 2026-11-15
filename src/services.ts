@@ -47,10 +47,7 @@ export interface Service {
   readonly stayOrMove?: StayOrMove;
 }
 
-const SETUP_FEE_FAQ: ServiceFaq = {
-  question: "what's the $500 setup fee?",
-  answer: "it covers the work at the start: i look through your whole site, get access to everything, set up backups + set up monitoring. you pay it once.",
-};
+const FIRST_MONTH_NOTE = "in the first month i look through your whole site, get access, and set up backups + monitoring.";
 
 export const SERVICES: readonly Service[] = [
   {
@@ -244,7 +241,7 @@ export const SERVICES: readonly Service[] = [
       "bigger stuff goes on monthly help or gets quoted as one project",
     ],
     plan: "care",
-    costNote: "$199/month + a $500 setup fee. no long-term contract, cancel anytime.",
+    costNote: `$199/month. ${FIRST_MONTH_NOTE} no long-term contract, cancel anytime.`,
     faq: [
       {
         question: "how is this different from a $50 maintenance plan?",
@@ -260,7 +257,6 @@ export const SERVICES: readonly Service[] = [
         answer: "updates, uptime + security monitoring and up to 2 small fixes a month, all done by me. i reply within 1 business day.",
       },
       { question: "is hosting included?", answer: "no. your website host's monthly fee gets billed to you directly." },
-      SETUP_FEE_FAQ,
     ],
     comparison: [
       { topic: "who does it", typical: "whoever is on the ticket", mine: "me, a senior software engineer, every time" },
@@ -300,7 +296,7 @@ export const SERVICES: readonly Service[] = [
       "check the finished work. i keep going until it's right",
     ],
     plan: "monthly help",
-    costNote: "$1,500/month + a $500 setup fee. no long-term contract, pause or cancel anytime.",
+    costNote: `$1,500/month. ${FIRST_MONTH_NOTE} no long-term contract, pause or cancel anytime.`,
     faq: [
       {
         question: "how fast do i get stuff back?",
@@ -318,7 +314,6 @@ export const SERVICES: readonly Service[] = [
         question: "what counts as a job?",
         answer: "a fix, a new page, connecting two tools, a simple report. one at a time, as many as you need in the month.",
       },
-      SETUP_FEE_FAQ,
     ],
     related: ["website-care", "online-booking", "new-website"],
   },

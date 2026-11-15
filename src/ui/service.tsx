@@ -45,8 +45,7 @@ export const MOVE_LABEL = "think about moving if";
 
 function planPriceCopy(plan: Plan): string {
   if (plan.price === null) return `${plan.name}: ${PROJECT_PRICE_COPY}`;
-  const monthly = `${plan.name} ${formatPrice(plan.price)}/${plan.per}`;
-  return plan.setup === undefined ? monthly : `${monthly} + ${formatPrice(plan.setup)} setup`;
+  return `${plan.name} ${formatPrice(plan.price)}/${plan.per}`;
 }
 
 export function servicePriceLine(plans: readonly Plan[]): string {

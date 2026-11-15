@@ -11,7 +11,6 @@ roles:
   - title: "senior software engineer ii, developer experience"
     points:
       - "built command-line tools for 80 engineers to run all the services on their own laptops w/ docker, node.js and process-compose. setup went from hours to minutes."
-      - "shipped ai-assisted engineering workflows w/ claude code, mcp servers, git worktrees and stacked pull requests, so features + code review moved faster."
       - "released throwaway test environments, so each feature gets tested on its own w/o fighting over a shared one."
       - "built an internal plugin system so every team uses the same tools."
   - title: "senior software engineer, fullstack"
@@ -45,7 +44,7 @@ demos:
     width: 1280
     height: 800
   - slug: "local-dev-app"
-    title: "ai-assisted dev app"
+    title: "local dev app"
     event: "hackathon demo"
     summary: "a desktop app that sets up a dev workspace, runs everything and turns a plain request into a reviewed code change."
     points:

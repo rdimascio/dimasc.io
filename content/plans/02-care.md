@@ -1,7 +1,6 @@
 ---
 name: "care"
 price: 199
-setup: 500
 summary: "a senior engineer keeps your site updated, watched + fixed when small stuff breaks."
 features:
   - "updates, done for you + checked after"
