@@ -84,7 +84,7 @@ export const SERVICES: readonly Service[] = [
       {
         question: "who looks at my site?",
         answer:
-          "me. i've been a software engineer since 2017. at 10up i was tech lead on holt international's site. i was a front-end engineer there on blackstone + stanford ecorner. at luxury presence i built the platform behind 30k+ websites + was tech lead on the mls home search behind serhant.com. by day i'm a senior engineer at every, a y combinator startup.",
+          "me. i've been a software engineer since 2017. at 10up i was tech lead on holt international's site. i was a front-end engineer there on blackstone + stanford ecorner. at luxury presence i built the platform behind 30k+ websites + was tech lead on the mls home search behind serhant.com.",
       },
       { question: "how fast do you reply?", answer: "within 1 business day, monday to friday. no weekend or same-day emergency help." },
     ],

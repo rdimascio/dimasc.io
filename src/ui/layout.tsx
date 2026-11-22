@@ -11,12 +11,12 @@ import { Signature } from "./signature";
 export const WIDTH = "max-w-[1320px] mx-auto px-5 sm:px-8 lg:px-10";
 export { ABOUT_ROUTE };
 
-export function Eyebrow({ children }: { children: ReactNode }): ReactElement {
+export function Eyebrow({ children, as: Tag = "p" }: { children: ReactNode; as?: "p" | "h2" }): ReactElement {
   return (
-    <p className="m-0 font-mono text-[0.72rem] tracking-[0.04em] text-muted flex items-center gap-2">
+    <Tag className="m-0 font-mono font-normal text-[0.72rem] tracking-[0.04em] text-muted flex items-center gap-2">
       <span className="inline-block w-1.5 h-1.5 rounded-full bg-accent-bright" aria-hidden="true" />
       {children}
-    </p>
+    </Tag>
   );
 }
 
@@ -35,7 +35,7 @@ export function SectionHead({
     <div className="grid gap-6 md:grid-cols-12 border-t border-ink pt-5 mb-12 sm:mb-16">
       <div className="md:col-span-4 flex items-start gap-4">
         {index === undefined ? null : <span className="font-mono text-[0.72rem] text-muted pt-[1px]">{index}</span>}
-        <Eyebrow>{label}</Eyebrow>
+        <Eyebrow as={title === undefined ? "h2" : "p"}>{label}</Eyebrow>
       </div>
       {title === undefined ? null : (
         <h2 className="md:col-span-6 m-0 text-[clamp(1.9rem,3.6vw,3.1rem)] leading-[1.02] tracking-[-0.035em] font-medium [text-wrap:balance]">
