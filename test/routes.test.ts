@@ -110,6 +110,12 @@ const REFUND_LINE = "refund 75% of your first payment, even if i already deliver
 const FRONT_END_ONLY_CLIENT = /blackstone|stanford/i;
 const LEAD_ROLE_CLAIM = /tech lead|led front-end work|led frontend|led the front/i;
 const SENTENCE_END = /(?<=[.!?])\s+/;
+const AI_CODING_TOOL_NAMES = ["claude", "cursor", "copilot", "vibe coded", "vibe-coded", "vibe coding", "agents built this", "ai coding", "ai-assisted"] as const;
+const CLASS_ATTRIBUTE = /\sclass="[^"]*"/g;
+
+function withoutClassAttributes(html: string): string {
+  return html.replace(CLASS_ATTRIBUTE, "");
+}
 const ATTRIBUTE_VALUE = /="([^"]*)"/g;
 
 function visibleAndAttributeText(html: string): string {
@@ -850,16 +856,17 @@ describe("site routes", () => {
     for (const row of SERVICES.find((service) => service.slug === "website-care")?.comparison ?? []) expect(care).toContain(row.mine);
   });
 
-  it("ships no setup fee, waiver or ai tool mention in the built public HTML", async () => {
+  it("ships no setup fee, waiver or ai coding-tool name in the built public HTML, while ai stays a service word", async () => {
     const publicApp = await createApp(await buildAppConfig({ previewDrafts: false }));
     const routes = sitemapRoutes(await loadAllCaseStudies(), await loadAllArticles());
     expect(routes.length).toBeGreaterThan(0);
     for (const route of [...routes, ...NOINDEX_ROUTES]) {
-      const html = decodeEntities(await text(await publicApp.handle("GET", route))).toLowerCase();
-      for (const banned of ["waive", "setup fee", "$500 setup", "ai coding", "ai tools", "ai-assisted", "claude"]) {
+      const html = withoutClassAttributes(decodeEntities(await text(await publicApp.handle("GET", route)))).toLowerCase();
+      for (const banned of ["waive", "setup fee", "$500 setup", ...AI_CODING_TOOL_NAMES]) {
         expect(`${route}: ${html}`).not.toContain(banned);
       }
     }
+    expect(withoutClassAttributes("<p class=\"cursor-pointer\">ai front desk</p>")).not.toContain("cursor");
   });
 
   it("never claims a lead role on blackstone or stanford in the built HTML", async () => {
