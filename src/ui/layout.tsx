@@ -4,6 +4,7 @@ import { ABOUT_ROUTE, CONTACT_EMAIL, GITHUB_URL, introCallHref, introCallLabel, 
 import { ARTICLES_ROUTE } from "../content";
 import { ORANGE_COUNTY_ROUTE, serviceRoute, SERVICES, SERVICES_ROUTE } from "../services";
 import { WORK_ROUTE } from "../work";
+import { YOUTH_SPORTS_ROUTE } from "../youth-sports";
 import { PixelWordmark } from "./pixel-wordmark";
 import { Signature } from "./signature";
 
@@ -81,7 +82,7 @@ function ContactBand(): ReactElement {
         </h2>
         <div className="mt-14 grid gap-8 md:grid-cols-12 items-end">
           <p className="md:col-span-5 m-0 text-muted text-[1.1rem] leading-relaxed max-w-[28rem]">
-            tell me what's broken or slowing you down. i'll tell you if a quick fix, care, monthly help or one project makes sense, or if you need me at all.
+            tell me how people reach you now. i'll tell you if an ai front desk makes sense, or if you need me at all.
           </p>
           <div className="md:col-span-7 flex flex-wrap gap-3 md:justify-end">
             <ArrowLink href={introCallHref()} tone="accent">
@@ -120,6 +121,7 @@ function Footer({ sections }: { sections: NavSections }): ReactElement {
   const links = [
     ...visibleNav(sections).map((item) => ({ label: item.label, href: item.href })),
     { label: "prices", href: "/#pricing" },
+    { label: "youth sports", href: YOUTH_SPORTS_ROUTE },
     { label: "one-project jobs", href: "/process" },
     { label: "github", href: GITHUB_URL },
     { label: "email", href: `mailto:${CONTACT_EMAIL}` },
@@ -134,7 +136,7 @@ function Footer({ sections }: { sections: NavSections }): ReactElement {
       <div className={`${WIDTH} pt-10`}>
         <div className="border-t border-line pt-8 grid gap-8 md:grid-cols-12">
           <p className="md:col-span-5 m-0 text-muted max-w-[22rem]">
-            {`website help from a senior software engineer, for small businesses in ${SERVICE_AREA_COPY} + anywhere in the us. built + tested by me.`}
+            {`ai setup for local businesses in ${SERVICE_AREA_COPY}, from a senior software engineer. set up + looked after by me.`}
           </p>
           <div className="md:col-span-7 flex flex-col gap-4">
             <ul className="m-0 p-0 list-none flex flex-wrap gap-x-8 gap-y-1 md:justify-end">

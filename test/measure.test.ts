@@ -27,6 +27,7 @@ const GCLID = "Cj0KCQ_abc-123";
 const FULL_REFERER = "https://www.google.com/search?q=fix+my+gym+site&client=pat";
 const PERSON = { name: "Pat Owner", email: "pat@example.com", website: "patsgym.com", message: "the booking button does nothing on my phone" };
 const HOME_ROUTES = ["/", "/about", PRIVACY_ROUTE, SITE_CHECK_PAGE] as const;
+const FORM_LINK_PAGE = "/about";
 
 let app: App;
 
@@ -117,7 +118,7 @@ const VALID_POST = {
 
 describe("attribution carry-through", () => {
   it("adds the visitor's click id, utm tags + click time to every link to the form", async () => {
-    const response = await visit(`/?gclid=${GCLID}&utm_source=gbp&utm_medium=organic&utm_campaign=oc&ref=card&other=x`);
+    const response = await visit(`${FORM_LINK_PAGE}?gclid=${GCLID}&utm_source=gbp&utm_medium=organic&utm_campaign=oc&ref=card&other=x`);
     const hrefs = formHrefs(await response.text());
     expect(hrefs.length).toBeGreaterThan(0);
     for (const href of hrefs) {
@@ -136,7 +137,7 @@ describe("attribution carry-through", () => {
   });
 
   it("drops invalid click ids + unsafe utm characters, and leaves a page w/o params untouched + cacheable", async () => {
-    const response = await visit(`/?gclid=${encodeURIComponent('bad"><script>')}&wbraid=a.b&utm_source=${encodeURIComponent('gbp"><b>')}`);
+    const response = await visit(`${FORM_LINK_PAGE}?gclid=${encodeURIComponent('bad"><script>')}&wbraid=a.b&utm_source=${encodeURIComponent('gbp"><b>')}`);
     const html = await response.text();
     for (const href of formHrefs(html)) {
       const url = new URL(href, SITE_URL);
@@ -147,7 +148,7 @@ describe("attribution carry-through", () => {
     }
     expect(html).not.toContain("<script>");
 
-    const plain = await visit("/");
+    const plain = await visit(FORM_LINK_PAGE);
     expect(plain.headers.get("cache-control")).toBe("public, max-age=0, must-revalidate");
     expect(formHrefs(await plain.text())).toContain(siteCheckHref());
     expect(carriedQuery(new URL(`${SITE_URL}/?gclid=a%20b&x=1`))).toBe("");

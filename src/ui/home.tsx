@@ -1,11 +1,23 @@
 import type { CSSProperties, ReactElement } from "react";
 
-import { ARTICLES_ROUTE, type Article, type CaseStudy, type FaqItem, type Plan } from "../content";
+import { ARTICLES_ROUTE, type Article, type CaseStudy, type FaqItem, listedPlans, type Plan } from "../content";
 import { BRAND_LOGOS, logoSrc, opticalScale } from "../logos";
-import { HIRE_ANCHOR, introCallHref, planHref, QUICK_FIX_MINUTES, SERVICE_AREA_COPY, SITE_CHECK_CTA, SITE_CHECK_NAME, siteCheckHref } from "../site";
+import {
+  FRONT_DESK_CHECK_CTA,
+  FRONT_DESK_CHECK_MINUTES,
+  FRONT_DESK_CHECK_NAME,
+  FRONT_DESK_NAME,
+  FRONT_DESK_TOOLS,
+  frontDeskCheckHref,
+  introCallHref,
+  planHref,
+  SERVICE_AREA_COPY,
+  SITE_CHECK_NAME,
+} from "../site";
 import { homeGraph } from "../structured-data";
-import { PLAN_SERVICE, type PlanName, serviceBySlug, serviceRoute, SERVICES, SERVICES_ROUTE, type ServiceSlug } from "../services";
+import { PLAN_SERVICE, type PlanName, serviceBySlug, serviceRoute, type ServiceSlug } from "../services";
 import { WORK_ROUTE } from "../work";
+import { YOUTH_SPORTS_ROUTE } from "../youth-sports";
 import { ABOUT_ROUTE, ArrowLink, Eyebrow, SectionHead, WIDTH } from "./layout";
 import { ArticleList } from "./articles";
 import { JsonLd } from "./json-ld";
@@ -13,30 +25,46 @@ import { CaseStudyGrid, RequestNote } from "./work";
 
 export const START_HERE_LABEL = "start here";
 export const SINCE_YEAR = 2017;
-export const HERO_LEAD = "i built the platform behind 30k+ websites.";
-export const HERO_TURN = "now i fix yours";
+export const HERO_EYEBROW = `ai setup for local businesses in ${SERVICE_AREA_COPY}`;
+export const HERO_LEAD = "you're missing calls.";
+export const HERO_TURN = "i can fix that";
 export const CREDENTIALS = [
   "tech lead on holt international + the serhant.com mls home search.",
   "front-end engineer on blackstone + stanford ecorner.",
-  `software engineer since ${SINCE_YEAR}. by day at every, a y combinator startup.`,
+  `software engineer since ${SINCE_YEAR}. now i set up ai for local businesses.`,
 ] as const;
-export const SITE_CHECK_LINE = "i look through your whole site + send a plain list of what's broken.";
-export const QUICK_FIX_LINE = `fixes under ${QUICK_FIX_MINUTES} min: free.`;
-export const PRICING_TERMS = "no contracts. no hourly bills. pause or cancel anytime.";
+export const WHAT_IT_DOES = [
+  "picks up the calls you miss",
+  "texts people back",
+  "answers booking questions",
+  "replies to your google reviews",
+] as const;
+export const RUNS_IN_LINE = `it runs inside the stuff you already use: ${FRONT_DESK_TOOLS}.`;
+export const LOOK_AFTER_LINE = "i set it up, i watch it, i fix it when it breaks. you don't touch it.";
+export const CHECK_LINE = `i call your business after hours, like a customer would, + count the google reviews nobody answered. then i show you what that costs in dollars. ${FRONT_DESK_CHECK_MINUTES} minutes.`;
+export const PRICING_TERMS = "software billed at cost, no markup. no hourly bills.";
 export const PROJECT_PRICE_LABEL = { price: "quoted", suffix: "up front" } as const;
+export const WHO_FOR = [
+  "youth sports academies + kids' activity centers",
+  "gyms, studios + med spas",
+  "home services, like hvac, plumbing, landscaping + cleaning",
+] as const;
+export const WHO_FOR_LINE = `owner-run, 2-30 staff, in ${SERVICE_AREA_COPY}. people book w/ you by phone or app.`;
+export const NOT_FOR = [
+  "banks, fintech, payments, lending or insurance",
+  "back office work for anyone: bookkeeping, accounting, payroll, invoicing, spend tools, hr or benefits",
+  "startups + venture-backed companies",
+  "restaurants, for now",
+  "a custom ai product built from scratch for you to own",
+] as const;
+export const NOT_FOR_LINE = "i say no to these, + i'm happy to point you somewhere else.";
 const COMPACT_PLAN_BULLETS = 4;
-
-export function hireAnchorLine(plans: readonly Plan[]): string | null {
-  const monthly = plans.find((plan) => plan.name === "monthly help")?.price;
-  if (monthly === undefined || monthly === null) return null;
-  return `a full-time web developer costs about ${formatPrice(HIRE_ANCHOR.monthly)} a month in pay alone (${HIRE_ANCHOR.source}). monthly help is ${formatPrice(monthly)}.`;
-}
 const HOME_ARTICLE_COUNT = 3;
 
 const STEPS = [
-  { title: "get a free site check", body: "a plain list of what's broken." },
-  { title: "pick how we work", body: "care, monthly help or one project." },
-  { title: "check the finished work", body: "most small jobs are back in 2 business days." },
+  { title: "get a free check", body: "i show you the calls + reviews you're missing, in dollars." },
+  { title: "i set it up", body: "in the tools you already pay for, using your hours, prices + faq." },
+  { title: "i keep it working", body: "i check it every week + fix what's off." },
 ] as const;
 
 export function formatPrice(price: number): string {
@@ -45,6 +73,37 @@ export function formatPrice(price: number): string {
 
 function sectionIndex(position: number): string {
   return `(${String(position).padStart(2, "0")})`;
+}
+
+export function frontDeskPlan(plans: readonly Plan[]): Plan & { price: number; setup: number } {
+  const plan = plans.find((candidate) => candidate.name === FRONT_DESK_NAME);
+  if (plan?.price === null || plan?.price === undefined || plan.setup === undefined) {
+    throw new Error(`the "${FRONT_DESK_NAME}" plan needs a monthly price + a setup price`);
+  }
+  return { ...plan, price: plan.price, setup: plan.setup };
+}
+
+function minimumLine(plan: Plan): string {
+  return plan.minimumMonths === undefined ? "" : ` ${plan.minimumMonths} months, then month to month.`;
+}
+
+export function frontDeskPriceLine(plans: readonly Plan[]): string {
+  const plan = frontDeskPlan(plans);
+  return `${formatPrice(plan.setup)} to set up. ${formatPrice(plan.price)} a month after that.${minimumLine(plan)}`;
+}
+
+export function frontDeskShortPrice(plans: readonly Plan[]): string {
+  const plan = frontDeskPlan(plans);
+  return `${formatPrice(plan.setup)} to set up, then ${formatPrice(plan.price)}/month.`;
+}
+
+export function setupLine(plan: Plan): string | null {
+  if (plan.setup === undefined) return null;
+  return `+ ${formatPrice(plan.setup)} to set up.${minimumLine(plan)}`;
+}
+
+export function priceSuffix(plan: Plan): string {
+  return plan.per === "site" ? "flat, per site" : `/${plan.per}`;
 }
 
 export function lowestPrice(plans: readonly Plan[]): number | null {
@@ -83,11 +142,15 @@ function PlanPrice({ plan }: { plan: Plan }): ReactElement {
       </p>
     );
   }
+  const setup = setupLine(plan);
   return (
-    <p className="mt-8 mb-0 flex items-baseline gap-1.5">
-      <span className={amount}>{formatPrice(plan.price)}</span>
-      <span className="text-muted">{`/${plan.per}`}</span>
-    </p>
+    <>
+      <p className="mt-8 mb-0 flex items-baseline gap-1.5">
+        <span className={amount}>{formatPrice(plan.price)}</span>
+        <span className="text-muted">{priceSuffix(plan)}</span>
+      </p>
+      {setup === null ? null : <p className="mt-3 mb-0 text-muted">{setup}</p>}
+    </>
   );
 }
 
@@ -133,20 +196,17 @@ export function PlanCard({
   );
 }
 
-function SiteCheckBand(): ReactElement {
+export function CheckBand(): ReactElement {
   return (
     <div className="reveal rounded-[28px] border border-accent bg-card p-8 sm:p-10 grid gap-8 md:grid-cols-[minmax(0,1fr)_auto] md:items-center">
       <div>
         <span className="inline-block rounded-full bg-accent px-3 py-1 text-[0.72rem] font-medium text-on-accent">{START_HERE_LABEL}</span>
-        <h3 className="mt-5 mb-0 text-[clamp(2rem,4vw,3.2rem)] leading-none tracking-[-0.045em] font-medium">{SITE_CHECK_NAME}</h3>
-        <p className="mt-4 mb-0 text-[1.1rem] text-muted max-w-[34rem]">
-          {`${SITE_CHECK_LINE} `}
-          <span className="text-ink font-medium">{QUICK_FIX_LINE}</span>
-        </p>
+        <h3 className="mt-5 mb-0 text-[clamp(2rem,4vw,3.2rem)] leading-none tracking-[-0.045em] font-medium">{FRONT_DESK_CHECK_NAME}</h3>
+        <p className="mt-4 mb-0 text-[1.1rem] text-muted max-w-[34rem]">{CHECK_LINE}</p>
       </div>
       <div>
-        <ArrowLink href={siteCheckHref()} tone="accent">
-          {SITE_CHECK_CTA}
+        <ArrowLink href={frontDeskCheckHref()} tone="accent">
+          {FRONT_DESK_CHECK_CTA}
         </ArrowLink>
       </div>
     </div>
@@ -194,7 +254,7 @@ function Hero(): ReactElement {
   return (
     <section className="hero flex flex-col">
       <div className={`${WIDTH} w-full flex-1 flex flex-col justify-center pt-8 sm:pt-12 pb-8 sm:pb-12`}>
-        <Eyebrow>{`for small businesses in ${SERVICE_AREA_COPY}`}</Eyebrow>
+        <Eyebrow>{HERO_EYEBROW}</Eyebrow>
         <h1 className="mt-6 sm:mt-8 mb-0 font-semibold leading-[0.98] tracking-[-0.055em] text-[clamp(2.6rem,7vw,7.4rem)] max-w-[14ch] md:max-w-[17ch] [text-wrap:balance]">
           <span className="hero-line">
             <span>
@@ -216,8 +276,8 @@ function Hero(): ReactElement {
             ))}
           </ul>
           <div className="md:col-span-5 flex flex-wrap items-center gap-x-5 gap-y-2 md:justify-end">
-            <ArrowLink href={siteCheckHref()} tone="accent">
-              {SITE_CHECK_CTA}
+            <ArrowLink href={frontDeskCheckHref()} tone="accent">
+              {FRONT_DESK_CHECK_CTA}
             </ArrowLink>
             <a className="link-underline inline-block py-2 text-muted hover:text-ink" href={ABOUT_ROUTE}>
               about me
@@ -230,31 +290,37 @@ function Hero(): ReactElement {
   );
 }
 
-function HelpWith(): ReactElement {
+function WhatItDoes(): ReactElement {
   return (
-    <section className={`${WIDTH} py-24 sm:py-32`}>
+    <section className={`${WIDTH} py-24 sm:py-32`} id="ai-front-desk">
       <SectionHead
         aside={
-          <a className="link-underline inline-block py-2 text-ink" href={SERVICES_ROUTE}>
-            all services
+          <a className="link-underline inline-block py-2 text-ink" href={YOUTH_SPORTS_ROUTE}>
+            for youth sports
           </a>
         }
         index={sectionIndex(1)}
-        label="things i can help with"
-        title="the usual stuff that eats your week."
+        label={FRONT_DESK_NAME}
+        title={
+          <>
+            the front desk <span className="serif">that doesn't miss calls.</span>
+          </>
+        }
       />
-      <ul className="m-0 p-0 list-none grid sm:grid-cols-2 gap-x-10 border-b border-line md:ml-[calc(33.333%+0.5rem)]">
-        {SERVICES.map((service) => (
-          <li className="reveal border-t border-line" key={service.slug}>
-            <a className="group flex items-center justify-between gap-4 py-5 text-[1.1rem] leading-snug tracking-[-0.01em] text-ink" href={serviceRoute(service.slug)}>
-              <span className="link-underline">{service.name}</span>
-              <span className="text-muted transition-transform duration-300 group-hover:translate-x-0.5" aria-hidden="true">
-                →
+      <div className="md:ml-[calc(33.333%+0.5rem)]">
+        <ul className="m-0 p-0 list-none grid sm:grid-cols-2 gap-x-10 border-b border-line">
+          {WHAT_IT_DOES.map((item) => (
+            <li className="reveal flex gap-3 border-t border-line py-5 text-[1.1rem] leading-snug tracking-[-0.01em]" key={item}>
+              <span className="text-accent" aria-hidden="true">
+                ✓
               </span>
-            </a>
-          </li>
-        ))}
-      </ul>
+              <span>{item}</span>
+            </li>
+          ))}
+        </ul>
+        <p className="mt-8 mb-0 text-[1.1rem] max-w-[40rem]">{RUNS_IN_LINE}</p>
+        <p className="mt-3 mb-0 text-[1.1rem] text-muted max-w-[40rem]">{LOOK_AFTER_LINE}</p>
+      </div>
     </section>
   );
 }
@@ -267,7 +333,7 @@ function HowItWorks(): ReactElement {
         label="how it works"
         title={
           <>
-            tell me what needs doing. <span className="serif">i do it.</span>
+            i set it up. <span className="serif">you don't touch it.</span>
           </>
         }
       />
@@ -285,7 +351,6 @@ function HowItWorks(): ReactElement {
 }
 
 function Pricing({ plans }: { plans: readonly Plan[] }): ReactElement {
-  const anchor = hireAnchorLine(plans);
   return (
     <section className={`${WIDTH} pb-24 sm:pb-32 scroll-mt-16`} id="pricing">
       <SectionHead
@@ -293,18 +358,55 @@ function Pricing({ plans }: { plans: readonly Plan[] }): ReactElement {
         label="prices"
         title={
           <>
-            flat prices. <span className="serif text-muted">no surprises.</span>
+            one offer. <span className="serif text-muted">one price.</span>
           </>
         }
       />
-      <SiteCheckBand />
-      <div className="mt-6 grid gap-6 lg:grid-cols-3 items-stretch">
-        {plans.map((plan) => (
-          <PlanCard key={plan.slug} compact plan={plan} showMore={false} />
+      <CheckBand />
+      <div className="mt-6 grid gap-6 lg:grid-cols-2 items-stretch">
+        {listedPlans(plans).map((plan) => (
+          <PlanCard key={plan.slug} plan={plan} showMore={false} />
         ))}
       </div>
       <p className="mt-10 mb-0 text-center text-ink">{PRICING_TERMS}</p>
-      {anchor === null ? null : <p className="mt-2 mb-0 mx-auto max-w-[44rem] text-center text-[0.92rem] text-muted">{anchor}</p>}
+    </section>
+  );
+}
+
+function WhoFor(): ReactElement {
+  return (
+    <section className={`${WIDTH} pb-24 sm:pb-32 scroll-mt-16`} id="who-its-for">
+      <SectionHead index={sectionIndex(4)} label="who it's for" title="local businesses that book by phone or app." />
+      <div className="md:ml-[calc(33.333%+0.5rem)] grid gap-10 md:grid-cols-2">
+        <div>
+          <h3 className="m-0 mb-3 text-[1.1rem] font-medium">for</h3>
+          <ul className="m-0 p-0 list-none border-b border-line">
+            {WHO_FOR.map((item) => (
+              <li className="flex gap-3 border-t border-line py-4 leading-snug" key={item}>
+                <span className="text-accent" aria-hidden="true">
+                  ✓
+                </span>
+                <span>{item}</span>
+              </li>
+            ))}
+          </ul>
+          <p className="mt-4 mb-0 text-muted">{WHO_FOR_LINE}</p>
+        </div>
+        <div>
+          <h3 className="m-0 mb-3 text-[1.1rem] font-medium">not for</h3>
+          <ul className="m-0 p-0 list-none border-b border-line">
+            {NOT_FOR.map((item) => (
+              <li className="flex gap-3 border-t border-line py-4 leading-snug" key={item}>
+                <span className="text-muted" aria-hidden="true">
+                  ×
+                </span>
+                <span>{item}</span>
+              </li>
+            ))}
+          </ul>
+          <p className="mt-4 mb-0 text-muted">{NOT_FOR_LINE}</p>
+        </div>
+      </div>
     </section>
   );
 }
@@ -320,7 +422,7 @@ function Work({ studies }: { studies: readonly CaseStudy[] }): ReactElement | nu
               all past work
             </a>
           }
-          index={sectionIndex(4)}
+          index={sectionIndex(5)}
           label="past work"
           title={
             <>
@@ -356,7 +458,7 @@ function LatestArticles({ articles }: { articles: readonly Article[] }): ReactEl
 function Faq({ faq }: { faq: readonly FaqItem[] }): ReactElement {
   return (
     <section className={`${WIDTH} py-24 sm:py-32`}>
-      <SectionHead index={sectionIndex(5)} label="questions" title="stuff people ask." />
+      <SectionHead index={sectionIndex(6)} label="questions" title="stuff people ask." />
       <div className="md:ml-[calc(33.333%+0.5rem)] border-b border-line">
         {faq.map((item) => (
           <details className="group border-t border-line py-6" key={item.slug}>
@@ -390,11 +492,12 @@ export function Home({
 }): ReactElement {
   return (
     <main>
-      <JsonLd data={homeGraph(plans, faq)} />
+      <JsonLd data={homeGraph(listedPlans(plans), faq)} />
       <Hero />
-      <HelpWith />
+      <WhatItDoes />
       <HowItWorks />
       <Pricing plans={plans} />
+      <WhoFor />
       <Work studies={studies} />
       <LatestArticles articles={articles} />
       <Faq faq={faq} />

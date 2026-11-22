@@ -3,7 +3,7 @@ import { openSqlite } from "@lesto/runtime";
 import type { PageMetadata } from "@lesto/web";
 import { lesto } from "@lesto/web";
 
-import { ARTICLES_ROUTE, loadAllCaseStudies, loadArticles, loadExperience, loadFaq, loadPlans, loadProcess, type Plan } from "./content";
+import { ARTICLES_ROUTE, loadAllCaseStudies, loadArticles, loadExperience, loadFaq, loadPlans, loadProcess, type Plan, unlistedPlans } from "./content";
 import { FEED_ROUTE } from "./feed";
 import {
   canonicalUrl,
@@ -19,7 +19,7 @@ import {
 } from "./site";
 import { makeAbout } from "./ui/about";
 import { ARTICLES_LEDE, makeArticle, makeArticlesIndex } from "./ui/articles";
-import { makeHome, startingPricesLine } from "./ui/home";
+import { frontDeskShortPrice, makeHome } from "./ui/home";
 import { ABOUT_ROUTE, makeSiteLayout } from "./ui/layout";
 import { NOINDEX_ROUTES, PROCESS_ROUTE } from "./sitemap";
 import { makeProcess } from "./ui/process";
@@ -31,6 +31,8 @@ import { CHECK_SENT_ROUTE } from "./check";
 import { makeCaseStudy, makeWorkIndex, makeWorkRequest } from "./ui/work";
 import { previewDraftsFromEnv } from "./preview";
 import { WORK_REQUEST_ROUTE, WORK_ROUTE } from "./work";
+import { YOUTH_SPORTS_DESCRIPTION, YOUTH_SPORTS_ROUTE, YOUTH_SPORTS_TITLE } from "./youth-sports";
+import { makeYouthSports } from "./ui/youth-sports";
 
 export { canonicalUrl, SITE_URL };
 
@@ -90,7 +92,7 @@ export function serviceTitle(title: string): string {
   return `${title} · ${SITE_NAME}`;
 }
 
-export const HOME_TITLE = `small business website help in ${SERVICE_AREA_SHORT} · ${SITE_NAME}`;
+export const HOME_TITLE = `ai front desk for ${SERVICE_AREA_SHORT} businesses · ${SITE_NAME}`;
 
 function withMeta(metadata: PageMetadata, extra: PageMetadata["meta"]): PageMetadata {
   return { ...metadata, meta: [...(metadata.meta ?? []), ...(extra ?? [])] };
@@ -102,8 +104,7 @@ function routeMetadata(input: Parameters<typeof seoMetadata>[0]): PageMetadata {
 }
 
 export function homeDescription(plans: readonly Plan[]): string {
-  const prices = startingPricesLine(plans);
-  return `senior engineer in ${SERVICE_AREA_COPY}. i fix + look after small-business sites myself. ${prices}`;
+  return `ai front desk for local businesses in ${SERVICE_AREA_COPY}. picks up missed calls, texts back + replies to reviews. ${frontDeskShortPrice(plans)}`;
 }
 
 export async function buildAppConfig(
@@ -118,6 +119,7 @@ export async function buildAppConfig(
     loadExperience(),
     loadArticles(options.previewDrafts),
   ]);
+  const websitePlans = unlistedPlans(plans);
 
   let app = lesto()
     .styles("/styles.css")
@@ -160,16 +162,23 @@ export async function buildAppConfig(
   app = app
     .page(SERVICES_ROUTE, {
       static: true,
-      component: makeServicesIndex(plans),
+      component: makeServicesIndex(websitePlans),
       metadata: () =>
         seoMetadata({ title: SERVICES_TITLE, description: SERVICES_LEDE, route: SERVICES_ROUTE, type: "website" }),
     })
     .page(ORANGE_COUNTY_ROUTE, {
       static: true,
-      component: makeOrangeCounty(plans),
+      component: makeOrangeCounty(websitePlans),
       metadata: () =>
         seoMetadata({ title: ORANGE_COUNTY_TITLE, description: ORANGE_COUNTY_DESCRIPTION, route: ORANGE_COUNTY_ROUTE, type: "website" }),
     });
+
+  app = app.page(YOUTH_SPORTS_ROUTE, {
+    static: true,
+    component: makeYouthSports(plans),
+    metadata: () =>
+      seoMetadata({ title: serviceTitle(YOUTH_SPORTS_TITLE), description: YOUTH_SPORTS_DESCRIPTION, route: YOUTH_SPORTS_ROUTE, type: "website" }),
+  });
 
   app = app.page(PRIVACY_ROUTE, {
     static: true,
@@ -193,7 +202,7 @@ export async function buildAppConfig(
     const route = serviceRoute(service.slug);
     app = app.page(route, {
       static: true,
-      component: makeServicePage(service, plans),
+      component: makeServicePage(service, websitePlans),
       metadata: () => seoMetadata({ title: serviceTitle(service.title), description: service.description, route, type: "website" }),
     });
   }
