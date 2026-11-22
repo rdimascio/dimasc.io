@@ -3,6 +3,7 @@ import {
   ABOUT_ROUTE,
   canonicalUrl,
   CONTACT_EMAIL,
+  FRONT_DESK_CHECK_NAME,
   GITHUB_URL,
   OG_IMAGE_PATH,
   SERVICE_AREA,
@@ -24,8 +25,9 @@ export const PERSON_ID = `${SITE_URL}/#person`;
 export const WEBSITE_ID = `${SITE_URL}/#website`;
 
 const OG_IMAGE_URL = `${SITE_URL}${OG_IMAGE_PATH}`;
-const BUSINESS_DESCRIPTION = `Website help from a senior software engineer, for small businesses in ${SERVICE_AREA_LABEL}: a free site check, care, monthly help and one-off projects.`;
+const BUSINESS_DESCRIPTION = `AI setup for local businesses in ${SERVICE_AREA_LABEL}: an AI front desk that picks up missed calls, texts people back, answers booking questions and replies to reviews, inside the tools the business already uses.`;
 const SITE_CHECK_DESCRIPTION = "i look through your site + tell you what's broken. fixes under 30 min are free.";
+const FRONT_DESK_CHECK_DESCRIPTION = "i call your business after hours + count the reviews nobody answered, then show you what that costs in dollars.";
 const JOB_TITLE = "Senior software engineer";
 
 const HTML_ENTITIES: Readonly<Record<string, string>> = {
@@ -74,21 +76,27 @@ function monthlyPriceLd(price: string): JsonLd {
 }
 
 function offerLd(plan: Plan & { price: number }): JsonLd {
-  return {
-    "@type": "Offer",
-    name: plan.name,
-    description: plan.summary,
-    price: String(plan.price),
-    priceCurrency: CURRENCY,
-    priceSpecification: monthlyPriceLd(String(plan.price)),
-  };
+  const base = { "@type": "Offer", name: plan.name, description: plan.summary, price: String(plan.price), priceCurrency: CURRENCY };
+  return plan.per === "month" ? { ...base, priceSpecification: monthlyPriceLd(String(plan.price)) } : base;
+}
+
+function setupOfferLd(plan: Plan & { setup: number }): JsonLd {
+  return { "@type": "Offer", name: `${plan.name} setup`, description: `one-time setup for ${plan.name}`, price: String(plan.setup), priceCurrency: CURRENCY };
+}
+
+function planOffersLd(plan: Plan & { price: number }): JsonLd[] {
+  return plan.setup === undefined ? [offerLd(plan)] : [setupOfferLd({ ...plan, setup: plan.setup }), offerLd(plan)];
 }
 
 export function siteCheckOfferLd(): JsonLd {
   return { "@type": "Offer", name: SITE_CHECK_NAME, description: SITE_CHECK_DESCRIPTION, price: "0", priceCurrency: CURRENCY };
 }
 
-export function businessLd(plans: readonly Plan[]): JsonLd {
+export function frontDeskCheckOfferLd(): JsonLd {
+  return { "@type": "Offer", name: FRONT_DESK_CHECK_NAME, description: FRONT_DESK_CHECK_DESCRIPTION, price: "0", priceCurrency: CURRENCY };
+}
+
+export function businessLd(plans: readonly Plan[], checkOffer: JsonLd = siteCheckOfferLd()): JsonLd {
   const range = priceRange(plans);
   return {
     "@type": "ProfessionalService",
@@ -102,7 +110,7 @@ export function businessLd(plans: readonly Plan[]): JsonLd {
     areaServed: areaServed(),
     founder: ref(PERSON_ID),
     ...(range === undefined ? {} : { priceRange: range }),
-    makesOffer: [siteCheckOfferLd(), ...pricedPlans(plans).map(offerLd)],
+    makesOffer: [checkOffer, ...pricedPlans(plans).flatMap(planOffersLd)],
   };
 }
 
@@ -212,7 +220,7 @@ export function serviceLd(input: ServiceLdInput): JsonLd {
 }
 
 export function homeGraph(plans: readonly Plan[], faq: readonly FaqItem[]): JsonLd {
-  return { "@context": SCHEMA_CONTEXT, "@graph": [businessLd(plans), personLd(), websiteLd(), faqLd(faq)] };
+  return { "@context": SCHEMA_CONTEXT, "@graph": [businessLd(plans, frontDeskCheckOfferLd()), personLd(), websiteLd(), faqLd(faq)] };
 }
 
 export function pageGraph(...nodes: readonly JsonLd[]): JsonLd {

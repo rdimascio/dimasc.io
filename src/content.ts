@@ -34,6 +34,9 @@ export interface Plan {
   readonly name: string;
   readonly price: number | null;
   readonly per: PlanFrontmatter["per"];
+  readonly setup: number | undefined;
+  readonly minimumMonths: number | undefined;
+  readonly listed: boolean;
   readonly summary: string;
   readonly features: readonly string[];
   readonly cta: string;
@@ -144,6 +147,9 @@ export async function loadPlans(): Promise<Plan[]> {
       name: entry.name,
       price: entry.price,
       per: entry.per,
+      setup: entry.setup,
+      minimumMonths: entry.minimumMonths,
+      listed: entry.listed,
       summary: entry.summary,
       features: entry.features,
       cta: entry.cta,
@@ -151,6 +157,14 @@ export async function loadPlans(): Promise<Plan[]> {
       order: entry.order,
     }))
     .toSorted((a, b) => a.order - b.order);
+}
+
+export function listedPlans(plans: readonly Plan[]): Plan[] {
+  return plans.filter((plan) => plan.listed);
+}
+
+export function unlistedPlans(plans: readonly Plan[]): Plan[] {
+  return plans.filter((plan) => !plan.listed);
 }
 
 export type Demo = DemoFrontmatter;

@@ -11,5 +11,6 @@ features:
   - "pause or cancel anytime"
 cta: "ask about monthly help"
 featured: true
+listed: false
 order: 3
 ---

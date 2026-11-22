@@ -10,7 +10,7 @@ export const SERVICE_AREA_COPY = SERVICE_AREA_LABEL.toLowerCase();
 export const SERVICE_AREA_SHORT = SERVICE_AREA.county.toLowerCase();
 export const SITE_NAME = "ryan dimascio";
 export const SITE_NAME_PROPER = "Ryan DiMascio";
-export const SITE_TAGLINE = "website help for small businesses";
+export const SITE_TAGLINE = "ai setup for local businesses";
 export const CONTACT_EMAIL = "ryan@dimasc.io";
 export const GITHUB_URL = "https://github.com/rdimascio";
 export const ABOUT_ROUTE = "/about";
@@ -54,10 +54,28 @@ export function siteCheckHref(): string {
   return `${SITE_CHECK_PAGE}#${SITE_CHECK_ANCHOR}`;
 }
 
-export const HIRE_ANCHOR = {
-  monthly: 7_700,
-  source: "us bureau of labor statistics, median web developer pay, may 2025",
-} as const;
+export const FRONT_DESK_NAME = "ai front desk";
+export const FRONT_DESK_TOOLS = "mindbody, jobber, vagaro, your google profile + your phone line";
+export const FRONT_DESK_CHECK_NAME = "free missed-call check";
+export const FRONT_DESK_CHECK_CTA = "get a free missed-call check";
+export const FRONT_DESK_CHECK_MINUTES = 20;
+
+const FRONT_DESK_CHECK_BODY = [
+  "business name:",
+  "",
+  "the number customers call:",
+  "",
+  "how people book w/ you now (mindbody, jobber, vagaro, phone...):",
+  "",
+  "link to your google business profile:",
+  "",
+  "best time to talk:",
+  "",
+].join("\n");
+
+export function frontDeskCheckHref(): string {
+  return mailto(FRONT_DESK_CHECK_NAME, FRONT_DESK_CHECK_BODY);
+}
 
 export const OG_IMAGE_PATH = "/og.png";
 export const OG_IMAGE_SOURCE = "assets/og.png";
