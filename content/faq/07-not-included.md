@@ -3,4 +3,4 @@ question: "what's not included?"
 order: 7
 ---
 
-the monthly fees for the stuff you run on, like your website host or the apps you use. those get billed to you directly. logo + brand design, writing your website's words and photos aren't included either, but i'm happy to work w/ whoever does them.
+the software itself. its monthly fees are billed at cost, no markup. a new website isn't included either. if your site gets in the way of booking, a fix or rebuild is a flat $3,000, confirmed after the free check.
