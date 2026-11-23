@@ -17,38 +17,39 @@ import {
   TURNSTILE_SITEKEY,
 } from "../check";
 import {
+  AI_NAME,
+  AI_ROUTE,
   CONTACT_EMAIL,
-  FREE_CHECK_ROUTE,
-  FRONT_DESK_CHECK_CTA,
-  FRONT_DESK_CHECK_MINUTES,
-  FRONT_DESK_CHECK_NAME,
-  FRONT_DESK_NAME,
-  FRONT_DESK_ROUTE,
+  INTRO_CALL_CTA,
+  INTRO_CALL_MINUTES,
+  INTRO_CALL_NAME,
+  INTRO_CALL_ROUTE,
   PRIVACY_ROUTE,
   SERVICE_AREA_COPY,
 } from "../site";
-import { breadcrumbLd, frontDeskCheckOfferLd, pageGraph } from "../structured-data";
-import { CHECK_LINE, frontDeskPriceLine } from "./home";
+import { INTRO_CALL_LINE } from "../offer";
+import { breadcrumbLd, introCallOfferLd, pageGraph } from "../structured-data";
 import { JsonLd } from "./json-ld";
-import { ArrowLink, Eyebrow, HEADING, LEDE, PAGE, SectionHead } from "./layout";
+import { ArrowLink, Eyebrow, HEADING, LEDE, PAGE } from "./layout";
+import { LadderList, NumberedSteps, PageSection, WideSection } from "./offer";
 
 export const CHECK_FORM_ANCHOR = "check";
 export const CHECK_FORM_TITLE = "tell me about your business";
 export const CHECK_SUBMIT_LABEL = "send it";
-export const FREE_CHECK_HEADLINE = "see the calls you're missing.";
-export const FREE_CHECK_STEPS = [
-  "you send me your business name, the number customers call + how people book w/ you",
-  "i call your business after hours, like a customer would",
-  "i count the google reviews nobody answered",
-  `we talk for ${FRONT_DESK_CHECK_MINUTES} min + i show you what that gap costs in dollars`,
+export const INTRO_CALL_HEADLINE = "let's talk for 15 minutes.";
+export const INTRO_CALL_STEPS = [
+  { title: "you send this form", body: "your business, the best number to reach you + what eats your week." },
+  { title: "i reply", body: "within 1 business day, monday to friday, to pick a time." },
+  { title: `we talk for ${INTRO_CALL_MINUTES} min`, body: "how the business runs + where the busywork is. i tell you straight if ai can help." },
+  { title: "if it fits", body: "the next step is an ai plan. if it doesn't, that's the end of it." },
 ] as const;
-export const FREE_CHECK_NO_PRESSURE = "it's free, + you don't have to sign up for anything.";
-export const CHECK_SENT_HEADLINE = "got it. i'll reply within 1 business day, monday to friday, to set up your free check.";
+export const NO_PRESSURE_LINE = "it's free, + you don't have to sign up for anything.";
+export const CHECK_SENT_HEADLINE = "got it. i'll reply within 1 business day, monday to friday, to set up your free 15-min call.";
 export const CHECK_NEXT_STEPS = [
-  "i read your note + look up your google profile",
-  "i call your business after hours, like a customer would",
-  "i count the google reviews nobody answered",
-  `we talk for ${FRONT_DESK_CHECK_MINUTES} min + i show you the gap in dollars`,
+  "i read your note + look up your business",
+  "i reply within 1 business day to pick a time",
+  "we talk for 15 min about where the busywork is",
+  "if ai can save you real time, i tell you what an ai plan would cover",
 ] as const;
 export const CHECK_EMAIL_FALLBACK = "rather email? write me at";
 
@@ -65,7 +66,7 @@ function EmailFallback(): ReactElement {
   );
 }
 
-function NumberedSteps({ steps }: { steps: readonly string[] }): ReactElement {
+function StepList({ steps }: { steps: readonly string[] }): ReactElement {
   return (
     <ol className="mt-6 m-0 p-0 list-none border-b border-line">
       {steps.map((step, index) => (
@@ -81,7 +82,7 @@ function NumberedSteps({ steps }: { steps: readonly string[] }): ReactElement {
 export function CheckForm(): ReactElement {
   return (
     <section className="mt-16 sm:mt-20 max-w-[40rem] scroll-mt-24" id={CHECK_FORM_ANCHOR} aria-labelledby="check-title">
-      <Eyebrow>{FRONT_DESK_CHECK_CTA}</Eyebrow>
+      <Eyebrow>{INTRO_CALL_CTA}</Eyebrow>
       <h2 className="mt-6 mb-0 text-[clamp(1.9rem,3.6vw,3.1rem)] leading-[1.02] tracking-[-0.035em] font-medium" id="check-title">
         {CHECK_FORM_TITLE}
       </h2>
@@ -165,53 +166,49 @@ export function CheckForm(): ReactElement {
   );
 }
 
-function FreeCheckPage({ plans }: { plans: readonly Plan[] }): ReactElement {
+function IntroCallPage({ plans }: { plans: readonly Plan[] }): ReactElement {
   return (
     <main className={`${PAGE} pb-28`}>
-      <JsonLd data={pageGraph(frontDeskCheckOfferLd(), breadcrumbLd([{ name: FRONT_DESK_CHECK_NAME, route: FREE_CHECK_ROUTE }]))} />
-      <Eyebrow>{`${FRONT_DESK_CHECK_NAME} · ${SERVICE_AREA_COPY}`}</Eyebrow>
-      <h1 className={`${HEADING} mt-8`}>{FREE_CHECK_HEADLINE}</h1>
-      <p className={`${LEDE} mt-8`}>{CHECK_LINE}</p>
-      <p className="mt-4 mb-0 text-muted max-w-[38rem]">{FREE_CHECK_NO_PRESSURE}</p>
+      <JsonLd data={pageGraph(introCallOfferLd(), breadcrumbLd([{ name: INTRO_CALL_NAME, route: INTRO_CALL_ROUTE }]))} />
+      <Eyebrow>{`${INTRO_CALL_NAME} · ${SERVICE_AREA_COPY}`}</Eyebrow>
+      <h1 className={`${HEADING} mt-8`}>{INTRO_CALL_HEADLINE}</h1>
+      <p className={`${LEDE} mt-8`}>{INTRO_CALL_LINE}</p>
+      <p className="mt-4 mb-0 text-muted max-w-[38rem]">{NO_PRESSURE_LINE}</p>
       <CheckForm />
 
-      <section className="mt-20 sm:mt-28">
-        <SectionHead label="how the check works" />
-        <div className="md:ml-[calc(33.333%+0.5rem)] max-w-[44rem]">
-          <NumberedSteps steps={FREE_CHECK_STEPS} />
-        </div>
-      </section>
+      <WideSection label="how the call works">
+        <NumberedSteps steps={INTRO_CALL_STEPS} />
+      </WideSection>
 
-      <section className="mt-20 sm:mt-28">
-        <SectionHead label="if you want it fixed" />
-        <div className="md:ml-[calc(33.333%+0.5rem)] max-w-[44rem] grid gap-4">
-          <p className="m-0 text-[1.1rem]">{`${FRONT_DESK_NAME}: ${frontDeskPriceLine(plans)}`}</p>
-          <a className="link-underline inline-block py-2 text-ink" href={FRONT_DESK_ROUTE}>
-            {`more about the ${FRONT_DESK_NAME}`}
+      <PageSection label="what comes after">
+        <div className="grid gap-4">
+          <LadderList plans={plans} />
+          <a className="link-underline inline-block py-2 text-ink" href={AI_ROUTE}>
+            {`more about ${AI_NAME}`}
           </a>
         </div>
-      </section>
+      </PageSection>
     </main>
   );
 }
 
-export function makeFreeCheck(plans: readonly Plan[]): () => ReactElement {
-  return function BoundFreeCheck(): ReactElement {
-    return <FreeCheckPage plans={plans} />;
+export function makeIntroCall(plans: readonly Plan[]): () => ReactElement {
+  return function BoundIntroCall(): ReactElement {
+    return <IntroCallPage plans={plans} />;
   };
 }
 
 function CheckSent(): ReactElement {
   return (
     <main className={`${PAGE} pb-28`}>
-      <Eyebrow>{FRONT_DESK_CHECK_NAME}</Eyebrow>
+      <Eyebrow>{INTRO_CALL_NAME}</Eyebrow>
       <h1 className={`${HEADING} mt-8`}>got it.</h1>
       <p className={`${LEDE} mt-8`}>{CHECK_SENT_HEADLINE}</p>
       <section className="mt-16 max-w-[44rem]" aria-labelledby="next-title">
         <h2 className="m-0 text-[1.3rem] font-medium" id="next-title">
           what happens next
         </h2>
-        <NumberedSteps steps={CHECK_NEXT_STEPS} />
+        <StepList steps={CHECK_NEXT_STEPS} />
       </section>
       <div className="mt-10 grid gap-4">
         <p className="m-0 text-muted">
@@ -221,8 +218,8 @@ function CheckSent(): ReactElement {
           </a>
         </p>
         <div>
-          <ArrowLink href={FRONT_DESK_ROUTE} tone="ghost">
-            {`more about the ${FRONT_DESK_NAME}`}
+          <ArrowLink href={AI_ROUTE} tone="ghost">
+            {`more about ${AI_NAME}`}
           </ArrowLink>
         </div>
       </div>

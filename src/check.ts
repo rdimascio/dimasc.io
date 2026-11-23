@@ -1,5 +1,5 @@
 import { type EventEnv, formContext, recordEvent, SITE_EVENT, type SiteEvent } from "./measure";
-import { CONTACT_EMAIL, FREE_CHECK_ROUTE, freeCheckHref, FRONT_DESK_CHECK_NAME, PRIVACY_ROUTE, SITE_HOST, SITE_NAME, SITE_URL } from "./site";
+import { CONTACT_EMAIL, INTRO_CALL_ROUTE, introCallHref, INTRO_CALL_NAME, PRIVACY_ROUTE, SITE_HOST, SITE_NAME, SITE_URL } from "./site";
 
 export const CHECK_ROUTE = "/check";
 export const CHECK_SENT_ROUTE = "/check/sent";
@@ -35,10 +35,10 @@ export const CHECK_LIMIT = {
 export const CHECK_LABEL = {
   name: "your name",
   business: "business name",
-  phone: "the number customers call",
+  phone: "best number to reach you",
   email: "your email",
-  website: "your google business profile or website",
-  message: "how people book w/ you now (mindbody, jobber, vagaro, phone...)",
+  website: "your website or google business profile",
+  message: "what eats your week? (calls, texts, reminders, reviews, posts...)",
   optional: "(optional)",
 } as const;
 
@@ -143,10 +143,10 @@ const PROBLEMS = {
   missing: {
     status: 400,
     title: "a few things are missing",
-    detail: "i need your name, your business name, the number customers call, your email + how people book w/ you.",
+    detail: "i need your name, your business name, a number to reach you, your email + what eats your week.",
   },
   badEmail: { status: 400, title: "check your email address", detail: "i need a real email address to reply to." },
-  badPhone: { status: 400, title: "check the phone number", detail: "i need the number customers call, so i can call it after hours." },
+  badPhone: { status: 400, title: "check the phone number", detail: "i need a number i can call you on." },
   tooMany: { status: 429, title: "slow down a sec", detail: "a lot of requests came from your connection. wait a minute + try again." },
   notHuman: { status: 403, title: "couldn't confirm you're human", detail: "i couldn't confirm you're human." },
 } as const satisfies Record<string, Problem>;
@@ -312,14 +312,14 @@ export function checkEmail(record: CheckRequest): CheckEmail {
     `received: ${record.receivedAt}`,
     `id: ${record.id}`,
     "",
-    "how people book w/ them now:",
+    "what eats their week:",
     record.message,
   ];
   return {
     to: CONTACT_EMAIL,
     from: { email: CHECK_SENDER, name: SITE_NAME },
     replyTo: record.email,
-    subject: `${FRONT_DESK_CHECK_NAME}: ${record.business} (${record.name})`,
+    subject: `${INTRO_CALL_NAME}: ${record.business} (${record.name})`,
     text: lines.join("\n"),
   };
 }
@@ -342,7 +342,7 @@ export function renderCheckProblem(problem: Pick<Problem, "title" | "detail">): 
     <main class="max-w-[36rem] mx-auto py-28 px-6">
       <h1 class="text-4xl mb-4 tracking-[-0.04em] font-semibold">${problem.title}</h1>
       <p class="text-muted">${problem.detail}</p>
-      <p class="text-muted">go <a class="underline underline-offset-4" href="${freeCheckHref()}">back to the form</a>, or email me at <a class="underline underline-offset-4" href="mailto:${CONTACT_EMAIL}">${CONTACT_EMAIL}</a>.</p>
+      <p class="text-muted">go <a class="underline underline-offset-4" href="${introCallHref()}">back to the form</a>, or email me at <a class="underline underline-offset-4" href="mailto:${CONTACT_EMAIL}">${CONTACT_EMAIL}</a>.</p>
     </main>
   </body>
 </html>`;
@@ -472,7 +472,7 @@ async function deliver(mailer: CheckMailer, record: CheckRequest, onDelivered: (
 }
 
 export async function handleCheck(request: Request, env: CheckEnv, ctx?: CheckContext): Promise<Response> {
-  if (request.method === "GET" || request.method === "HEAD") return seeOther(freeCheckHref());
+  if (request.method === "GET" || request.method === "HEAD") return seeOther(introCallHref());
   if (request.method !== "POST") return methodNotAllowed();
 
   const contentType = (request.headers.get("content-type") ?? "").split(";")[0]?.trim().toLowerCase();
@@ -521,7 +521,7 @@ export function isCheckRoute(pathname: string): boolean {
 }
 
 export function isCheckFormPage(pathname: string): boolean {
-  return pathname === FREE_CHECK_ROUTE;
+  return pathname === INTRO_CALL_ROUTE;
 }
 
 export function formFills(url: URL, now: Date = new Date()): Record<string, string> {
@@ -553,7 +553,7 @@ export function carriedQuery(url: URL, now: Date = new Date()): string {
 
 export function formHrefWithQuery(href: string, query: string): string {
   const target = new URL(href, SITE_URL);
-  if (target.origin !== SITE_URL || target.pathname !== FREE_CHECK_ROUTE) return href;
+  if (target.origin !== SITE_URL || target.pathname !== INTRO_CALL_ROUTE) return href;
   for (const [name, value] of new URLSearchParams(query)) target.searchParams.set(name, value);
   return `${target.pathname}${target.search}${target.hash}`;
 }
@@ -572,7 +572,7 @@ function privateCopy(response: Response): Response {
 export function withParamsCarried(response: Response, url: URL, now: Date = new Date()): Response {
   const query = carriedQuery(url, now);
   if (query === "" || !isHtmlResponse(response)) return response;
-  const rewriter = new HTMLRewriter().on(`a[href^="${FREE_CHECK_ROUTE}"]`, {
+  const rewriter = new HTMLRewriter().on(`a[href^="${INTRO_CALL_ROUTE}"]`, {
     element(element) {
       const href = element.getAttribute("href");
       if (href !== null) element.setAttribute("href", formHrefWithQuery(href, query));
