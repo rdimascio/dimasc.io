@@ -4,9 +4,9 @@ import { createApp } from "@lesto/kernel";
 import type { App } from "@lesto/kernel";
 
 import appConfig from "../lesto.app";
-import { buildAppConfig, HOME_TITLE, homeDescription, ORANGE_COUNTY_DESCRIPTION, ORANGE_COUNTY_TITLE, SERVICES_TITLE, serviceTitle } from "../src/app";
-import { ORANGE_COUNTY_ROUTE, PLAN_SERVICE, serviceRoute, serviceRoutes, SERVICES, SERVICES_ROUTE } from "../src/services";
-import { canonicalRedirect } from "../src/redirect";
+import { buildAppConfig, FREE_CHECK_DESCRIPTION, FREE_CHECK_TITLE, HOME_TITLE, homeDescription, ORANGE_COUNTY_TITLE, orangeCountyDescription, serviceTitle } from "../src/app";
+import { FRONT_DESK_TITLE, frontDeskDescription, ORANGE_COUNTY_ROUTE } from "../src/front-desk";
+import { canonicalRedirect, RETIRED_ROUTES } from "../src/redirect";
 import {
   CHECK_FIELD,
   CHECK_LIMIT,
@@ -31,7 +31,7 @@ import {
 import { PRIVACY_DESCRIPTION, PRIVACY_LEDE, PRIVACY_SECTIONS } from "../src/ui/privacy";
 import { clickIdOf, conversionsCsv, CSV_HEADER, googleAdsTime, keysSince, parseArgs } from "../scripts/export-ad-leads.mjs";
 import { CHECK_NEXT_STEPS, CHECK_SENT_HEADLINE } from "../src/ui/check";
-import { MOVE_LABEL, PROJECT_PRICE_COPY, servicePriceLine, STAY_LABEL } from "../src/ui/service";
+import { AREA_LINE, frontDeskQuestions, ORANGE_COUNTY_HEADLINE } from "../src/ui/front-desk";
 import { NOINDEX_ROUTES, PROCESS_ROUTE, siteRoutes, sitemapRoutes } from "../src/sitemap";
 import { BUSINESS_ID, htmlToText, PERSON_ID } from "../src/structured-data";
 import { JSON_LD_TYPE } from "../src/ui/json-ld";
@@ -53,11 +53,6 @@ import {
   ABOUT_ROUTE,
   BOOKING_URL,
   CONTACT_EMAIL,
-  QUICK_FIX_MINUTES,
-  SITE_CHECK_ANCHOR,
-  SITE_CHECK_CTA,
-  SITE_CHECK_PAGE,
-  siteCheckHref,
   planHref,
   introCallHref,
   introCallLabel,
@@ -78,6 +73,7 @@ import {
   CREDENTIALS,
   formatPrice,
   frontDeskPriceLine,
+  frontDeskShortPrice,
   HERO_EYEBROW,
   HERO_LEAD,
   NOT_FOR,
@@ -86,8 +82,8 @@ import {
   START_HERE_LABEL,
   WHAT_IT_DOES,
 } from "../src/ui/home";
-import { FRONT_DESK_CHECK_CTA, FRONT_DESK_NAME, frontDeskCheckHref } from "../src/site";
-import { listedPlans, unlistedPlans } from "../src/content";
+import { FRONT_DESK_CHECK_CTA, FRONT_DESK_CHECK_NAME, FRONT_DESK_NAME, FREE_CHECK_ROUTE, freeCheckHref, FRONT_DESK_ROUTE, websiteFixHref } from "../src/site";
+import { listedPlans } from "../src/content";
 import { YOUTH_SPORTS_DESCRIPTION, YOUTH_SPORTS_PROOF, YOUTH_SPORTS_ROUTE, YOUTH_SPORTS_TITLE } from "../src/youth-sports";
 import { BRAND_LOGOS, LOGO_SOURCE_DIR, logoSrc } from "../src/logos";
 import { articleRoutes, articlesFeed, FEED_ROUTE } from "../src/feed";
@@ -121,7 +117,6 @@ function decodeEntities(html: string): string {
   return html.replaceAll("&#x27;", "'").replaceAll("&amp;", "&");
 }
 
-const REFUND_LINE = "refund 75% of your first payment, even if i already delivered work";
 const FRONT_END_ONLY_CLIENT = /blackstone|stanford/i;
 const LEAD_ROLE_CLAIM = /tech lead|led front-end work|led frontend|led the front/i;
 const SENTENCE_END = /(?<=[.!?])\s+/;
@@ -144,8 +139,8 @@ function leadClaimsOnFrontEndOnlyClients(copy: string): string[] {
 }
 
 const JSON_LD_BLOCK = new RegExp(`<script type="${RegExp.escape(JSON_LD_TYPE)}">([\\s\\S]*?)</script>`, "g");
-const SERVICE_PAGE_ROUTES = SERVICES.map((service) => serviceRoute(service.slug));
-const STUDIO_ROUTES = ["/", YOUTH_SPORTS_ROUTE, ABOUT_ROUTE, PROCESS_ROUTE, WORK_ROUTE, WORK_REQUEST_ROUTE, ...serviceRoutes(), PRIVACY_ROUTE, CHECK_SENT_ROUTE] as const;
+const RETIRED_SERVICE_ROUTES = Object.keys(RETIRED_ROUTES);
+const STUDIO_ROUTES = ["/", FRONT_DESK_ROUTE, FREE_CHECK_ROUTE, YOUTH_SPORTS_ROUTE, ORANGE_COUNTY_ROUTE, ABOUT_ROUTE, PROCESS_ROUTE, WORK_ROUTE, WORK_REQUEST_ROUTE, PRIVACY_ROUTE, CHECK_SENT_ROUTE] as const;
 const MAX_TITLE_LENGTH = 65;
 const MAX_DESCRIPTION_LENGTH = 155;
 
@@ -163,7 +158,7 @@ const TURNSTILE_SCRIPT_TAG = `<script async="" defer="" src="${TURNSTILE_SCRIPT_
 
 function withoutAllowedScripts(route: string, html: string): string {
   const withoutData = withoutJsonLd(html);
-  return route === SITE_CHECK_PAGE ? withoutData.replace(TURNSTILE_SCRIPT_TAG, "") : withoutData;
+  return route === FREE_CHECK_ROUTE ? withoutData.replace(TURNSTILE_SCRIPT_TAG, "") : withoutData;
 }
 
 function ldNodes(html: string): LdNode[] {
@@ -231,14 +226,14 @@ describe("site routes", () => {
     for (const item of await loadFaq()) expect(html).toContain(item.question);
   });
 
-  it("keeps care, monthly help + one project off the home page, but on the website pages", async () => {
-    const plans = await loadPlans();
-    expect(unlistedPlans(plans).map((plan) => plan.name)).toEqual(["care", "monthly help", "one project"]);
-    const home = decodeEntities(await text(await app.handle("GET", "/")));
-    const main = home.slice(home.indexOf("<main"), home.indexOf("</main>"));
-    for (const gone of ["$199", "$1,500", "care from", "monthly help", "75%"]) expect(main).not.toContain(gone);
-    const care = decodeEntities(await text(await app.handle("GET", serviceRoute("website-care"))));
-    expect(care).toContain("$199");
+  it("sells no care, monthly help or one-project plan on any public page", async () => {
+    expect((await loadPlans()).map((plan) => plan.name)).toEqual([FRONT_DESK_NAME, "website fix or rebuild"]);
+    for (const route of STUDIO_ROUTES) {
+      const html = decodeEntities(await text(await app.handle("GET", route)));
+      for (const gone of ["$199", "$1,500", "care from", "monthly help", "one project", "75%", "2,500", "5,000"]) {
+        expect({ route, found: html.includes(gone) ? gone : null }).toEqual({ route, found: null });
+      }
+    }
   });
 
   it("labels the call button honestly for where it leads", async () => {
@@ -249,7 +244,7 @@ describe("site routes", () => {
     for (const plan of listedPlans(await loadPlans()).filter((candidate) => candidate.price !== null)) {
       expect(html).toContain(planHref(plan.name));
     }
-    expect(html).toContain(frontDeskCheckHref());
+    expect(html).toContain(freeCheckHref());
   });
 
   it("makes no claim the review flagged as unprovable", async () => {
@@ -259,30 +254,6 @@ describe("site routes", () => {
     }
   });
 
-  it("keeps the monthly help refund rule on the monthly help page", async () => {
-    const html = decodeEntities(await text(await app.handle("GET", serviceRoute("monthly-help"))));
-    expect(html).toContain(REFUND_LINE);
-    expect(html).not.toContain("no refunds for finished work");
-  });
-
-  it("keeps every claim on the care and monthly help plans and drops the old tiers", async () => {
-    const plans = await loadPlans();
-    const care = plans.find((plan) => plan.name === "care");
-    const monthly = plans.find((plan) => plan.name === "monthly help");
-    expect(care?.features).toEqual(
-      expect.arrayContaining(["uptime + security monitoring", "up to 2 small fixes a month, done by me", "i reply within 1 business day", "cancel anytime"]),
-    );
-    expect(monthly?.features).toEqual(
-      expect.arrayContaining([
-        'anything on the "things i can help with" list',
-        "most small jobs done in 2 business days",
-        "i reply within 1 business day",
-        "pause or cancel anytime",
-      ]),
-    );
-    const html = decodeEntities(await text(await app.handle("GET", "/")));
-    for (const gone of ["2,500", "5,000", "monthly, double", "two jobs"]) expect(html).not.toContain(gone);
-  });
 
   it("renders the process page with every step in order", async () => {
     const response = await app.handle("GET", "/process");
@@ -388,7 +359,7 @@ describe("site routes", () => {
     const hero = main.slice(0, main.indexOf(FRONT_DESK_SECTION));
     expect(hero).toContain(`href="${ABOUT_ROUTE}"`);
     expect(hero).toContain(HERO_LEAD);
-    expect(hero).toContain(frontDeskCheckHref());
+    expect(hero).toContain(freeCheckHref());
     for (const line of CREDENTIALS) expect(hero).toContain(line);
     for (const fact of ["holt international", "serhant.com mls home search", "blackstone", "stanford ecorner", "y combinator", `since ${SINCE_YEAR}`]) {
       expect(hero).toContain(fact);
@@ -606,7 +577,7 @@ describe("site routes", () => {
     const pricing = html.slice(html.indexOf('id="pricing"'));
     const band = pricing.indexOf(CHECK_LINE);
     expect(band).toBeGreaterThan(0);
-    expect(pricing.indexOf(`href="${frontDeskCheckHref()}"`)).toBeGreaterThan(band);
+    expect(pricing.indexOf(`href="${freeCheckHref()}"`)).toBeGreaterThan(band);
     for (const plan of plans) expect(pricing.indexOf(`>${plan.name}</h3>`)).toBeGreaterThan(band);
     for (const plan of plans.filter((candidate) => candidate.price !== null)) {
       expect(html).toContain(formatPrice(plan.price ?? 0));
@@ -654,20 +625,20 @@ describe("site routes", () => {
     }
   });
 
-  it("marks up only the FAQ that is on the page, and only on the home page + service pages", async () => {
+  it("marks up only the FAQ that is on the page, and only on the home page + the ai front desk page", async () => {
     const html = await text(await app.handle("GET", "/"));
     const faq = await loadFaq();
     const questions = (ldNode(html, "FAQPage")?.mainEntity ?? []) as { name: string; acceptedAnswer: { text: string } }[];
     expect(questions.length).toBe((html.match(/<details/g) ?? []).length);
     expect(questions.map((question) => question.name)).toEqual(faq.map((item) => item.question));
     for (const question of questions) expect(question.acceptedAnswer.text).not.toMatch(/<[a-z]/);
-    for (const route of STUDIO_ROUTES.slice(1).filter((candidate) => !SERVICE_PAGE_ROUTES.includes(candidate))) {
+    for (const route of STUDIO_ROUTES.filter((candidate) => candidate !== "/" && candidate !== FRONT_DESK_ROUTE)) {
       expect(ldTypes(await text(await app.handle("GET", route)))).not.toContain("FAQPage");
     }
   });
 
   it("adds a breadcrumb trail on every indexable sub-page", async () => {
-    for (const route of [YOUTH_SPORTS_ROUTE, ABOUT_ROUTE, PROCESS_ROUTE, WORK_ROUTE]) {
+    for (const route of [FRONT_DESK_ROUTE, FREE_CHECK_ROUTE, YOUTH_SPORTS_ROUTE, ORANGE_COUNTY_ROUTE, ABOUT_ROUTE, PROCESS_ROUTE, WORK_ROUTE]) {
       const crumbs = ldNode(await text(await app.handle("GET", route)), "BreadcrumbList");
       const items = (crumbs?.itemListElement ?? []) as { position: number; item: string }[];
       expect(items.map((item) => item.position)).toEqual([1, 2]);
@@ -733,162 +704,151 @@ describe("site routes", () => {
     expect(config).toMatch(/"run_worker_first":\s*true/);
   });
 
-  it("renders one page per service w/ a unique title, description, one h1, its plan's price + CTA and FAQs", async () => {
-    const plans = await loadPlans();
-    const titles = new Set<string>();
-    const descriptions = new Set<string>();
-    expect(SERVICES.map((service) => service.slug)).toEqual([
-      "fix-my-website",
-      "new-website",
-      "online-booking",
-      "online-store",
-      "website-care",
-      "monthly-help",
-      "squarespace-wix-help",
+  it("301s every retired service URL to its new home, keeping the query so click ids survive", () => {
+    expect(RETIRED_SERVICE_ROUTES).toEqual([
+      "/services",
+      "/services/fix-my-website",
+      "/services/squarespace-wix-help",
+      "/services/new-website",
+      "/services/online-store",
+      "/services/online-booking",
+      "/services/website-care",
+      "/services/monthly-help",
     ]);
-    for (const service of SERVICES) {
-      const response = await app.handle("GET", serviceRoute(service.slug));
-      const html = decodeEntities(await text(response));
-      const title = serviceTitle(service.title);
-      expect(response.status).toBe(200);
-      expect(title.length).toBeLessThanOrEqual(MAX_TITLE_LENGTH);
-      expect(service.description.length).toBeLessThanOrEqual(MAX_DESCRIPTION_LENGTH);
-      expect(html).toContain(`<title>${title}</title>`);
-      expect(html).toContain(`<link rel="canonical" href="${SITE_URL}${serviceRoute(service.slug)}"`);
-      expect((html.match(/<h1[\s>]/g) ?? []).length).toBe(1);
-      expect(service.faq.length).toBeGreaterThanOrEqual(3);
-      expect(service.faq.length).toBeLessThanOrEqual(5);
-      for (const item of service.faq) expect(html).toContain(item.question);
-      const plan = plans.find((candidate) => candidate.name === service.plan);
-      expect(plan === undefined).toBe(service.plan === null);
-      if (plan?.price !== null && plan?.price !== undefined) expect(html).toContain(formatPrice(plan.price));
-      const cta = plan === undefined ? siteCheckHref() : plan.price === null ? introCallHref() : planHref(plan.name);
-      expect(html).toContain(cta);
-      expect(html).toContain(`href="${WORK_ROUTE}"`);
-      for (const related of service.related) expect(html).toContain(`href="${serviceRoute(related)}"`);
-      titles.add(title);
-      descriptions.add(service.description);
+    for (const route of RETIRED_SERVICE_ROUTES) {
+      const response = canonicalRedirect(requestTo(`${SITE_URL}${route}?gclid=abc_123&utm_source=gbp`));
+      expect(response?.status).toBe(301);
+      const target = new URL(response?.headers.get("location") ?? "");
+      expect(target.origin).toBe(SITE_URL);
+      expect([FRONT_DESK_ROUTE, FREE_CHECK_ROUTE]).toContain(target.pathname);
+      expect(target.searchParams.get("gclid")).toBe("abc_123");
+      expect(target.searchParams.get("utm_source")).toBe("gbp");
     }
-    expect(titles.size).toBe(SERVICES.length);
-    expect(descriptions.size).toBe(SERVICES.length);
+    expect(canonicalRedirect(requestTo(`${SITE_URL}/services/fix-my-website/`))?.headers.get("location")).toBe(`${SITE_URL}${FREE_CHECK_ROUTE}`);
+    expect(canonicalRedirect(requestTo(`${SITE_URL}/services/squarespace-wix-help`))?.headers.get("location")).toBe(`${SITE_URL}${websiteFixHref()}`);
+    expect(canonicalRedirect(requestTo(`https://${WWW_HOST}/services/website-care`))?.headers.get("location")).toBe(`${SITE_URL}${FRONT_DESK_ROUTE}`);
   });
 
-  it("leads the fix page w/ the free site check + free quick fixes", async () => {
-    const html = decodeEntities(await text(await app.handle("GET", serviceRoute("fix-my-website"))));
-    const lede = html.slice(html.indexOf("<h1"), html.indexOf("what i can do"));
-    expect(lede).toContain("the check is free");
-    expect(lede).toContain(`under ${QUICK_FIX_MINUTES} min`);
-    expect(lede).toContain(siteCheckHref());
-    expect(html).toContain("what happens after you send it");
-    expect(html).toContain("get quoted as one project");
-  });
-
-  it("marks up every service page as a Service from the business, serving orange county, w/ a breadcrumb", async () => {
-    const plans = await loadPlans();
-    for (const service of SERVICES) {
-      const route = serviceRoute(service.slug);
+  it("keeps every retired service URL out of the built site + the sitemap", async () => {
+    const routes = sitemapRoutes(await loadAllCaseStudies(), await loadAllArticles());
+    for (const route of RETIRED_SERVICE_ROUTES) {
+      expect(routes).not.toContain(route);
+      expect((await app.handle("GET", route)).status).toBe(404);
+    }
+    for (const route of [FRONT_DESK_ROUTE, FREE_CHECK_ROUTE, YOUTH_SPORTS_ROUTE, ORANGE_COUNTY_ROUTE]) expect(routes).toContain(route);
+    for (const route of STUDIO_ROUTES) {
       const html = await text(await app.handle("GET", route));
-      const node = ldNode(html, "Service");
-      expect(node?.name).toBe(service.name);
-      expect(node?.url).toBe(`${SITE_URL}${route}`);
-      expect((node?.provider as LdNode | undefined)?.["@id"]).toBe(BUSINESS_ID);
-      expect(JSON.stringify(node?.areaServed)).toContain(SERVICE_AREA.county);
-      const plan = plans.find((candidate) => candidate.name === service.plan);
-      const offer = node?.offers as { price: string } | undefined;
-      const expected = plan === undefined ? "0" : plan.price === null ? undefined : String(plan.price);
-      expect(offer?.price).toBe(expected);
-      const crumbs = (ldNode(html, "BreadcrumbList")?.itemListElement ?? []) as { item: string }[];
-      expect(crumbs.map((crumb) => crumb.item)).toEqual([`${SITE_URL}/`, `${SITE_URL}${SERVICES_ROUTE}`, `${SITE_URL}${route}`]);
-      for (const block of jsonLdBlocks(html)) {
-        for (const banned of ["telephone", "address", "streetAddress", "postalCode"]) expect(block).not.toContain(`"${banned}"`);
-      }
+      for (const retired of RETIRED_SERVICE_ROUTES) expect({ route, link: html.includes(`href="${retired}`) ? retired : null }).toEqual({ route, link: null });
     }
   });
 
-  it("lists every service on the services index, linked from the nav + footer", async () => {
-    const index = decodeEntities(await text(await app.handle("GET", SERVICES_ROUTE)));
-    expect(index).toContain(`<title>${SERVICES_TITLE}</title>`);
-    for (const route of SERVICE_PAGE_ROUTES) expect(index).toContain(`href="${route}"`);
-    const home = decodeEntities(await text(await app.handle("GET", "/")));
-    const header = home.slice(home.indexOf("<header"), home.indexOf("</header>"));
-    const footer = home.slice(home.indexOf("<footer"));
-    expect(header).toContain(`href="${SERVICES_ROUTE}"`);
-    for (const route of [...SERVICE_PAGE_ROUTES, ORANGE_COUNTY_ROUTE]) expect(footer).toContain(`href="${route}"`);
-  });
-
-  it("renders one honest orange county page w/o an address, a phone or a city list", async () => {
-    const response = await app.handle("GET", ORANGE_COUNTY_ROUTE);
+  it("renders the ai front desk page w/ one h1, the price near the top, the free check CTA, what's not included + the website fix", async () => {
+    const plans = await loadPlans();
+    const response = await app.handle("GET", FRONT_DESK_ROUTE);
     const html = decodeEntities(await text(response));
+    const title = serviceTitle(FRONT_DESK_TITLE);
+    const description = frontDeskDescription(frontDeskShortPrice(plans));
     expect(response.status).toBe(200);
-    expect(ORANGE_COUNTY_TITLE.length).toBeLessThanOrEqual(MAX_TITLE_LENGTH);
-    expect(ORANGE_COUNTY_DESCRIPTION.length).toBeLessThanOrEqual(MAX_DESCRIPTION_LENGTH);
-    expect(html).toContain(`<title>${ORANGE_COUNTY_TITLE}</title>`);
+    expect(title.length).toBeLessThanOrEqual(MAX_TITLE_LENGTH);
+    expect(description.length).toBeLessThanOrEqual(MAX_DESCRIPTION_LENGTH);
+    expect(description).toContain("$3,000 to set up, then $900/month.");
+    expect(html).toContain(`<title>${title}</title>`);
+    expect(html).toContain(`<link rel="canonical" href="${SITE_URL}${FRONT_DESK_ROUTE}"`);
     expect((html.match(/<h1[\s>]/g) ?? []).length).toBe(1);
-    const main = withoutJsonLd(html.slice(html.indexOf("<main"), html.indexOf("</main>")));
-    expect(main).toContain("anywhere else in the us");
-    for (const city of ["irvine", "santa ana", "anaheim", "costa mesa", "huntington beach", "newport beach"]) {
-      expect(main.toLowerCase()).not.toContain(city);
+    const top = html.slice(html.indexOf("<h1"), html.indexOf("what it does"));
+    expect(top).toContain(frontDeskPriceLine(plans));
+    expect(top).toContain(`href="${freeCheckHref()}"`);
+    expect(top).toContain(FRONT_DESK_CHECK_CTA);
+    for (const item of WHAT_IT_DOES) expect(html.toLowerCase()).toContain(item.split(" ").slice(-2).join(" "));
+    for (const item of NOT_FOR) expect(html).toContain(item);
+    expect(html).toContain("not included");
+    expect(html).toContain(`id="website"`);
+    expect(html).toContain("$3,000</span>");
+    expect(html).toContain("flat, per site");
+    expect(html).toContain(PRICING_TERMS);
+    for (const gone of ["$199", "$1,500", "care from", "setup fee"]) expect(html).not.toContain(gone);
+  });
+
+  it("marks up the ai front desk page as a Service w/ the check, setup + monthly offers, a breadcrumb + an FAQPage that matches the visible questions", async () => {
+    const plans = await loadPlans();
+    const html = await text(await app.handle("GET", FRONT_DESK_ROUTE));
+    const node = ldNode(html, "Service");
+    expect(node?.name).toBe(FRONT_DESK_NAME);
+    expect(node?.url).toBe(`${SITE_URL}${FRONT_DESK_ROUTE}`);
+    expect((node?.provider as LdNode | undefined)?.["@id"]).toBe(BUSINESS_ID);
+    expect(JSON.stringify(node?.areaServed)).toContain(SERVICE_AREA.county);
+    const offers = node?.offers as { name: string; price: string }[];
+    expect(offers.map((offer) => offer.price)).toEqual(["0", "3000", "900", "3000"]);
+    expect(offers.map((offer) => offer.name)).toEqual([FRONT_DESK_CHECK_NAME, `${FRONT_DESK_NAME} setup`, FRONT_DESK_NAME, "website fix or rebuild"]);
+    const crumbs = (ldNode(html, "BreadcrumbList")?.itemListElement ?? []) as { item: string }[];
+    expect(crumbs.map((crumb) => crumb.item)).toEqual([`${SITE_URL}/`, `${SITE_URL}${FRONT_DESK_ROUTE}`]);
+    const questions = (ldNode(html, "FAQPage")?.mainEntity ?? []) as { name: string; acceptedAnswer: { text: string } }[];
+    const visible = decodeEntities(withoutJsonLd(html)).replaceAll("&quot;", '"');
+    expect(questions.length).toBe((html.match(/<details/g) ?? []).length);
+    expect(questions.map((question) => question.name)).toEqual(frontDeskQuestions(plans).map((item) => item.question));
+    expect(questions[0]?.acceptedAnswer.text).toBe(`${frontDeskPriceLine(plans)} ${PRICING_TERMS}`);
+    for (const question of questions) {
+      expect(visible).toContain(question.name);
+      expect(visible).toContain(question.acceptedAnswer.text);
     }
-    for (const route of SERVICE_PAGE_ROUTES) expect(main).toContain(`href="${route}"`);
-    expect(main).toContain(`href="${WORK_ROUTE}"`);
-    expect(ldTypes(html)).toEqual(["ProfessionalService", "BreadcrumbList"]);
     for (const block of jsonLdBlocks(html)) {
       for (const banned of ["telephone", "address", "streetAddress", "postalCode"]) expect(block).not.toContain(`"${banned}"`);
     }
   });
 
-  it("marks up each service page's FAQ as an FAQPage that matches the visible questions + answers", async () => {
-    for (const service of SERVICES) {
-      const html = await text(await app.handle("GET", serviceRoute(service.slug)));
-      const questions = (ldNode(html, "FAQPage")?.mainEntity ?? []) as { name: string; acceptedAnswer: { text: string } }[];
-      const visible = decodeEntities(withoutJsonLd(html)).replaceAll("&quot;", '"');
-      expect(questions.length).toBe((html.match(/<details/g) ?? []).length);
-      expect(questions.map((question) => question.name)).toEqual(service.faq.map((item) => item.question));
-      for (const question of questions) {
-        expect(visible).toContain(question.name);
-        expect(visible).toContain(question.acceptedAnswer.text);
-      }
-    }
+  it("renders the free check page w/ the form, the steps + the offer price, marked up as a free offer", async () => {
+    const plans = await loadPlans();
+    const response = await app.handle("GET", FREE_CHECK_ROUTE);
+    const raw = await text(response);
+    const html = decodeEntities(raw);
+    expect(response.status).toBe(200);
+    expect(FREE_CHECK_TITLE.length).toBeLessThanOrEqual(MAX_TITLE_LENGTH);
+    expect(FREE_CHECK_DESCRIPTION.length).toBeLessThanOrEqual(MAX_DESCRIPTION_LENGTH);
+    expect(html).toContain(`<title>${FREE_CHECK_TITLE}</title>`);
+    expect((html.match(/<h1[\s>]/g) ?? []).length).toBe(1);
+    expect(html).toContain(CHECK_LINE);
+    expect(html).toContain(`action="${CHECK_ROUTE}"`);
+    expect(html).toContain(`${FRONT_DESK_NAME}: ${frontDeskPriceLine(plans)}`);
+    expect(html).toContain(`href="${FRONT_DESK_ROUTE}"`);
+    const offer = ldNode(raw, "Offer");
+    expect(offer?.price).toBe("0");
+    expect(offer?.name).toBe(FRONT_DESK_CHECK_NAME);
   });
 
-  it("puts the price line near the top of every service page", async () => {
-    for (const service of SERVICES) {
-      const html = decodeEntities(await text(await app.handle("GET", serviceRoute(service.slug))));
-      const top = html.slice(html.indexOf("<h1"), html.indexOf("what i can do"));
-      expect(top).toContain(servicePriceLine(unlistedPlans(await loadPlans())));
-      for (const price of ["free site check", `under ${QUICK_FIX_MINUTES} min free`, "care $199/month", "monthly help $1,500/month", PROJECT_PRICE_COPY]) {
-        expect(top).toContain(price);
-      }
-      for (const gone of ["setup", "$500"]) expect(top).not.toContain(gone);
-    }
+  it("links the ai front desk from the nav, and the free check, youth sports + orange county from the footer", async () => {
+    const home = decodeEntities(await text(await app.handle("GET", "/")));
+    const header = home.slice(home.indexOf("<header"), home.indexOf("</header>"));
+    const footer = home.slice(home.indexOf("<footer"));
+    expect(header).toContain(`href="${FRONT_DESK_ROUTE}"`);
+    for (const route of [FRONT_DESK_ROUTE, FREE_CHECK_ROUTE, YOUTH_SPORTS_ROUTE, ORANGE_COUNTY_ROUTE]) expect(footer).toContain(`href="${route}"`);
+    const main = home.slice(home.indexOf("<main"), home.indexOf("</main>"));
+    expect(main).toContain(`href="${FRONT_DESK_ROUTE}"`);
+    expect(main).toContain(`href="${websiteFixHref()}"`);
   });
 
-  it("renders the squarespace + wix help page w/ stay-or-move advice, listed on the index, footer + sitemap", async () => {
-    const route = serviceRoute("squarespace-wix-help");
-    const response = await app.handle("GET", route);
+  it("renders one honest orange county page about the ai front desk, w/o an address, a phone or a long city list", async () => {
+    const plans = await loadPlans();
+    const response = await app.handle("GET", ORANGE_COUNTY_ROUTE);
     const html = decodeEntities(await text(response));
     expect(response.status).toBe(200);
-    for (const word of ["squarespace", "wix", "godaddy", "wordpress", STAY_LABEL, MOVE_LABEL]) expect(html).toContain(word);
-    expect(html).toContain(siteCheckHref());
-    expect(decodeEntities(await text(await app.handle("GET", SERVICES_ROUTE)))).toContain(`href="${route}"`);
-    const home = await text(await app.handle("GET", "/"));
-    expect(home.slice(home.indexOf("<footer"))).toContain(`href="${route}"`);
-    expect(sitemapRoutes(await loadAllCaseStudies(), await loadAllArticles())).toContain(route);
-    for (const claim of ["expert", "certified", "partner since", "years of squarespace", "years of wix"]) expect(html.toLowerCase()).not.toContain(claim);
-  });
-
-  it("puts every service page + the orange county page in the sitemap", async () => {
-    const routes = sitemapRoutes(await loadAllCaseStudies(), await loadAllArticles());
-    for (const route of serviceRoutes()) expect(routes).toContain(route);
-  });
-
-  it("shows how care differs from a plugin-update plan on the care page only", async () => {
-    for (const service of SERVICES) {
-      const html = decodeEntities(await text(await app.handle("GET", serviceRoute(service.slug))));
-      expect(html.includes("how it's different")).toBe(service.slug === "website-care");
+    expect(ORANGE_COUNTY_TITLE.length).toBeLessThanOrEqual(MAX_TITLE_LENGTH);
+    expect(orangeCountyDescription(plans).length).toBeLessThanOrEqual(MAX_DESCRIPTION_LENGTH);
+    expect(html).toContain(`<title>${ORANGE_COUNTY_TITLE}</title>`);
+    expect((html.match(/<h1[\s>]/g) ?? []).length).toBe(1);
+    const main = withoutJsonLd(html.slice(html.indexOf("<main"), html.indexOf("</main>")));
+    expect(main).toContain(ORANGE_COUNTY_HEADLINE);
+    expect(main).toContain(AREA_LINE);
+    expect(main).toContain(`${FRONT_DESK_NAME}: ${frontDeskPriceLine(plans)}`);
+    for (const city of ["irvine", "santa ana", "anaheim", "costa mesa", "huntington beach", "newport beach"]) {
+      expect(main.toLowerCase()).not.toContain(city);
     }
-    const care = decodeEntities(await text(await app.handle("GET", serviceRoute("website-care"))));
-    for (const row of SERVICES.find((service) => service.slug === "website-care")?.comparison ?? []) expect(care).toContain(row.mine);
+    for (const route of [FRONT_DESK_ROUTE, freeCheckHref(), WORK_ROUTE]) expect(main).toContain(`href="${route}"`);
+    expect(ldTypes(html)).toEqual(["ProfessionalService", "BreadcrumbList"]);
+    const offers = (ldNode(html, "ProfessionalService")?.makesOffer ?? []) as { price: string }[];
+    expect(offers.map((offer) => offer.price)).toEqual(["0", "3000", "900", "3000"]);
+    for (const block of jsonLdBlocks(html)) {
+      for (const banned of ["telephone", "address", "streetAddress", "postalCode"]) expect(block).not.toContain(`"${banned}"`);
+    }
   });
 
   it("ships no setup fee, waiver or ai coding-tool name in the built public HTML, while ai stays a service word", async () => {
@@ -935,7 +895,7 @@ describe("site routes", () => {
     expect(html).toContain(YOUTH_SPORTS_PROOF);
     for (const name of ["touch n go", "touch-n-go", "brittany"]) expect(html.toLowerCase()).not.toContain(name);
     expect(html).toContain(frontDeskPriceLine(await loadPlans()));
-    expect(html).toContain(`href="${frontDeskCheckHref()}"`);
+    expect(html).toContain(`href="${freeCheckHref()}"`);
     const home = await text(await app.handle("GET", "/"));
     expect(home.slice(home.indexOf("<footer"))).toContain(`href="${YOUTH_SPORTS_ROUTE}"`);
     expect(sitemapRoutes(await loadAllCaseStudies(), await loadAllArticles())).toContain(YOUTH_SPORTS_ROUTE);
@@ -1021,9 +981,11 @@ function checkFixture(options: { allow?: boolean; mailer?: boolean; secret?: boo
 
 const VALID_CHECK = {
   [CHECK_FIELD.name]: "Pat Owner",
+  [CHECK_FIELD.business]: "Pat's Gym",
+  [CHECK_FIELD.phone]: "(714) 555-0100",
   [CHECK_FIELD.email]: "pat@example.com",
   [CHECK_FIELD.website]: "patsgym.com",
-  [CHECK_FIELD.message]: "the booking button does nothing on my phone",
+  [CHECK_FIELD.message]: "people book on mindbody or call the front desk",
   [CHECK_FIELD.source]: "",
   [CHECK_FIELD.trap]: "",
   [TURNSTILE_RESPONSE_FIELD]: PASS_TOKEN,
@@ -1040,15 +1002,15 @@ function checkPost(fields: Record<string, string>, init: { method?: string; refe
 }
 
 describe("site check form", () => {
-  it("shows the form on the fix page, posting to the worker w/ a honeypot, a source field + an email fallback", async () => {
-    const html = decodeEntities(await text(await app.handle("GET", SITE_CHECK_PAGE)));
-    expect(siteCheckHref()).toBe(`${SITE_CHECK_PAGE}#${SITE_CHECK_ANCHOR}`);
-    expect(html).toContain(`id="${SITE_CHECK_ANCHOR}"`);
+  it("shows the form on the free check page, posting to the worker w/ a honeypot, a source field + an email fallback", async () => {
+    const html = decodeEntities(await text(await app.handle("GET", FREE_CHECK_ROUTE)));
+    expect(freeCheckHref()).toBe(FREE_CHECK_ROUTE);
     expect(html).toContain(`action="${CHECK_ROUTE}"`);
     expect(html).toMatch(/method="post"/i);
-    for (const field of [CHECK_FIELD.name, CHECK_FIELD.email, CHECK_FIELD.website, CHECK_FIELD.message]) {
+    for (const field of [CHECK_FIELD.name, CHECK_FIELD.business, CHECK_FIELD.phone, CHECK_FIELD.email, CHECK_FIELD.website, CHECK_FIELD.message]) {
       expect(html).toContain(`name="${field}"`);
     }
+    expect(html).toMatch(new RegExp(`<input[^>]*type="tel"[^>]*name="${CHECK_FIELD.phone}"|<input[^>]*name="${CHECK_FIELD.phone}"[^>]*type="tel"`));
     expect(html.toLowerCase()).toContain(`maxlength="${CHECK_LIMIT.message}"`);
     expect(html).toMatch(new RegExp(`<input[^>]*name="${CHECK_FIELD.source}"[^>]*type="hidden"|<input[^>]*type="hidden"[^>]*name="${CHECK_FIELD.source}"`));
     expect(html).toMatch(new RegExp(`<input[^>]*name="${CHECK_FIELD.trap}"[^>]*tabindex="-1"|<input[^>]*tabindex="-1"[^>]*name="${CHECK_FIELD.trap}"`, "i"));
@@ -1056,12 +1018,22 @@ describe("site check form", () => {
     expect(form).toContain(`href="mailto:${CONTACT_EMAIL}"`);
   });
 
-  it("points every free site check CTA at the form, not a mailto", async () => {
-    for (const route of [ABOUT_ROUTE, SITE_CHECK_PAGE]) {
+  it("points every free missed-call check CTA at the form, not a mailto", async () => {
+    for (const route of ["/", FRONT_DESK_ROUTE, YOUTH_SPORTS_ROUTE, ORANGE_COUNTY_ROUTE, ABOUT_ROUTE]) {
       const html = decodeEntities(await text(await app.handle("GET", route)));
-      expect(html).toContain(`href="${siteCheckHref()}"`);
-      expect(html).not.toContain("mailto:ryan@dimasc.io?subject=free%20site%20check");
+      expect(html).toContain(`href="${freeCheckHref()}"`);
+      expect(html).not.toContain("subject=free%20site%20check");
+      expect(html).not.toContain("subject=free%20missed-call%20check");
     }
+  });
+
+  it("asks for the number customers call + refuses one that is not a phone number", async () => {
+    const { env, stored } = checkFixture();
+    expect((await handleCheck(checkPost({ ...VALID_CHECK, [CHECK_FIELD.phone]: "" }), env)).status).toBe(400);
+    expect((await handleCheck(checkPost({ ...VALID_CHECK, [CHECK_FIELD.business]: "" }), env)).status).toBe(400);
+    expect((await handleCheck(checkPost({ ...VALID_CHECK, [CHECK_FIELD.phone]: "call me maybe" }), env)).status).toBe(400);
+    expect((await handleCheck(checkPost({ ...VALID_CHECK, [CHECK_FIELD.phone]: "1".repeat(CHECK_LIMIT.phone + 1) }), env)).status).toBe(413);
+    expect(stored.size).toBe(0);
   });
 
   it("stores a valid request, emails it to me w/ the sender as reply-to, + sends the visitor to the thank-you page", async () => {
@@ -1070,7 +1042,7 @@ describe("site check form", () => {
     const original = console.log;
     console.log = (...args: unknown[]) => logged.push(args.join(" "));
     const response = await handleCheck(
-      checkPost(VALID_CHECK, { referer: `${SITE_URL}${SITE_CHECK_PAGE}?utm_source=google&utm_medium=organic&utm_campaign=gbp&x=1` }),
+      checkPost(VALID_CHECK, { referer: `${SITE_URL}${FREE_CHECK_ROUTE}?utm_source=google&utm_medium=organic&utm_campaign=gbp&x=1` }),
       env,
     );
     console.log = original;
@@ -1081,7 +1053,7 @@ describe("site check form", () => {
     expect(record.name).toBe(VALID_CHECK.name);
     expect(record.message).toBe(VALID_CHECK.message);
     expect(record.source).toBe("utm_source=google&utm_medium=organic&utm_campaign=gbp");
-    expect(record.page).toBe(SITE_CHECK_PAGE);
+    expect(record.page).toBe(FREE_CHECK_ROUTE);
     expect(sent).toHaveLength(1);
     expect(sent[0]?.to).toBe(CONTACT_EMAIL);
     expect(sent[0]?.replyTo).toBe(VALID_CHECK.email);
@@ -1134,7 +1106,7 @@ describe("site check form", () => {
     }
     const get = await handleCheck(new Request(`${SITE_URL}${CHECK_ROUTE}`), env);
     expect(get.status).toBe(303);
-    expect(get.headers.get("location")).toBe(siteCheckHref());
+    expect(get.headers.get("location")).toBe(freeCheckHref());
     expect(stored.size).toBe(0);
   });
 
@@ -1147,23 +1119,23 @@ describe("site check form", () => {
 
   it("fills the hidden source field on the form page from the URL's utm params, server-side", async () => {
     const page = new Response('<form><input name="source" type="hidden" value=""/></form>', { headers: { "content-type": "text/html" } });
-    const url = new URL(`${SITE_URL}${SITE_CHECK_PAGE}?utm_source=email&utm_campaign=2026-12-oc-gyms"><b>`);
+    const url = new URL(`${SITE_URL}${FREE_CHECK_ROUTE}?utm_source=email&utm_campaign=2026-12-oc-gyms"><b>`);
     const html = await withFormFilled(page, url).text();
     const value = /value="([^"]*)"/.exec(html)?.[1] ?? "";
     expect(value).toStartWith("utm_source=email&utm_campaign=2026-12-oc-gyms");
     expect(value).toMatch(/^[\w.\-=&]+$/);
     const plain = new Response("<p>x</p>", { headers: { "content-type": "text/html" } });
-    expect(withFormFilled(plain, new URL(`${SITE_URL}${SITE_CHECK_PAGE}`))).toBe(plain);
+    expect(withFormFilled(plain, new URL(`${SITE_URL}${FREE_CHECK_ROUTE}`))).toBe(plain);
   });
 
   it("fills the hidden click id fields + click time from the URL's gclid, gbraid + wbraid, server-side", async () => {
-    const html = await text(await app.handle("GET", SITE_CHECK_PAGE));
+    const html = await text(await app.handle("GET", FREE_CHECK_ROUTE));
     for (const field of [CHECK_FIELD.gclid, CHECK_FIELD.gbraid, CHECK_FIELD.wbraid, CHECK_FIELD.clickedAt]) {
       expect(html).toMatch(new RegExp(`<input[^>]*name="${field}"[^>]*type="hidden"|<input[^>]*type="hidden"[^>]*name="${field}"`));
     }
     const page = new Response(html, { headers: { "content-type": "text/html" } });
     const now = new Date("2026-11-14T18:00:00.000Z");
-    const url = new URL(`${SITE_URL}${SITE_CHECK_PAGE}?gclid=Cj0KCQ_abc-123&wbraid=WB_9&utm_source=google`);
+    const url = new URL(`${SITE_URL}${FREE_CHECK_ROUTE}?gclid=Cj0KCQ_abc-123&wbraid=WB_9&utm_source=google`);
     const filled = withFormFilled(page, url, now);
     expect(filled.headers.get("cache-control")).toBe("private, no-store");
     const out = await filled.text();
@@ -1180,7 +1152,7 @@ describe("site check form", () => {
       const page = new Response('<input name="gclid" type="hidden" value=""/><input name="clicked_at" type="hidden" value=""/>', {
         headers: { "content-type": "text/html" },
       });
-      const url = new URL(`${SITE_URL}${SITE_CHECK_PAGE}`);
+      const url = new URL(`${SITE_URL}${FREE_CHECK_ROUTE}`);
       url.searchParams.set("gclid", bad);
       const response = withFormFilled(page, url);
       expect(response).toBe(page);
@@ -1210,7 +1182,7 @@ describe("site check form", () => {
     expect(logged).not.toContain("Cj0KCQ_abc-123");
 
     const fromReferer = checkFixture();
-    await handleCheck(checkPost(VALID_CHECK, { referer: `${SITE_URL}${SITE_CHECK_PAGE}?gbraid=GB_1` }), fromReferer.env);
+    await handleCheck(checkPost(VALID_CHECK, { referer: `${SITE_URL}${FREE_CHECK_ROUTE}?gbraid=GB_1` }), fromReferer.env);
     const refererRecord = JSON.parse([...fromReferer.stored.values()][0] ?? "{}") as Record<string, string>;
     expect(refererRecord.gbraid).toBe("GB_1");
     expect(refererRecord.clickedAt).toBe("");
@@ -1252,17 +1224,17 @@ describe("site check form", () => {
 
   it("ships no client script on any page but the Turnstile script on the form page, the error page included", async () => {
     const routes = [...siteRoutes(await loadAllCaseStudies(), await loadArticles(false), false), CHECK_SENT_ROUTE];
-    expect(routes).toContain(SITE_CHECK_PAGE);
+    expect(routes).toContain(FREE_CHECK_ROUTE);
     for (const route of routes) {
       const html = await text(await app.handle("GET", route));
       expect(`${route}: ${withoutAllowedScripts(route, html)}`).not.toContain("<script");
-      if (route !== SITE_CHECK_PAGE) expect(html).not.toContain("challenges.cloudflare.com");
+      if (route !== FREE_CHECK_ROUTE) expect(html).not.toContain("challenges.cloudflare.com");
     }
     expect(renderCheckProblem({ title: "x", detail: "y" })).not.toContain("<script");
   });
 
   it("loads the Turnstile script once on the form page + puts the widget inside the form", async () => {
-    const html = await text(await app.handle("GET", SITE_CHECK_PAGE));
+    const html = await text(await app.handle("GET", FREE_CHECK_ROUTE));
     const form = html.slice(html.indexOf("<form"), html.indexOf("</form>"));
     expect(html.split(TURNSTILE_SCRIPT_TAG)).toHaveLength(2);
     expect(form).toContain(`class="cf-turnstile"`);
@@ -1475,7 +1447,7 @@ describe("privacy page", () => {
     for (const phrase of ["cloudflare", "google ads", "no ad cookies", "turnstile", `mailto:${CONTACT_EMAIL}`]) expect(html).toContain(phrase);
     const footer = html.slice(html.indexOf("<footer"));
     expect(footer).toContain(`href="${PRIVACY_ROUTE}"`);
-    const form = decodeEntities(await text(await app.handle("GET", SITE_CHECK_PAGE)));
+    const form = decodeEntities(await text(await app.handle("GET", FREE_CHECK_ROUTE)));
     expect(form.slice(form.indexOf("<form"), form.indexOf("</form>"))).toContain(`href="${PRIVACY_ROUTE}"`);
     expect(sitemapRoutes(await loadAllCaseStudies(), await loadAllArticles())).toContain(PRIVACY_ROUTE);
   });
