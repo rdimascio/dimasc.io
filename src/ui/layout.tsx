@@ -1,8 +1,22 @@
 import type { ReactElement, ReactNode } from "react";
 
-import { ABOUT_ROUTE, CONTACT_EMAIL, GITHUB_URL, introCallHref, introCallLabel, PRIVACY_ROUTE, SERVICE_AREA_COPY, SITE_NAME, SITE_NAME_PROPER } from "../site";
+import {
+  ABOUT_ROUTE,
+  CONTACT_EMAIL,
+  FREE_CHECK_ROUTE,
+  FRONT_DESK_CHECK_NAME,
+  FRONT_DESK_NAME,
+  FRONT_DESK_ROUTE,
+  GITHUB_URL,
+  introCallHref,
+  introCallLabel,
+  PRIVACY_ROUTE,
+  SERVICE_AREA_COPY,
+  SITE_NAME,
+  SITE_NAME_PROPER,
+} from "../site";
 import { ARTICLES_ROUTE } from "../content";
-import { ORANGE_COUNTY_ROUTE, serviceRoute, SERVICES, SERVICES_ROUTE } from "../services";
+import { ORANGE_COUNTY_ROUTE } from "../front-desk";
 import { WORK_ROUTE } from "../work";
 import { YOUTH_SPORTS_ROUTE } from "../youth-sports";
 import { PixelWordmark } from "./pixel-wordmark";
@@ -106,7 +120,7 @@ export interface NavSections {
 type NavSection = keyof NavSections | "always";
 
 const NAV: readonly { label: string; href: string; section: NavSection; hideNarrow: boolean }[] = [
-  { label: "services", href: SERVICES_ROUTE, section: "always", hideNarrow: true },
+  { label: FRONT_DESK_NAME, href: FRONT_DESK_ROUTE, section: "always", hideNarrow: true },
   { label: "past work", href: WORK_ROUTE, section: "work", hideNarrow: true },
   { label: "articles", href: ARTICLES_ROUTE, section: "articles", hideNarrow: true },
   { label: "how it works", href: "/#how-it-works", section: "always", hideNarrow: true },
@@ -121,14 +135,14 @@ function Footer({ sections }: { sections: NavSections }): ReactElement {
   const links = [
     ...visibleNav(sections).map((item) => ({ label: item.label, href: item.href })),
     { label: "prices", href: "/#pricing" },
-    { label: "youth sports", href: YOUTH_SPORTS_ROUTE },
     { label: "one-project jobs", href: "/process" },
     { label: "github", href: GITHUB_URL },
     { label: "email", href: `mailto:${CONTACT_EMAIL}` },
     { label: "privacy", href: PRIVACY_ROUTE },
   ];
   const serviceLinks = [
-    ...SERVICES.map((service) => ({ label: service.name, href: serviceRoute(service.slug) })),
+    { label: FRONT_DESK_CHECK_NAME, href: FREE_CHECK_ROUTE },
+    { label: "youth sports", href: YOUTH_SPORTS_ROUTE },
     { label: SERVICE_AREA_COPY, href: ORANGE_COUNTY_ROUTE },
   ];
   return (

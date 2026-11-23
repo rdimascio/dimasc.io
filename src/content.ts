@@ -163,10 +163,6 @@ export function listedPlans(plans: readonly Plan[]): Plan[] {
   return plans.filter((plan) => plan.listed);
 }
 
-export function unlistedPlans(plans: readonly Plan[]): Plan[] {
-  return plans.filter((plan) => !plan.listed);
-}
-
 export type Demo = DemoFrontmatter;
 export type Role = RoleFrontmatter;
 
