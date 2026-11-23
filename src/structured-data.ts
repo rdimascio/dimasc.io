@@ -8,7 +8,6 @@ import {
   OG_IMAGE_PATH,
   SERVICE_AREA,
   SERVICE_AREA_LABEL,
-  SITE_CHECK_NAME,
   SITE_NAME_PROPER,
   SITE_URL,
 } from "./site";
@@ -26,7 +25,6 @@ export const WEBSITE_ID = `${SITE_URL}/#website`;
 
 const OG_IMAGE_URL = `${SITE_URL}${OG_IMAGE_PATH}`;
 const BUSINESS_DESCRIPTION = `AI setup for local businesses in ${SERVICE_AREA_LABEL}: an AI front desk that picks up missed calls, texts people back, answers booking questions and replies to reviews, inside the tools the business already uses.`;
-const SITE_CHECK_DESCRIPTION = "i look through your site + tell you what's broken. fixes under 30 min are free.";
 const FRONT_DESK_CHECK_DESCRIPTION = "i call your business after hours + count the reviews nobody answered, then show you what that costs in dollars.";
 const JOB_TITLE = "Senior software engineer";
 
@@ -88,15 +86,11 @@ function planOffersLd(plan: Plan & { price: number }): JsonLd[] {
   return plan.setup === undefined ? [offerLd(plan)] : [setupOfferLd({ ...plan, setup: plan.setup }), offerLd(plan)];
 }
 
-export function siteCheckOfferLd(): JsonLd {
-  return { "@type": "Offer", name: SITE_CHECK_NAME, description: SITE_CHECK_DESCRIPTION, price: "0", priceCurrency: CURRENCY };
-}
-
 export function frontDeskCheckOfferLd(): JsonLd {
   return { "@type": "Offer", name: FRONT_DESK_CHECK_NAME, description: FRONT_DESK_CHECK_DESCRIPTION, price: "0", priceCurrency: CURRENCY };
 }
 
-export function businessLd(plans: readonly Plan[], checkOffer: JsonLd = siteCheckOfferLd()): JsonLd {
+export function businessLd(plans: readonly Plan[]): JsonLd {
   const range = priceRange(plans);
   return {
     "@type": "ProfessionalService",
@@ -110,7 +104,7 @@ export function businessLd(plans: readonly Plan[], checkOffer: JsonLd = siteChec
     areaServed: areaServed(),
     founder: ref(PERSON_ID),
     ...(range === undefined ? {} : { priceRange: range }),
-    makesOffer: [checkOffer, ...pricedPlans(plans).flatMap(planOffersLd)],
+    makesOffer: [frontDeskCheckOfferLd(), ...pricedPlans(plans).flatMap(planOffersLd)],
   };
 }
 
@@ -196,7 +190,7 @@ export interface ServiceLdInput {
   readonly name: string;
   readonly description: string;
   readonly route: string;
-  readonly plan: Plan | undefined;
+  readonly plans: readonly Plan[];
 }
 
 function providerLd(): JsonLd {
@@ -204,9 +198,7 @@ function providerLd(): JsonLd {
 }
 
 export function serviceLd(input: ServiceLdInput): JsonLd {
-  const plan = input.plan;
-  const priced = plan !== undefined && plan.price !== null ? { ...plan, price: plan.price } : undefined;
-  const offers = plan === undefined ? siteCheckOfferLd() : priced === undefined ? undefined : offerLd(priced);
+  const offers = [frontDeskCheckOfferLd(), ...pricedPlans(input.plans).flatMap(planOffersLd)];
   return {
     "@type": "Service",
     name: input.name,
@@ -215,12 +207,12 @@ export function serviceLd(input: ServiceLdInput): JsonLd {
     url: canonicalUrl(input.route),
     provider: providerLd(),
     areaServed: areaServed(),
-    ...(offers === undefined ? {} : { offers }),
+    offers,
   };
 }
 
 export function homeGraph(plans: readonly Plan[], faq: readonly FaqItem[]): JsonLd {
-  return { "@context": SCHEMA_CONTEXT, "@graph": [businessLd(plans, frontDeskCheckOfferLd()), personLd(), websiteLd(), faqLd(faq)] };
+  return { "@context": SCHEMA_CONTEXT, "@graph": [businessLd(plans), personLd(), websiteLd(), faqLd(faq)] };
 }
 
 export function pageGraph(...nodes: readonly JsonLd[]): JsonLd {

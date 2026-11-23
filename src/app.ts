@@ -3,10 +3,15 @@ import { openSqlite } from "@lesto/runtime";
 import type { PageMetadata } from "@lesto/web";
 import { lesto } from "@lesto/web";
 
-import { ARTICLES_ROUTE, loadAllCaseStudies, loadArticles, loadExperience, loadFaq, loadPlans, loadProcess, type Plan, unlistedPlans } from "./content";
+import { ARTICLES_ROUTE, loadAllCaseStudies, loadArticles, loadExperience, loadFaq, loadPlans, loadProcess, type Plan } from "./content";
 import { FEED_ROUTE } from "./feed";
+import { FRONT_DESK_TITLE, frontDeskDescription, ORANGE_COUNTY_ROUTE } from "./front-desk";
 import {
   canonicalUrl,
+  FREE_CHECK_ROUTE,
+  FRONT_DESK_CHECK_MINUTES,
+  FRONT_DESK_CHECK_NAME,
+  FRONT_DESK_ROUTE,
   OG_IMAGE_ALT,
   OG_IMAGE_HEIGHT,
   OG_IMAGE_PATH,
@@ -23,9 +28,8 @@ import { frontDeskShortPrice, makeHome } from "./ui/home";
 import { ABOUT_ROUTE, makeSiteLayout } from "./ui/layout";
 import { NOINDEX_ROUTES, PROCESS_ROUTE } from "./sitemap";
 import { makeProcess } from "./ui/process";
-import { makeOrangeCounty, makeServicePage, makeServicesIndex, SERVICES_LEDE } from "./ui/service";
-import { ORANGE_COUNTY_ROUTE, serviceRoute, SERVICES, SERVICES_ROUTE } from "./services";
-import { makeCheckSent } from "./ui/check";
+import { makeFrontDesk, makeOrangeCounty } from "./ui/front-desk";
+import { makeCheckSent, makeFreeCheck } from "./ui/check";
 import { makePrivacy, PRIVACY_DESCRIPTION, PRIVACY_TITLE } from "./ui/privacy";
 import { CHECK_SENT_ROUTE } from "./check";
 import { makeCaseStudy, makeWorkIndex, makeWorkRequest } from "./ui/work";
@@ -84,9 +88,13 @@ function withFeedLink(metadata: PageMetadata): PageMetadata {
 const NOINDEX = { name: "robots", content: "noindex" } as const;
 const NOINDEX_FOLLOW = { name: "robots", content: "noindex, follow" } as const;
 
-export const SERVICES_TITLE = `website services for small businesses · ${SITE_NAME}`;
-export const ORANGE_COUNTY_TITLE = `small business website help, ${SERVICE_AREA_SHORT} ca · ${SITE_NAME}`;
-export const ORANGE_COUNTY_DESCRIPTION = `senior software engineer based in ${SERVICE_AREA_COPY}. i fix, build + look after websites for small businesses here, and meet in person around oc.`;
+export const ORANGE_COUNTY_TITLE = `ai setup for local businesses, ${SERVICE_AREA_SHORT} ca · ${SITE_NAME}`;
+export const FREE_CHECK_TITLE = `${FRONT_DESK_CHECK_NAME} · ${SITE_NAME}`;
+export const FREE_CHECK_DESCRIPTION = `i call your business after hours + count the google reviews nobody answered, then show you what that costs in dollars. free, ${FRONT_DESK_CHECK_MINUTES} min.`;
+
+export function orangeCountyDescription(plans: readonly Plan[]): string {
+  return `engineer in ${SERVICE_AREA_COPY}. i set up an ai front desk for local businesses here + keep it working. ${frontDeskShortPrice(plans)}`;
+}
 
 export function serviceTitle(title: string): string {
   return `${title} · ${SITE_NAME}`;
@@ -119,7 +127,6 @@ export async function buildAppConfig(
     loadExperience(),
     loadArticles(options.previewDrafts),
   ]);
-  const websitePlans = unlistedPlans(plans);
 
   let app = lesto()
     .styles("/styles.css")
@@ -160,17 +167,28 @@ export async function buildAppConfig(
     });
 
   app = app
-    .page(SERVICES_ROUTE, {
+    .page(FRONT_DESK_ROUTE, {
       static: true,
-      component: makeServicesIndex(websitePlans),
+      component: makeFrontDesk(plans),
       metadata: () =>
-        seoMetadata({ title: SERVICES_TITLE, description: SERVICES_LEDE, route: SERVICES_ROUTE, type: "website" }),
+        seoMetadata({
+          title: serviceTitle(FRONT_DESK_TITLE),
+          description: frontDeskDescription(frontDeskShortPrice(plans)),
+          route: FRONT_DESK_ROUTE,
+          type: "website",
+        }),
+    })
+    .page(FREE_CHECK_ROUTE, {
+      static: true,
+      component: makeFreeCheck(plans),
+      metadata: () =>
+        seoMetadata({ title: FREE_CHECK_TITLE, description: FREE_CHECK_DESCRIPTION, route: FREE_CHECK_ROUTE, type: "website" }),
     })
     .page(ORANGE_COUNTY_ROUTE, {
       static: true,
-      component: makeOrangeCounty(websitePlans),
+      component: makeOrangeCounty(plans),
       metadata: () =>
-        seoMetadata({ title: ORANGE_COUNTY_TITLE, description: ORANGE_COUNTY_DESCRIPTION, route: ORANGE_COUNTY_ROUTE, type: "website" }),
+        seoMetadata({ title: ORANGE_COUNTY_TITLE, description: orangeCountyDescription(plans), route: ORANGE_COUNTY_ROUTE, type: "website" }),
     });
 
   app = app.page(YOUTH_SPORTS_ROUTE, {
@@ -192,20 +210,11 @@ export async function buildAppConfig(
     metadata: () =>
       routeMetadata({
         title: `got it · ${SITE_NAME}`,
-        description: "your site check request is in. i reply within 1 business day, monday to friday.",
+        description: "your free missed-call check request is in. i reply within 1 business day, monday to friday.",
         route: CHECK_SENT_ROUTE,
         type: "website",
       }),
   });
-
-  for (const service of SERVICES) {
-    const route = serviceRoute(service.slug);
-    app = app.page(route, {
-      static: true,
-      component: makeServicePage(service, websitePlans),
-      metadata: () => seoMetadata({ title: serviceTitle(service.title), description: service.description, route, type: "website" }),
-    });
-  }
 
   if (studies.length > 0) {
     app = app
