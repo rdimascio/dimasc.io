@@ -5,6 +5,11 @@ import { PROCESS_ROUTE } from "../sitemap";
 import { breadcrumbLd, pageGraph } from "../structured-data";
 import { JsonLd } from "./json-ld";
 import { Eyebrow, HEADING, LEDE, PAGE } from "./layout";
+import { FRONT_DESK_NAME } from "../site";
+
+export const PROCESS_TITLE = "how setup works";
+export const PROCESS_LEDE =
+  "from the free check to a front desk that picks up when you can't. you see the price before i start, test it before it goes live, + i keep it working after.";
 
 function stepNumber(step: number): string {
   return String(step).padStart(2, "0");
@@ -30,11 +35,11 @@ export function ProcessRows({ steps }: { steps: readonly ProcessStep[] }): React
 function ProcessPage({ steps }: { steps: readonly ProcessStep[] }): ReactElement {
   return (
     <main className={PAGE}>
-      <JsonLd data={pageGraph(breadcrumbLd([{ name: "how a one-project job works", route: PROCESS_ROUTE }]))} />
-      <Eyebrow>one-project jobs</Eyebrow>
-      <h1 className={`${HEADING} mt-8`}>how a one‑project job works</h1>
+      <JsonLd data={pageGraph(breadcrumbLd([{ name: PROCESS_TITLE, route: PROCESS_ROUTE }]))} />
+      <Eyebrow>{FRONT_DESK_NAME}</Eyebrow>
+      <h1 className={`${HEADING} mt-8`}>{PROCESS_TITLE}</h1>
       <p className={`${LEDE} mt-8`}>
-        for one bigger job, like a new website. you see what i found behind each decision, one price per step before i start, and something working at the end of each step.
+        {PROCESS_LEDE}
       </p>
       <ol className="mt-20 m-0 p-0 list-none">
         {steps.map((step) => (

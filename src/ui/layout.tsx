@@ -135,7 +135,7 @@ function Footer({ sections }: { sections: NavSections }): ReactElement {
   const links = [
     ...visibleNav(sections).map((item) => ({ label: item.label, href: item.href })),
     { label: "prices", href: "/#pricing" },
-    { label: "one-project jobs", href: "/process" },
+    { label: "how setup works", href: "/process" },
     { label: "github", href: GITHUB_URL },
     { label: "email", href: `mailto:${CONTACT_EMAIL}` },
     { label: "privacy", href: PRIVACY_ROUTE },

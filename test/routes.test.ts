@@ -230,7 +230,7 @@ describe("site routes", () => {
     expect((await loadPlans()).map((plan) => plan.name)).toEqual([FRONT_DESK_NAME, "website fix or rebuild"]);
     for (const route of STUDIO_ROUTES) {
       const html = decodeEntities(await text(await app.handle("GET", route)));
-      for (const gone of ["$199", "$1,500", "care from", "monthly help", "one project", "75%", "2,500", "5,000"]) {
+      for (const gone of ["$199", "$1,500", "care from", "website care", "monthly help", "one project", "one-project", "one‑project", "look after websites", "75%", "2,500", "5,000"]) {
         expect({ route, found: html.includes(gone) ? gone : null }).toEqual({ route, found: null });
       }
     }

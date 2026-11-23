@@ -11,6 +11,7 @@ import {
   FREE_CHECK_ROUTE,
   FRONT_DESK_CHECK_MINUTES,
   FRONT_DESK_CHECK_NAME,
+  FRONT_DESK_NAME,
   FRONT_DESK_ROUTE,
   OG_IMAGE_ALT,
   OG_IMAGE_HEIGHT,
@@ -27,7 +28,7 @@ import { ARTICLES_LEDE, makeArticle, makeArticlesIndex } from "./ui/articles";
 import { frontDeskShortPrice, makeHome } from "./ui/home";
 import { ABOUT_ROUTE, makeSiteLayout } from "./ui/layout";
 import { NOINDEX_ROUTES, PROCESS_ROUTE } from "./sitemap";
-import { makeProcess } from "./ui/process";
+import { makeProcess, PROCESS_TITLE } from "./ui/process";
 import { makeFrontDesk, makeOrangeCounty } from "./ui/front-desk";
 import { makeCheckSent, makeFreeCheck } from "./ui/check";
 import { makePrivacy, PRIVACY_DESCRIPTION, PRIVACY_TITLE } from "./ui/privacy";
@@ -144,12 +145,12 @@ export async function buildAppConfig(
     })
     .page(ABOUT_ROUTE, {
       static: true,
-      component: makeAbout(experience),
+      component: makeAbout(experience, plans),
       metadata: () =>
         seoMetadata({
-          title: `about · web developer in ${SERVICE_AREA_SHORT} · ${SITE_NAME}`,
+          title: `about · software engineer in ${SERVICE_AREA_SHORT} · ${SITE_NAME}`,
           description:
-            "senior software engineer since 2017. i built the platform behind 30k+ websites + was tech lead on serhant.com's mls search. now i help small businesses.",
+            "senior software engineer since 2017. i built the platform behind 30k+ websites + was tech lead on serhant.com's mls search. now i set up ai front desks for local businesses.",
           route: ABOUT_ROUTE,
           type: "website",
         }),
@@ -159,8 +160,8 @@ export async function buildAppConfig(
       component: makeProcess(steps),
       metadata: () =>
         seoMetadata({
-          title: `how a one-project job works · ${SITE_NAME}`,
-          description: "for one bigger job: we talk, i look around, you get one plan + one price per step, then i build it in small steps.",
+          title: `${PROCESS_TITLE} · ${FRONT_DESK_NAME} · ${SITE_NAME}`,
+          description: `free check, one price, setup in your own tools, a test together, then i keep it working. ${frontDeskShortPrice(plans)}`,
           route: PROCESS_ROUTE,
           type: "website",
         }),
