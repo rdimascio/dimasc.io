@@ -382,7 +382,7 @@ describe("site routes", () => {
     }
   });
 
-  it("puts the proof + credentials in the hero once, linked to the about page, w/o naming the day job", async () => {
+  it("puts the proof + credentials in the hero once, linked to the about page", async () => {
     const home = decodeEntities(await text(await app.handle("GET", "/")));
     const main = home.slice(home.indexOf("<main"), home.indexOf("</main>"));
     const hero = main.slice(0, main.indexOf(FRONT_DESK_SECTION));
@@ -390,12 +390,10 @@ describe("site routes", () => {
     expect(hero).toContain(HERO_LEAD);
     expect(hero).toContain(frontDeskCheckHref());
     for (const line of CREDENTIALS) expect(hero).toContain(line);
-    for (const fact of ["holt international", "serhant.com mls home search", "blackstone", "stanford ecorner", `since ${SINCE_YEAR}`]) {
+    for (const fact of ["holt international", "serhant.com mls home search", "blackstone", "stanford ecorner", "y combinator", `since ${SINCE_YEAR}`]) {
       expect(hero).toContain(fact);
     }
-    const mainText = htmlToText(main).toLowerCase();
-    for (const gone of ["y combinator", "by day", "every, a"]) expect(mainText).not.toContain(gone);
-    expect(BRAND_LOGOS.map((logo) => logo.slug)).not.toContain("every");
+    expect(htmlToText(main.slice(main.indexOf(FRONT_DESK_SECTION))).toLowerCase()).not.toContain("y combinator");
     expect(home).not.toContain("<video");
   });
 

@@ -16,6 +16,7 @@ export const BRAND_LOGOS: readonly BrandLogo[] = [
   { slug: "serhant", name: "SERHANT.", ratio: 6.077 },
   { slug: "luxury-presence", name: "Luxury Presence", ratio: 2.833, weightCompensation: 1.2 },
   { slug: "10up", name: "10up", ratio: 0.874, weightCompensation: 0.85 },
+  { slug: "every", name: "Every", ratio: 3.929 },
 ];
 
 export function logoSrc(logo: Pick<BrandLogo, "slug">): string {

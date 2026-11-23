@@ -31,7 +31,7 @@ export const HERO_TURN = "i can fix that";
 export const CREDENTIALS = [
   "tech lead on holt international + the serhant.com mls home search.",
   "front-end engineer on blackstone + stanford ecorner.",
-  `software engineer since ${SINCE_YEAR}. now i set up ai for local businesses.`,
+  `software engineer since ${SINCE_YEAR}. by day at every, a y combinator startup.`,
 ] as const;
 export const WHAT_IT_DOES = [
   "picks up the calls you miss",
