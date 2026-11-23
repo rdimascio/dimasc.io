@@ -1,5 +1,3 @@
-import { serviceRoute } from "./services";
-
 export const SITE_HOST = "dimasc.io";
 export const SITE_URL = `https://${SITE_HOST}`;
 export const WWW_HOST = `www.${SITE_HOST}`;
@@ -43,15 +41,16 @@ export function planHref(planName: string): string {
   return mailto(planName);
 }
 
-export const QUICK_FIX_MINUTES = 30;
-export const SITE_CHECK_NAME = "free site check";
-export const SITE_CHECK_CTA = "get a free site check";
+export const FRONT_DESK_ROUTE = "/ai-front-desk";
+export const FREE_CHECK_ROUTE = "/free-check";
+export const WEBSITE_FIX_ANCHOR = "website";
 
-export const SITE_CHECK_PAGE = serviceRoute("fix-my-website");
-export const SITE_CHECK_ANCHOR = "check";
+export function websiteFixHref(): string {
+  return `${FRONT_DESK_ROUTE}#${WEBSITE_FIX_ANCHOR}`;
+}
 
-export function siteCheckHref(): string {
-  return `${SITE_CHECK_PAGE}#${SITE_CHECK_ANCHOR}`;
+export function freeCheckHref(): string {
+  return FREE_CHECK_ROUTE;
 }
 
 export const FRONT_DESK_NAME = "ai front desk";
@@ -59,23 +58,6 @@ export const FRONT_DESK_TOOLS = "mindbody, jobber, vagaro, your google profile +
 export const FRONT_DESK_CHECK_NAME = "free missed-call check";
 export const FRONT_DESK_CHECK_CTA = "get a free missed-call check";
 export const FRONT_DESK_CHECK_MINUTES = 20;
-
-const FRONT_DESK_CHECK_BODY = [
-  "business name:",
-  "",
-  "the number customers call:",
-  "",
-  "how people book w/ you now (mindbody, jobber, vagaro, phone...):",
-  "",
-  "link to your google business profile:",
-  "",
-  "best time to talk:",
-  "",
-].join("\n");
-
-export function frontDeskCheckHref(): string {
-  return mailto(FRONT_DESK_CHECK_NAME, FRONT_DESK_CHECK_BODY);
-}
 
 export const OG_IMAGE_PATH = "/og.png";
 export const OG_IMAGE_SOURCE = "assets/og.png";

@@ -1,7 +1,7 @@
 import type { ReactElement } from "react";
 
 import type { Plan } from "../content";
-import { CONTACT_EMAIL, FRONT_DESK_CHECK_CTA, FRONT_DESK_NAME, FRONT_DESK_TOOLS, frontDeskCheckHref, SERVICE_AREA_COPY } from "../site";
+import { CONTACT_EMAIL, FRONT_DESK_CHECK_CTA, FRONT_DESK_NAME, FRONT_DESK_TOOLS, freeCheckHref, SERVICE_AREA_COPY } from "../site";
 import { breadcrumbLd, pageGraph } from "../structured-data";
 import {
   YOUTH_SPORTS_HEADLINE,
@@ -50,7 +50,7 @@ function YouthSportsPage({ plans }: { plans: readonly Plan[] }): ReactElement {
       <p className={`${LEDE} mt-8`}>{YOUTH_SPORTS_LEDE}</p>
       <p className="mt-4 mb-0 text-muted max-w-[38rem]">{YOUTH_SPORTS_WHO}</p>
       <div className="mt-10 flex flex-wrap items-center gap-3">
-        <ArrowLink href={frontDeskCheckHref()} tone="accent">
+        <ArrowLink href={freeCheckHref()} tone="accent">
           {FRONT_DESK_CHECK_CTA}
         </ArrowLink>
         <a className="link-underline inline-block py-2 text-muted hover:text-ink" href={`mailto:${CONTACT_EMAIL}`}>

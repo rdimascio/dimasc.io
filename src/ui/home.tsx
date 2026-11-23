@@ -7,15 +7,15 @@ import {
   FRONT_DESK_CHECK_MINUTES,
   FRONT_DESK_CHECK_NAME,
   FRONT_DESK_NAME,
+  FRONT_DESK_ROUTE,
   FRONT_DESK_TOOLS,
-  frontDeskCheckHref,
+  freeCheckHref,
   introCallHref,
   planHref,
   SERVICE_AREA_COPY,
-  SITE_CHECK_NAME,
+  websiteFixHref,
 } from "../site";
 import { homeGraph } from "../structured-data";
-import { PLAN_SERVICE, type PlanName, serviceBySlug, serviceRoute, type ServiceSlug } from "../services";
 import { WORK_ROUTE } from "../work";
 import { YOUTH_SPORTS_ROUTE } from "../youth-sports";
 import { ABOUT_ROUTE, ArrowLink, Eyebrow, SectionHead, WIDTH } from "./layout";
@@ -58,6 +58,7 @@ export const NOT_FOR = [
   "a custom ai product built from scratch for you to own",
 ] as const;
 export const NOT_FOR_LINE = "i say no to these, + i'm happy to point you somewhere else.";
+export const WEBSITE_FIX_NAME = "website fix or rebuild";
 const COMPACT_PLAN_BULLETS = 4;
 const HOME_ARTICLE_COUNT = 3;
 
@@ -106,31 +107,18 @@ export function priceSuffix(plan: Plan): string {
   return plan.per === "site" ? "flat, per site" : `/${plan.per}`;
 }
 
-export function lowestPrice(plans: readonly Plan[]): number | null {
-  const prices = plans
-    .filter((plan) => plan.per === "month")
-    .map((plan) => plan.price)
-    .filter((price): price is number => price !== null);
-  return prices.length === 0 ? null : Math.min(...prices);
-}
-
-export function startingPricesLine(plans: readonly Plan[]): string {
-  const monthly = lowestPrice(plans);
-  const parts = [SITE_CHECK_NAME, ...(monthly === null ? [] : [`care from ${formatPrice(monthly)}/month`])];
-  return `${parts.join(", ")}, or one project for one price.`;
+export function websiteFixPlan(plans: readonly Plan[]): Plan | undefined {
+  return plans.find((candidate) => candidate.name === WEBSITE_FIX_NAME);
 }
 
 export function planCtaHref(plan: Plan): string {
   return plan.price === null ? introCallHref() : planHref(plan.name);
 }
 
-function isPlanName(name: string): name is PlanName {
-  return Object.hasOwn(PLAN_SERVICE, name);
-}
-
-function planService(plan: Plan): ServiceSlug | undefined {
-  return isPlanName(plan.name) ? PLAN_SERVICE[plan.name] : undefined;
-}
+const PLAN_MORE: Readonly<Record<string, { href: () => string; label: string }>> = {
+  [FRONT_DESK_NAME]: { href: () => FRONT_DESK_ROUTE, label: `more about the ${FRONT_DESK_NAME}` },
+  [WEBSITE_FIX_NAME]: { href: websiteFixHref, label: "more about the website fix" },
+};
 
 function PlanPrice({ plan }: { plan: Plan }): ReactElement {
   const amount = "text-[clamp(2.8rem,4.6vw,3.8rem)] leading-none tracking-[-0.055em] font-medium";
@@ -163,7 +151,7 @@ export function PlanCard({
   showMore?: boolean;
   compact?: boolean;
 }): ReactElement {
-  const more = showMore ? planService(plan) : undefined;
+  const more = showMore ? PLAN_MORE[plan.name] : undefined;
   const quietTone = plan.price === null ? "bg-bg-soft border-line" : "bg-card border-line";
   const tone = plan.featured ? "night border-line" : quietTone;
   const features = compact ? plan.features.slice(0, COMPACT_PLAN_BULLETS) : plan.features;
@@ -187,8 +175,8 @@ export function PlanCard({
           {plan.cta}
         </ArrowLink>
         {more === undefined ? null : (
-          <a className="link-underline inline-block py-2 text-[0.92rem] text-muted hover:text-ink" href={serviceRoute(more)}>
-            {`more about ${serviceBySlug(more).name}`}
+          <a className="link-underline inline-block py-2 text-[0.92rem] text-muted hover:text-ink" href={more.href()}>
+            {more.label}
           </a>
         )}
       </div>
@@ -205,7 +193,7 @@ export function CheckBand(): ReactElement {
         <p className="mt-4 mb-0 text-[1.1rem] text-muted max-w-[34rem]">{CHECK_LINE}</p>
       </div>
       <div>
-        <ArrowLink href={frontDeskCheckHref()} tone="accent">
+        <ArrowLink href={freeCheckHref()} tone="accent">
           {FRONT_DESK_CHECK_CTA}
         </ArrowLink>
       </div>
@@ -276,7 +264,7 @@ function Hero(): ReactElement {
             ))}
           </ul>
           <div className="md:col-span-5 flex flex-wrap items-center gap-x-5 gap-y-2 md:justify-end">
-            <ArrowLink href={frontDeskCheckHref()} tone="accent">
+            <ArrowLink href={freeCheckHref()} tone="accent">
               {FRONT_DESK_CHECK_CTA}
             </ArrowLink>
             <a className="link-underline inline-block py-2 text-muted hover:text-ink" href={ABOUT_ROUTE}>
@@ -320,6 +308,9 @@ function WhatItDoes(): ReactElement {
         </ul>
         <p className="mt-8 mb-0 text-[1.1rem] max-w-[40rem]">{RUNS_IN_LINE}</p>
         <p className="mt-3 mb-0 text-[1.1rem] text-muted max-w-[40rem]">{LOOK_AFTER_LINE}</p>
+        <a className="link-underline mt-6 inline-block py-2 text-ink" href={FRONT_DESK_ROUTE}>
+          {`more about the ${FRONT_DESK_NAME}`}
+        </a>
       </div>
     </section>
   );
@@ -365,7 +356,7 @@ function Pricing({ plans }: { plans: readonly Plan[] }): ReactElement {
       <CheckBand />
       <div className="mt-6 grid gap-6 lg:grid-cols-2 items-stretch">
         {listedPlans(plans).map((plan) => (
-          <PlanCard key={plan.slug} plan={plan} showMore={false} />
+          <PlanCard key={plan.slug} plan={plan} />
         ))}
       </div>
       <p className="mt-10 mb-0 text-center text-ink">{PRICING_TERMS}</p>

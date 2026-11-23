@@ -6,8 +6,8 @@ import { JsonLd } from "./json-ld";
 import { Eyebrow, HEADING, LEDE, PAGE } from "./layout";
 
 export const PRIVACY_TITLE = "privacy";
-export const PRIVACY_LEDE = "short version: i keep what you send me through the site check form, and not much else.";
-export const PRIVACY_DESCRIPTION = "what the site check form collects, where it goes, how google ad clicks are measured + how to get your info deleted.";
+export const PRIVACY_LEDE = "short version: i keep what you send me through the free check form, and not much else.";
+export const PRIVACY_DESCRIPTION = "what the free check form collects, where it goes, how google ad clicks are measured + how to get your info deleted.";
 
 export const NO_SCRIPTS_LINE = "no analytics scripts, no ad tracking scripts + no ad cookies. the site doesn't set any cookies of its own.";
 export const SERVER_COUNTING_LINE = "i count page views + form use on the server, with no cookies + no personal data.";
@@ -28,14 +28,14 @@ export const PRIVACY_SECTIONS: readonly PrivacySection[] = [
     title: "what the form collects",
     body: (
       <>
-        your name, your email, your website if you add it + your note. i also keep which page you sent it from, any utm tags in the link you came in on, and the
-        time you sent it.
+        your name, your business name, the number your customers call, your email, your google profile or website if you add it + how people book w/ you. i
+        also keep which page you sent it from, any utm tags in the link you came in on, and the time you sent it.
       </>
     ),
   },
   {
     title: "where it goes",
-    body: <>it's stored on cloudflare, which runs this site, and emailed to me. i use it to reply to you + do your site check. i don't sell it.</>,
+    body: <>it's stored on cloudflare, which runs this site, and emailed to me. i don't sell it. i use it to reply to you + do your free check, which means i call the number you give me after hours, like a customer would.</>,
   },
   {
     title: "google ads",

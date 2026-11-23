@@ -1,7 +1,7 @@
 import type { ReactElement } from "react";
 
 import type { Experience } from "../content";
-import { ABOUT_ROUTE, GITHUB_URL, SERVICE_AREA_COPY, SITE_CHECK_CTA, siteCheckHref } from "../site";
+import { ABOUT_ROUTE, freeCheckHref, FRONT_DESK_CHECK_CTA, GITHUB_URL, SERVICE_AREA_COPY } from "../site";
 import { breadcrumbLd, pageGraph } from "../structured-data";
 import { JsonLd } from "./json-ld";
 import { ExperienceTimeline, SkillsRow } from "./experience";
@@ -37,8 +37,8 @@ function AboutPage({ experience }: { experience: readonly Experience[] }): React
               </p>
             ))}
             <div className="mt-10 flex flex-wrap gap-3">
-              <ArrowLink href={siteCheckHref()} tone="accent">
-                {SITE_CHECK_CTA}
+              <ArrowLink href={freeCheckHref()} tone="accent">
+                {FRONT_DESK_CHECK_CTA}
               </ArrowLink>
               <a className="inline-flex items-center rounded-full border border-line px-6 py-3 font-medium hover:border-ink transition-colors" href={GITHUB_URL}>
                 github

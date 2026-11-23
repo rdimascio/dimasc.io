@@ -12,22 +12,29 @@ import {
   type CheckEnv,
   carriedQuery,
   formFills,
+  formHrefWithQuery,
   handleCheck,
   TURNSTILE_RESPONSE_FIELD,
   TURNSTILE_SCRIPT_SRC,
   TURNSTILE_VERIFY_URL,
 } from "../src/check";
 import { EVENT_BLOBS, type EventPoint, type EventSink, SITE_EVENT } from "../src/measure";
-import { PRIVACY_ROUTE, SITE_CHECK_PAGE, SITE_URL, siteCheckHref } from "../src/site";
+import { PRIVACY_ROUTE, FREE_CHECK_ROUTE, SITE_URL, freeCheckHref } from "../src/site";
 import { NO_SCRIPTS_LINE, SERVER_COUNTING_LINE } from "../src/ui/privacy";
 import { formatReport, readConfig, sourcesSql, summarize, TOKEN_ENV } from "../scripts/weekly-report.mjs";
 
 const CLIENT_IP = "203.0.113.7";
 const GCLID = "Cj0KCQ_abc-123";
 const FULL_REFERER = "https://www.google.com/search?q=fix+my+gym+site&client=pat";
-const PERSON = { name: "Pat Owner", email: "pat@example.com", website: "patsgym.com", message: "the booking button does nothing on my phone" };
-const HOME_ROUTES = ["/", "/about", PRIVACY_ROUTE, SITE_CHECK_PAGE] as const;
-const FORM_LINK_PAGE = "/about";
+const PERSON = {
+  name: "Pat Owner",
+  business: "Pat's Gym",
+  phone: "(714) 555-0100",
+  email: "pat@example.com",
+  website: "patsgym.com",
+  message: "people book on mindbody or call the front desk",
+};
+const HOME_ROUTES = ["/", "/about", PRIVACY_ROUTE, FREE_CHECK_ROUTE] as const;
 
 let app: App;
 
@@ -86,7 +93,7 @@ function visit(path: string, events?: EventSink, headers: Record<string, string>
 }
 
 function formHrefs(html: string): string[] {
-  return [...html.matchAll(/href="(\/services\/fix-my-website[^"]*)"/g)].map((match) => (match[1] ?? "").replaceAll("&amp;", "&"));
+  return [...html.matchAll(new RegExp(`href="(${FREE_CHECK_ROUTE}[^"]*)"`, "g"))].map((match) => (match[1] ?? "").replaceAll("&amp;", "&"));
 }
 
 function checkEnv(events: EventSink | undefined, sent: CheckEmail[] = [], stored = new Map<string, string>()): CheckEnv {
@@ -98,7 +105,7 @@ function checkEnv(events: EventSink | undefined, sent: CheckEmail[] = [], stored
   };
 }
 
-function checkPost(fields: Record<string, string>, referer = `${SITE_URL}${SITE_CHECK_PAGE}?utm_source=gbp&utm_medium=organic&gclid=${GCLID}`): Request {
+function checkPost(fields: Record<string, string>, referer = `${SITE_URL}${FREE_CHECK_ROUTE}?utm_source=gbp&utm_medium=organic&gclid=${GCLID}`): Request {
   return new Request(`${SITE_URL}${CHECK_ROUTE}`, {
     method: "POST",
     headers: { "content-type": "application/x-www-form-urlencoded", "cf-connecting-ip": CLIENT_IP, referer },
@@ -108,6 +115,8 @@ function checkPost(fields: Record<string, string>, referer = `${SITE_URL}${SITE_
 
 const VALID_POST = {
   [CHECK_FIELD.name]: PERSON.name,
+  [CHECK_FIELD.business]: PERSON.business,
+  [CHECK_FIELD.phone]: PERSON.phone,
   [CHECK_FIELD.email]: PERSON.email,
   [CHECK_FIELD.website]: PERSON.website,
   [CHECK_FIELD.message]: PERSON.message,
@@ -118,12 +127,12 @@ const VALID_POST = {
 
 describe("attribution carry-through", () => {
   it("adds the visitor's click id, utm tags + click time to every link to the form", async () => {
-    const response = await visit(`${FORM_LINK_PAGE}?gclid=${GCLID}&utm_source=gbp&utm_medium=organic&utm_campaign=oc&ref=card&other=x`);
+    const response = await visit(`/?gclid=${GCLID}&utm_source=gbp&utm_medium=organic&utm_campaign=oc&ref=card&other=x`);
     const hrefs = formHrefs(await response.text());
     expect(hrefs.length).toBeGreaterThan(0);
     for (const href of hrefs) {
       const url = new URL(href, SITE_URL);
-      expect(url.pathname).toBe(SITE_CHECK_PAGE);
+      expect(url.pathname).toBe(FREE_CHECK_ROUTE);
       expect(url.searchParams.get("gclid")).toBe(GCLID);
       expect(url.searchParams.get("utm_source")).toBe("gbp");
       expect(url.searchParams.get("utm_campaign")).toBe("oc");
@@ -131,13 +140,14 @@ describe("attribution carry-through", () => {
       expect(url.searchParams.get("other")).toBeNull();
       expect(Date.parse(url.searchParams.get(CHECK_FIELD.clickedAt) ?? "")).not.toBeNaN();
     }
-    expect(hrefs.some((href) => href.endsWith("#check"))).toBe(true);
+    expect(hrefs.length).toBeGreaterThanOrEqual(3);
+    expect(formHrefWithQuery(`${FREE_CHECK_ROUTE}#check`, "gclid=x")).toBe(`${FREE_CHECK_ROUTE}?gclid=x#check`);
     expect(response.headers.get("cache-control")).toBe("private, no-store");
     expect(response.headers.get("etag")).toBeNull();
   });
 
   it("drops invalid click ids + unsafe utm characters, and leaves a page w/o params untouched + cacheable", async () => {
-    const response = await visit(`${FORM_LINK_PAGE}?gclid=${encodeURIComponent('bad"><script>')}&wbraid=a.b&utm_source=${encodeURIComponent('gbp"><b>')}`);
+    const response = await visit(`/?gclid=${encodeURIComponent('bad"><script>')}&wbraid=a.b&utm_source=${encodeURIComponent('gbp"><b>')}`);
     const html = await response.text();
     for (const href of formHrefs(html)) {
       const url = new URL(href, SITE_URL);
@@ -148,19 +158,19 @@ describe("attribution carry-through", () => {
     }
     expect(html).not.toContain("<script>");
 
-    const plain = await visit(FORM_LINK_PAGE);
+    const plain = await visit("/");
     expect(plain.headers.get("cache-control")).toBe("public, max-age=0, must-revalidate");
-    expect(formHrefs(await plain.text())).toContain(siteCheckHref());
+    expect(formHrefs(await plain.text())).toContain(freeCheckHref());
     expect(carriedQuery(new URL(`${SITE_URL}/?gclid=a%20b&x=1`))).toBe("");
   });
 
   it("keeps the landing click time on the form page, and replaces a forged or future one", () => {
     const now = new Date("2026-11-14T18:00:00.000Z");
     const landed = "2026-11-14T17:55:00.000Z";
-    const fills = formFills(new URL(`${SITE_URL}${SITE_CHECK_PAGE}?gclid=${GCLID}&clicked_at=${landed}`), now);
+    const fills = formFills(new URL(`${SITE_URL}${FREE_CHECK_ROUTE}?gclid=${GCLID}&clicked_at=${landed}`), now);
     expect(fills[CHECK_FIELD.clickedAt]).toBe(landed);
     for (const bad of ["2026-11-15T00:00:00.000Z", "yesterday"]) {
-      const forged = formFills(new URL(`${SITE_URL}${SITE_CHECK_PAGE}?gclid=${GCLID}&clicked_at=${bad}`), now);
+      const forged = formFills(new URL(`${SITE_URL}${FREE_CHECK_ROUTE}?gclid=${GCLID}&clicked_at=${bad}`), now);
       expect(forged[CHECK_FIELD.clickedAt]).toBe(now.toISOString());
     }
   });
@@ -169,9 +179,9 @@ describe("attribution carry-through", () => {
 describe("server-side events", () => {
   it("writes one page_view per html page, plus form_view on the form page, w/ only the allowed blobs", async () => {
     const sink = recordingSink();
-    await visit(`${SITE_CHECK_PAGE}?gclid=${GCLID}&utm_source=gbp&utm_medium=organic&utm_campaign=oc`, sink, { referer: FULL_REFERER });
+    await visit(`${FREE_CHECK_ROUTE}?gclid=${GCLID}&utm_source=gbp&utm_medium=organic&utm_campaign=oc`, sink, { referer: FULL_REFERER });
     expect(sink.points.map((point) => point.indexes[0])).toEqual([SITE_EVENT.pageView, SITE_EVENT.formView]);
-    expect(sink.points[0]?.blobs).toEqual([SITE_EVENT.pageView, SITE_CHECK_PAGE, "www.google.com", "gbp", "organic", "oc", "1"]);
+    expect(sink.points[0]?.blobs).toEqual([SITE_EVENT.pageView, FREE_CHECK_ROUTE, "www.google.com", "gbp", "organic", "oc", "1"]);
     expect(sink.points[0]?.blobs).toHaveLength(EVENT_BLOBS.length);
 
     const internal = recordingSink();
@@ -247,7 +257,7 @@ describe("privacy + scripts", () => {
     for (const route of HOME_ROUTES) {
       const html = await (await visit(`${route}?gclid=${GCLID}&utm_source=gbp`, recordingSink())).text();
       const scripts = [...html.matchAll(/<script\b[^>]*>/g)].map((match) => match[0]).filter((tag) => !tag.includes('type="application/ld+json"'));
-      const allowed = route === SITE_CHECK_PAGE ? scripts.filter((tag) => !tag.includes(TURNSTILE_SCRIPT_SRC)) : scripts;
+      const allowed = route === FREE_CHECK_ROUTE ? scripts.filter((tag) => !tag.includes(TURNSTILE_SCRIPT_SRC)) : scripts;
       expect(`${route}: ${allowed.join(" ")}`).toBe(`${route}: `);
       expect(html).not.toMatch(/<img[^>]*(pixel|\/e\/)/);
     }

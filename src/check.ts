@@ -1,5 +1,5 @@
 import { type EventEnv, formContext, recordEvent, SITE_EVENT, type SiteEvent } from "./measure";
-import { CONTACT_EMAIL, PRIVACY_ROUTE, SITE_CHECK_NAME, SITE_CHECK_PAGE, SITE_HOST, SITE_NAME, SITE_URL, siteCheckHref } from "./site";
+import { CONTACT_EMAIL, FREE_CHECK_ROUTE, freeCheckHref, FRONT_DESK_CHECK_NAME, PRIVACY_ROUTE, SITE_HOST, SITE_NAME, SITE_URL } from "./site";
 
 export const CHECK_ROUTE = "/check";
 export const CHECK_SENT_ROUTE = "/check/sent";
@@ -8,6 +8,8 @@ export const CHECK_PRIVACY_LINK = "privacy";
 
 export const CHECK_FIELD = {
   name: "name",
+  business: "business",
+  phone: "phone",
   email: "email",
   website: "website",
   message: "message",
@@ -21,12 +23,31 @@ export const CHECK_FIELD = {
 
 export const CHECK_LIMIT = {
   name: 100,
+  business: 150,
+  phone: 40,
   email: 254,
   website: 300,
   message: 4000,
   source: 300,
   clickId: 200,
 } as const;
+
+export const CHECK_LABEL = {
+  name: "your name",
+  business: "business name",
+  phone: "the number customers call",
+  email: "your email",
+  website: "your google business profile or website",
+  message: "how people book w/ you now (mindbody, jobber, vagaro, phone...)",
+  optional: "(optional)",
+} as const;
+
+const PHONE_CHARACTERS = /^[0-9+() .-]+$/;
+const MIN_PHONE_DIGITS = 7;
+
+function isPhoneNumber(value: string): boolean {
+  return PHONE_CHARACTERS.test(value) && value.replace(/\D/g, "").length >= MIN_PHONE_DIGITS;
+}
 
 export const CLICK_ID_PARAMS = ["gclid", "gbraid", "wbraid"] as const;
 export type ClickIdName = (typeof CLICK_ID_PARAMS)[number];
@@ -104,6 +125,8 @@ export interface CheckRequest extends ClickIds {
   readonly id: string;
   readonly receivedAt: string;
   readonly name: string;
+  readonly business: string;
+  readonly phone: string;
   readonly email: string;
   readonly website: string;
   readonly message: string;
@@ -117,8 +140,13 @@ type Problem = { status: number; title: string; detail: string };
 const PROBLEMS = {
   tooLarge: { status: 413, title: "that's too long", detail: `keep the note under ${CHECK_LIMIT.message} characters.` },
   badType: { status: 415, title: "that didn't send", detail: "the form came through in a shape i can't read." },
-  missing: { status: 400, title: "a few things are missing", detail: "i need your name, your email + what's broken." },
+  missing: {
+    status: 400,
+    title: "a few things are missing",
+    detail: "i need your name, your business name, the number customers call, your email + how people book w/ you.",
+  },
   badEmail: { status: 400, title: "check your email address", detail: "i need a real email address to reply to." },
+  badPhone: { status: 400, title: "check the phone number", detail: "i need the number customers call, so i can call it after hours." },
   tooMany: { status: 429, title: "slow down a sec", detail: "a lot of requests came from your connection. wait a minute + try again." },
   notHuman: { status: 403, title: "couldn't confirm you're human", detail: "i couldn't confirm you're human." },
 } as const satisfies Record<string, Problem>;
@@ -224,20 +252,26 @@ function isOversize(value: string, limit: number): boolean {
 export function parseCheck(params: URLSearchParams, request: Request): CheckRequest | Problem {
   const field = (name: string): string => (params.get(name) ?? "").trim();
   const name = field(CHECK_FIELD.name);
+  const business = field(CHECK_FIELD.business);
+  const phone = field(CHECK_FIELD.phone);
   const email = field(CHECK_FIELD.email);
   const website = field(CHECK_FIELD.website);
   const message = field(CHECK_FIELD.message);
   const postedSource = cleanSource(field(CHECK_FIELD.source));
 
-  if (name === "" || email === "" || message === "") return PROBLEMS.missing;
+  if ([name, business, phone, email, message].includes("")) return PROBLEMS.missing;
   const oversize =
     isOversize(name, CHECK_LIMIT.name) ||
+    isOversize(business, CHECK_LIMIT.business) ||
+    isOversize(phone, CHECK_LIMIT.phone) ||
     isOversize(email, CHECK_LIMIT.email) ||
     isOversize(website, CHECK_LIMIT.website) ||
     isOversize(message, CHECK_LIMIT.message);
   if (oversize) return PROBLEMS.tooLarge;
-  if ([name, email, website].some((value) => SINGLE_LINE_UNSAFE.test(value)) || MESSAGE_UNSAFE.test(message)) return PROBLEMS.badType;
+  const singleLines = [name, business, phone, email, website];
+  if (singleLines.some((value) => SINGLE_LINE_UNSAFE.test(value)) || MESSAGE_UNSAFE.test(message)) return PROBLEMS.badType;
   if (!EMAIL_SHAPE.test(email)) return PROBLEMS.badEmail;
+  if (!isPhoneNumber(phone)) return PROBLEMS.badPhone;
 
   const referer = refererUrl(request);
   const source = postedSource !== "" ? postedSource : referer === null ? "" : sourceFromQuery(referer.searchParams);
@@ -249,6 +283,8 @@ export function parseCheck(params: URLSearchParams, request: Request): CheckRequ
     id: crypto.randomUUID(),
     receivedAt,
     name,
+    business,
+    phone,
     email,
     website,
     message,
@@ -265,23 +301,25 @@ export function checkKey(record: Pick<CheckRequest, "id" | "receivedAt">): strin
 
 export function checkEmail(record: CheckRequest): CheckEmail {
   const lines = [
+    `business: ${record.business}`,
+    `phone: ${record.phone}`,
     `name: ${record.name}`,
     `email: ${record.email}`,
-    `website: ${record.website === "" ? "(none)" : record.website}`,
+    `google profile or website: ${record.website === "" ? "(none)" : record.website}`,
     `source: ${record.source === "" ? "(direct)" : record.source}`,
     `page: ${record.page === "" ? "(unknown)" : record.page}`,
     adClickLine(record),
     `received: ${record.receivedAt}`,
     `id: ${record.id}`,
     "",
-    "what's broken or bugging them:",
+    "how people book w/ them now:",
     record.message,
   ];
   return {
     to: CONTACT_EMAIL,
     from: { email: CHECK_SENDER, name: SITE_NAME },
     replyTo: record.email,
-    subject: `${SITE_CHECK_NAME}: ${record.name}`,
+    subject: `${FRONT_DESK_CHECK_NAME}: ${record.business} (${record.name})`,
     text: lines.join("\n"),
   };
 }
@@ -304,7 +342,7 @@ export function renderCheckProblem(problem: Pick<Problem, "title" | "detail">): 
     <main class="max-w-[36rem] mx-auto py-28 px-6">
       <h1 class="text-4xl mb-4 tracking-[-0.04em] font-semibold">${problem.title}</h1>
       <p class="text-muted">${problem.detail}</p>
-      <p class="text-muted">go <a class="underline underline-offset-4" href="${siteCheckHref()}">back to the form</a>, or email me at <a class="underline underline-offset-4" href="mailto:${CONTACT_EMAIL}">${CONTACT_EMAIL}</a>.</p>
+      <p class="text-muted">go <a class="underline underline-offset-4" href="${freeCheckHref()}">back to the form</a>, or email me at <a class="underline underline-offset-4" href="mailto:${CONTACT_EMAIL}">${CONTACT_EMAIL}</a>.</p>
     </main>
   </body>
 </html>`;
@@ -316,7 +354,10 @@ export function escapeHtml(value: string): string {
   return value.replace(/[&<>"']/g, (character) => HTML_ESCAPES[character] ?? character);
 }
 
-export type CheckDraft = Pick<CheckRequest, "name" | "email" | "website" | "message" | "source" | ClickIdName | "clickedAt">;
+export type CheckDraft = Pick<
+  CheckRequest,
+  "name" | "business" | "phone" | "email" | "website" | "message" | "source" | ClickIdName | "clickedAt"
+>;
 
 export function renderCheckRetry(problem: Pick<Problem, "title" | "detail">, draft: CheckDraft): string {
   const value = (text: string): string => `value="${escapeHtml(text)}"`;
@@ -335,16 +376,22 @@ export function renderCheckRetry(problem: Pick<Problem, "title" | "detail">, dra
       <h1 class="text-4xl mb-4 tracking-[-0.04em] font-semibold">${problem.title}</h1>
       <p class="text-muted">${problem.detail} your note is still here. hit send again.</p>
       <form class="mt-8 grid gap-5" action="${CHECK_ROUTE}" method="post">
-        <label class="${CHECK_LABEL_CLASS}">your name
+        <label class="${CHECK_LABEL_CLASS}">${CHECK_LABEL.name}
           <input class="${CHECK_INPUT_CLASS}" autocomplete="name" maxlength="${CHECK_LIMIT.name}" name="${CHECK_FIELD.name}" required type="text" ${value(draft.name)} />
         </label>
-        <label class="${CHECK_LABEL_CLASS}">your email
+        <label class="${CHECK_LABEL_CLASS}">${CHECK_LABEL.business}
+          <input class="${CHECK_INPUT_CLASS}" autocomplete="organization" maxlength="${CHECK_LIMIT.business}" name="${CHECK_FIELD.business}" required type="text" ${value(draft.business)} />
+        </label>
+        <label class="${CHECK_LABEL_CLASS}">${CHECK_LABEL.phone}
+          <input class="${CHECK_INPUT_CLASS}" autocomplete="tel" inputmode="tel" maxlength="${CHECK_LIMIT.phone}" name="${CHECK_FIELD.phone}" required type="tel" ${value(draft.phone)} />
+        </label>
+        <label class="${CHECK_LABEL_CLASS}">${CHECK_LABEL.email}
           <input class="${CHECK_INPUT_CLASS}" autocomplete="email" maxlength="${CHECK_LIMIT.email}" name="${CHECK_FIELD.email}" required type="email" ${value(draft.email)} />
         </label>
-        <label class="${CHECK_LABEL_CLASS}">your website (optional)
+        <label class="${CHECK_LABEL_CLASS}">${CHECK_LABEL.website} ${CHECK_LABEL.optional}
           <input class="${CHECK_INPUT_CLASS}" autocomplete="url" inputmode="url" maxlength="${CHECK_LIMIT.website}" name="${CHECK_FIELD.website}" type="text" ${value(draft.website)} />
         </label>
-        <label class="${CHECK_LABEL_CLASS}">what's broken or bugging you
+        <label class="${CHECK_LABEL_CLASS}">${escapeHtml(CHECK_LABEL.message)}
           <textarea class="${CHECK_INPUT_CLASS} min-h-[9rem]" maxlength="${CHECK_LIMIT.message}" name="${CHECK_FIELD.message}" required rows="5">${escapeHtml(draft.message)}</textarea>
         </label>
         <input name="${CHECK_FIELD.source}" type="hidden" ${value(draft.source)} />
@@ -425,7 +472,7 @@ async function deliver(mailer: CheckMailer, record: CheckRequest, onDelivered: (
 }
 
 export async function handleCheck(request: Request, env: CheckEnv, ctx?: CheckContext): Promise<Response> {
-  if (request.method === "GET" || request.method === "HEAD") return seeOther(siteCheckHref());
+  if (request.method === "GET" || request.method === "HEAD") return seeOther(freeCheckHref());
   if (request.method !== "POST") return methodNotAllowed();
 
   const contentType = (request.headers.get("content-type") ?? "").split(";")[0]?.trim().toLowerCase();
@@ -474,7 +521,7 @@ export function isCheckRoute(pathname: string): boolean {
 }
 
 export function isCheckFormPage(pathname: string): boolean {
-  return pathname === SITE_CHECK_PAGE;
+  return pathname === FREE_CHECK_ROUTE;
 }
 
 export function formFills(url: URL, now: Date = new Date()): Record<string, string> {
@@ -506,7 +553,7 @@ export function carriedQuery(url: URL, now: Date = new Date()): string {
 
 export function formHrefWithQuery(href: string, query: string): string {
   const target = new URL(href, SITE_URL);
-  if (target.origin !== SITE_URL || target.pathname !== SITE_CHECK_PAGE) return href;
+  if (target.origin !== SITE_URL || target.pathname !== FREE_CHECK_ROUTE) return href;
   for (const [name, value] of new URLSearchParams(query)) target.searchParams.set(name, value);
   return `${target.pathname}${target.search}${target.hash}`;
 }
@@ -525,7 +572,7 @@ function privateCopy(response: Response): Response {
 export function withParamsCarried(response: Response, url: URL, now: Date = new Date()): Response {
   const query = carriedQuery(url, now);
   if (query === "" || !isHtmlResponse(response)) return response;
-  const rewriter = new HTMLRewriter().on(`a[href^="${SITE_CHECK_PAGE}"]`, {
+  const rewriter = new HTMLRewriter().on(`a[href^="${FREE_CHECK_ROUTE}"]`, {
     element(element) {
       const href = element.getAttribute("href");
       if (href !== null) element.setAttribute("href", formHrefWithQuery(href, query));
