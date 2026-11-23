@@ -1,7 +1,7 @@
 ---
 title: "i keep it working"
-summary: "i read through its replies every week + fix what's off. you don't touch it."
+summary: "$900/month per running build: i check it every week + fix what's off. 3-month minimum."
 step: 6
 ---
 
-once it's live, i read through its replies every week + fix what's off. if your hours or prices change, tell me + i update it. if you see something wrong, tell me + i fix it.
+once it's live, i check its work every week + fix what's off. if your hours, prices or tools change, tell me + i update it. it's $900/month per running build, 3-month minimum, then month to month.

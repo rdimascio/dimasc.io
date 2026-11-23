@@ -1,9 +1,7 @@
 ---
-title: "one price"
-summary: "$3,000 to set up, then $900 a month. 3 months, then month to month."
+title: "one price per build"
+summary: "each build gets one flat price, from $3,000, quoted from the plan before i start."
 step: 3
 ---
 
-the ai front desk is $3,000 to set up, then $900 a month. 3 months minimum, then month to month. no hourly bills.
-
-if your website is what stops people from booking, a fix or rebuild is one flat $3,000, confirmed after the free check. most people don't need it.
+pick what you want from the plan. each build gets one flat price, from $3,000, agreed before i start. no hourly bills. software is billed at cost, no markup.

@@ -4,4 +4,4 @@ summary: "you try it before it goes live, + i fix what's off."
 step: 5
 ---
 
-before it goes live, you call it, text it + ask it the questions your customers ask. anything that sounds wrong gets fixed first.
+before it goes live, you try it the way your customers + staff would. anything that sounds wrong gets fixed first.

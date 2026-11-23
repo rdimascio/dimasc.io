@@ -5,11 +5,11 @@ import { PROCESS_ROUTE } from "../sitemap";
 import { breadcrumbLd, pageGraph } from "../structured-data";
 import { JsonLd } from "./json-ld";
 import { Eyebrow, HEADING, LEDE, PAGE } from "./layout";
-import { FRONT_DESK_NAME } from "../site";
+import { AI_NAME } from "../site";
 
-export const PROCESS_TITLE = "how setup works";
+export const PROCESS_TITLE = "how it works, step by step";
 export const PROCESS_LEDE =
-  "from the free check to a front desk that picks up when you can't. you see the price before i start, test it before it goes live, + i keep it working after.";
+  "from a free 15-min call to ai that takes busywork off your plate. flat prices, agreed before i start. you test it before it goes live, + i keep it working after.";
 
 function stepNumber(step: number): string {
   return String(step).padStart(2, "0");
@@ -36,7 +36,7 @@ function ProcessPage({ steps }: { steps: readonly ProcessStep[] }): ReactElement
   return (
     <main className={PAGE}>
       <JsonLd data={pageGraph(breadcrumbLd([{ name: PROCESS_TITLE, route: PROCESS_ROUTE }]))} />
-      <Eyebrow>{FRONT_DESK_NAME}</Eyebrow>
+      <Eyebrow>{AI_NAME}</Eyebrow>
       <h1 className={`${HEADING} mt-8`}>{PROCESS_TITLE}</h1>
       <p className={`${LEDE} mt-8`}>
         {PROCESS_LEDE}

@@ -1,11 +1,13 @@
 import type { ReactElement } from "react";
 
 import type { Plan } from "../content";
-import { CONTACT_EMAIL, FRONT_DESK_CHECK_CTA, FRONT_DESK_NAME, FRONT_DESK_TOOLS, freeCheckHref, SERVICE_AREA_COPY } from "../site";
+import { AI_TOOLS, CONTACT_EMAIL, INTRO_CALL_CTA, introCallHref, SERVICE_AREA_COPY } from "../site";
+import { LOOK_AFTER_LINE } from "../offer";
 import { breadcrumbLd, pageGraph } from "../structured-data";
 import {
   YOUTH_SPORTS_HEADLINE,
   YOUTH_SPORTS_LEDE,
+  YOUTH_SPORTS_MORE,
   YOUTH_SPORTS_NAME,
   YOUTH_SPORTS_PROOF,
   YOUTH_SPORTS_QUESTIONS,
@@ -13,7 +15,7 @@ import {
   YOUTH_SPORTS_TOOLS_NOTE,
   YOUTH_SPORTS_WHO,
 } from "../youth-sports";
-import { CheckBand, frontDeskPriceLine, LOOK_AFTER_LINE } from "./home";
+import { IntroCallBand, LadderList, PricesLink } from "./offer";
 import { JsonLd } from "./json-ld";
 import { ArrowLink, Eyebrow, HEADING, LEDE, PAGE, SectionHead } from "./layout";
 
@@ -50,8 +52,8 @@ function YouthSportsPage({ plans }: { plans: readonly Plan[] }): ReactElement {
       <p className={`${LEDE} mt-8`}>{YOUTH_SPORTS_LEDE}</p>
       <p className="mt-4 mb-0 text-muted max-w-[38rem]">{YOUTH_SPORTS_WHO}</p>
       <div className="mt-10 flex flex-wrap items-center gap-3">
-        <ArrowLink href={freeCheckHref()} tone="accent">
-          {FRONT_DESK_CHECK_CTA}
+        <ArrowLink href={introCallHref()} tone="accent">
+          {INTRO_CALL_CTA}
         </ArrowLink>
         <a className="link-underline inline-block py-2 text-muted hover:text-ink" href={`mailto:${CONTACT_EMAIL}`}>
           {CONTACT_EMAIL}
@@ -62,9 +64,13 @@ function YouthSportsPage({ plans }: { plans: readonly Plan[] }): ReactElement {
         <Checklist items={YOUTH_SPORTS_QUESTIONS} />
       </Section>
 
+      <Section label="what else it can take off your plate">
+        <Checklist items={YOUTH_SPORTS_MORE} />
+      </Section>
+
       <Section label="where it runs">
         <div className="grid gap-3">
-          <p className="m-0 text-[1.1rem]">{`it runs inside ${FRONT_DESK_TOOLS}.`}</p>
+          <p className="m-0 text-[1.1rem]">{`it runs inside ${AI_TOOLS}.`}</p>
           <p className="m-0 text-muted">{YOUTH_SPORTS_TOOLS_NOTE}</p>
           <p className="m-0 text-muted">{LOOK_AFTER_LINE}</p>
         </div>
@@ -76,11 +82,9 @@ function YouthSportsPage({ plans }: { plans: readonly Plan[] }): ReactElement {
 
       <Section label="what it costs">
         <div className="grid gap-6">
-          <p className="m-0 text-[1.1rem]">{`${FRONT_DESK_NAME}: ${frontDeskPriceLine(plans)}`}</p>
-          <CheckBand />
-          <a className="link-underline inline-block py-2 text-ink" href="/#pricing">
-            all prices
-          </a>
+          <IntroCallBand />
+          <LadderList plans={plans} />
+          <PricesLink />
         </div>
       </Section>
     </main>
