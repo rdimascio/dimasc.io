@@ -34,7 +34,8 @@ export interface Plan {
   readonly name: string;
   readonly price: number | null;
   readonly per: PlanFrontmatter["per"];
-  readonly setup: number | undefined;
+  readonly from: boolean;
+  readonly unit: string | undefined;
   readonly minimumMonths: number | undefined;
   readonly listed: boolean;
   readonly summary: string;
@@ -147,7 +148,8 @@ export async function loadPlans(): Promise<Plan[]> {
       name: entry.name,
       price: entry.price,
       per: entry.per,
-      setup: entry.setup,
+      from: entry.from,
+      unit: entry.unit,
       minimumMonths: entry.minimumMonths,
       listed: entry.listed,
       summary: entry.summary,

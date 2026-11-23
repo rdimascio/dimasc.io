@@ -26,8 +26,9 @@ export type ProcessStepFrontmatter = z.infer<typeof processStepFrontmatter>;
 export const planFrontmatter = z.object({
   name: z.string(),
   price: z.number().int().positive().nullable(),
-  per: z.enum(["month", "site"]).default("month"),
-  setup: z.number().int().positive().optional(),
+  per: z.enum(["month", "flat", "build"]).default("month"),
+  from: z.boolean().default(false),
+  unit: z.string().optional(),
   minimumMonths: z.number().int().positive().optional(),
   listed: z.boolean().default(true),
   summary: z.string(),

@@ -3,7 +3,7 @@ import {
   ABOUT_ROUTE,
   canonicalUrl,
   CONTACT_EMAIL,
-  FRONT_DESK_CHECK_NAME,
+  INTRO_CALL_NAME,
   GITHUB_URL,
   OG_IMAGE_PATH,
   SERVICE_AREA,
@@ -24,8 +24,8 @@ export const PERSON_ID = `${SITE_URL}/#person`;
 export const WEBSITE_ID = `${SITE_URL}/#website`;
 
 const OG_IMAGE_URL = `${SITE_URL}${OG_IMAGE_PATH}`;
-const BUSINESS_DESCRIPTION = `AI setup for local businesses in ${SERVICE_AREA_LABEL}: an AI front desk that picks up missed calls, texts people back, answers booking questions and replies to reviews, inside the tools the business already uses.`;
-const FRONT_DESK_CHECK_DESCRIPTION = "i call your business after hours + count the reviews nobody answered, then show you what that costs in dollars.";
+const BUSINESS_DESCRIPTION = `AI help for local, owner-run businesses in ${SERVICE_AREA_LABEL}: AI that takes busywork off the owner's plate, like missed calls, follow-ups, review replies, scheduling, content drafts and simple reports, set up inside the tools the business already uses and kept working.`;
+const INTRO_CALL_DESCRIPTION = "a free 15-min call about how your business runs + whether ai can save you real time.";
 const JOB_TITLE = "Senior software engineer";
 
 const HTML_ENTITIES: Readonly<Record<string, string>> = {
@@ -73,21 +73,20 @@ function monthlyPriceLd(price: string): JsonLd {
   return { "@type": "UnitPriceSpecification", price, priceCurrency: CURRENCY, unitText: "MONTH" };
 }
 
+function startingPriceLd(price: string): JsonLd {
+  return { "@type": "PriceSpecification", minPrice: price, priceCurrency: CURRENCY };
+}
+
 function offerLd(plan: Plan & { price: number }): JsonLd {
-  const base = { "@type": "Offer", name: plan.name, description: plan.summary, price: String(plan.price), priceCurrency: CURRENCY };
-  return plan.per === "month" ? { ...base, priceSpecification: monthlyPriceLd(String(plan.price)) } : base;
+  const price = String(plan.price);
+  const base = { "@type": "Offer", name: plan.name, description: plan.summary, price, priceCurrency: CURRENCY };
+  if (plan.per === "month") return { ...base, priceSpecification: monthlyPriceLd(price) };
+  if (plan.from) return { ...base, priceSpecification: startingPriceLd(price) };
+  return base;
 }
 
-function setupOfferLd(plan: Plan & { setup: number }): JsonLd {
-  return { "@type": "Offer", name: `${plan.name} setup`, description: `one-time setup for ${plan.name}`, price: String(plan.setup), priceCurrency: CURRENCY };
-}
-
-function planOffersLd(plan: Plan & { price: number }): JsonLd[] {
-  return plan.setup === undefined ? [offerLd(plan)] : [setupOfferLd({ ...plan, setup: plan.setup }), offerLd(plan)];
-}
-
-export function frontDeskCheckOfferLd(): JsonLd {
-  return { "@type": "Offer", name: FRONT_DESK_CHECK_NAME, description: FRONT_DESK_CHECK_DESCRIPTION, price: "0", priceCurrency: CURRENCY };
+export function introCallOfferLd(): JsonLd {
+  return { "@type": "Offer", name: INTRO_CALL_NAME, description: INTRO_CALL_DESCRIPTION, price: "0", priceCurrency: CURRENCY };
 }
 
 export function businessLd(plans: readonly Plan[]): JsonLd {
@@ -104,7 +103,7 @@ export function businessLd(plans: readonly Plan[]): JsonLd {
     areaServed: areaServed(),
     founder: ref(PERSON_ID),
     ...(range === undefined ? {} : { priceRange: range }),
-    makesOffer: [frontDeskCheckOfferLd(), ...pricedPlans(plans).flatMap(planOffersLd)],
+    makesOffer: [introCallOfferLd(), ...pricedPlans(plans).map(offerLd)],
   };
 }
 
@@ -198,7 +197,7 @@ function providerLd(): JsonLd {
 }
 
 export function serviceLd(input: ServiceLdInput): JsonLd {
-  const offers = [frontDeskCheckOfferLd(), ...pricedPlans(input.plans).flatMap(planOffersLd)];
+  const offers = [introCallOfferLd(), ...pricedPlans(input.plans).map(offerLd)];
   return {
     "@type": "Service",
     name: input.name,
