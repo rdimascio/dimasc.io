@@ -5,14 +5,13 @@ import { lesto } from "@lesto/web";
 
 import { ARTICLES_ROUTE, loadAllCaseStudies, loadArticles, loadExperience, loadFaq, loadPlans, loadProcess, type Plan } from "./content";
 import { FEED_ROUTE } from "./feed";
-import { FRONT_DESK_TITLE, frontDeskDescription, ORANGE_COUNTY_ROUTE } from "./front-desk";
+import { AI_PAGE_TITLE, AI_PLAN_NAME, aiDescription, ladderSummary, ORANGE_COUNTY_ROUTE, planNamed, planPriceText } from "./offer";
 import {
   canonicalUrl,
-  FREE_CHECK_ROUTE,
-  FRONT_DESK_CHECK_MINUTES,
-  FRONT_DESK_CHECK_NAME,
-  FRONT_DESK_NAME,
-  FRONT_DESK_ROUTE,
+  INTRO_CALL_ROUTE,
+  INTRO_CALL_MINUTES,
+  INTRO_CALL_NAME,
+  AI_ROUTE,
   OG_IMAGE_ALT,
   OG_IMAGE_HEIGHT,
   OG_IMAGE_PATH,
@@ -25,12 +24,12 @@ import {
 } from "./site";
 import { makeAbout } from "./ui/about";
 import { ARTICLES_LEDE, makeArticle, makeArticlesIndex } from "./ui/articles";
-import { frontDeskShortPrice, makeHome } from "./ui/home";
+import { makeHome } from "./ui/home";
 import { ABOUT_ROUTE, makeSiteLayout } from "./ui/layout";
 import { NOINDEX_ROUTES, PROCESS_ROUTE } from "./sitemap";
 import { makeProcess, PROCESS_TITLE } from "./ui/process";
-import { makeFrontDesk, makeOrangeCounty } from "./ui/front-desk";
-import { makeCheckSent, makeFreeCheck } from "./ui/check";
+import { makeAi, makeOrangeCounty } from "./ui/ai";
+import { makeCheckSent, makeIntroCall } from "./ui/check";
 import { makePrivacy, PRIVACY_DESCRIPTION, PRIVACY_TITLE } from "./ui/privacy";
 import { CHECK_SENT_ROUTE } from "./check";
 import { makeCaseStudy, makeWorkIndex, makeWorkRequest } from "./ui/work";
@@ -89,19 +88,19 @@ function withFeedLink(metadata: PageMetadata): PageMetadata {
 const NOINDEX = { name: "robots", content: "noindex" } as const;
 const NOINDEX_FOLLOW = { name: "robots", content: "noindex, follow" } as const;
 
-export const ORANGE_COUNTY_TITLE = `ai setup for local businesses, ${SERVICE_AREA_SHORT} ca · ${SITE_NAME}`;
-export const FREE_CHECK_TITLE = `${FRONT_DESK_CHECK_NAME} · ${SITE_NAME}`;
-export const FREE_CHECK_DESCRIPTION = `i call your business after hours + count the google reviews nobody answered, then show you what that costs in dollars. free, ${FRONT_DESK_CHECK_MINUTES} min.`;
+export const ORANGE_COUNTY_TITLE = `ai help for local businesses, ${SERVICE_AREA_SHORT} ca · ${SITE_NAME}`;
+export const INTRO_CALL_TITLE = `${INTRO_CALL_NAME} · ${SITE_NAME}`;
+export const INTRO_CALL_DESCRIPTION = `tell me how your business runs + what eats your week. we talk for ${INTRO_CALL_MINUTES} min + i tell you straight if ai can help. free.`;
 
 export function orangeCountyDescription(plans: readonly Plan[]): string {
-  return `engineer in ${SERVICE_AREA_COPY}. i set up an ai front desk for local businesses here + keep it working. ${frontDeskShortPrice(plans)}`;
+  return `software engineer in ${SERVICE_AREA_COPY}. i set up ai that takes busywork off local business owners + keep it working. ${AI_PLAN_NAME} ${planPriceText(planNamed(plans, AI_PLAN_NAME))}.`;
 }
 
 export function serviceTitle(title: string): string {
   return `${title} · ${SITE_NAME}`;
 }
 
-export const HOME_TITLE = `ai front desk for ${SERVICE_AREA_SHORT} businesses · ${SITE_NAME}`;
+export const HOME_TITLE = `ai help for ${SERVICE_AREA_SHORT} businesses · ${SITE_NAME}`;
 
 function withMeta(metadata: PageMetadata, extra: PageMetadata["meta"]): PageMetadata {
   return { ...metadata, meta: [...(metadata.meta ?? []), ...(extra ?? [])] };
@@ -113,7 +112,7 @@ function routeMetadata(input: Parameters<typeof seoMetadata>[0]): PageMetadata {
 }
 
 export function homeDescription(plans: readonly Plan[]): string {
-  return `ai front desk for local businesses in ${SERVICE_AREA_COPY}. picks up missed calls, texts back + replies to reviews. ${frontDeskShortPrice(plans)}`;
+  return `ai that takes busywork off local business owners in ${SERVICE_AREA_COPY}, set up in the tools you use + kept working. ${AI_PLAN_NAME} ${planPriceText(planNamed(plans, AI_PLAN_NAME))}.`;
 }
 
 export async function buildAppConfig(
@@ -160,30 +159,30 @@ export async function buildAppConfig(
       component: makeProcess(steps),
       metadata: () =>
         seoMetadata({
-          title: `${PROCESS_TITLE} · ${FRONT_DESK_NAME} · ${SITE_NAME}`,
-          description: `free check, one price, setup in your own tools, a test together, then i keep it working. ${frontDeskShortPrice(plans)}`,
+          title: `${PROCESS_TITLE} · ${SITE_NAME}`,
+          description: `free call, ai plan, flat price per build, a test together, then i keep it working. ${ladderSummary(plans)}`,
           route: PROCESS_ROUTE,
           type: "website",
         }),
     });
 
   app = app
-    .page(FRONT_DESK_ROUTE, {
+    .page(AI_ROUTE, {
       static: true,
-      component: makeFrontDesk(plans),
+      component: makeAi(plans),
       metadata: () =>
         seoMetadata({
-          title: serviceTitle(FRONT_DESK_TITLE),
-          description: frontDeskDescription(frontDeskShortPrice(plans)),
-          route: FRONT_DESK_ROUTE,
+          title: serviceTitle(AI_PAGE_TITLE),
+          description: aiDescription(plans),
+          route: AI_ROUTE,
           type: "website",
         }),
     })
-    .page(FREE_CHECK_ROUTE, {
+    .page(INTRO_CALL_ROUTE, {
       static: true,
-      component: makeFreeCheck(plans),
+      component: makeIntroCall(plans),
       metadata: () =>
-        seoMetadata({ title: FREE_CHECK_TITLE, description: FREE_CHECK_DESCRIPTION, route: FREE_CHECK_ROUTE, type: "website" }),
+        seoMetadata({ title: INTRO_CALL_TITLE, description: INTRO_CALL_DESCRIPTION, route: INTRO_CALL_ROUTE, type: "website" }),
     })
     .page(ORANGE_COUNTY_ROUTE, {
       static: true,
@@ -211,7 +210,7 @@ export async function buildAppConfig(
     metadata: () =>
       routeMetadata({
         title: `got it · ${SITE_NAME}`,
-        description: "your free missed-call check request is in. i reply within 1 business day, monday to friday.",
+        description: "your free 15-min call request is in. i reply within 1 business day, monday to friday.",
         route: CHECK_SENT_ROUTE,
         type: "website",
       }),

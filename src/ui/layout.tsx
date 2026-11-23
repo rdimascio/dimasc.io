@@ -3,10 +3,9 @@ import type { ReactElement, ReactNode } from "react";
 import {
   ABOUT_ROUTE,
   CONTACT_EMAIL,
-  FREE_CHECK_ROUTE,
-  FRONT_DESK_CHECK_NAME,
-  FRONT_DESK_NAME,
-  FRONT_DESK_ROUTE,
+  INTRO_CALL_ROUTE,
+  INTRO_CALL_NAME,
+  AI_ROUTE,
   GITHUB_URL,
   introCallHref,
   introCallLabel,
@@ -16,7 +15,7 @@ import {
   SITE_NAME_PROPER,
 } from "../site";
 import { ARTICLES_ROUTE } from "../content";
-import { ORANGE_COUNTY_ROUTE } from "../front-desk";
+import { ORANGE_COUNTY_ROUTE } from "../offer";
 import { WORK_ROUTE } from "../work";
 import { YOUTH_SPORTS_ROUTE } from "../youth-sports";
 import { PixelWordmark } from "./pixel-wordmark";
@@ -96,7 +95,7 @@ function ContactBand(): ReactElement {
         </h2>
         <div className="mt-14 grid gap-8 md:grid-cols-12 items-end">
           <p className="md:col-span-5 m-0 text-muted text-[1.1rem] leading-relaxed max-w-[28rem]">
-            tell me how people reach you now. i'll tell you if an ai front desk makes sense, or if you need me at all.
+            tell me what eats your week. i'll tell you if ai can take it off your plate, or if you need me at all.
           </p>
           <div className="md:col-span-7 flex flex-wrap gap-3 md:justify-end">
             <ArrowLink href={introCallHref()} tone="accent">
@@ -120,7 +119,7 @@ export interface NavSections {
 type NavSection = keyof NavSections | "always";
 
 const NAV: readonly { label: string; href: string; section: NavSection; hideNarrow: boolean }[] = [
-  { label: FRONT_DESK_NAME, href: FRONT_DESK_ROUTE, section: "always", hideNarrow: true },
+  { label: "ai help", href: AI_ROUTE, section: "always", hideNarrow: true },
   { label: "past work", href: WORK_ROUTE, section: "work", hideNarrow: true },
   { label: "articles", href: ARTICLES_ROUTE, section: "articles", hideNarrow: true },
   { label: "how it works", href: "/#how-it-works", section: "always", hideNarrow: true },
@@ -135,13 +134,13 @@ function Footer({ sections }: { sections: NavSections }): ReactElement {
   const links = [
     ...visibleNav(sections).map((item) => ({ label: item.label, href: item.href })),
     { label: "prices", href: "/#pricing" },
-    { label: "how setup works", href: "/process" },
+    { label: "step by step", href: "/process" },
     { label: "github", href: GITHUB_URL },
     { label: "email", href: `mailto:${CONTACT_EMAIL}` },
     { label: "privacy", href: PRIVACY_ROUTE },
   ];
   const serviceLinks = [
-    { label: FRONT_DESK_CHECK_NAME, href: FREE_CHECK_ROUTE },
+    { label: INTRO_CALL_NAME, href: INTRO_CALL_ROUTE },
     { label: "youth sports", href: YOUTH_SPORTS_ROUTE },
     { label: SERVICE_AREA_COPY, href: ORANGE_COUNTY_ROUTE },
   ];

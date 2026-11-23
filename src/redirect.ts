@@ -1,16 +1,17 @@
-import { FREE_CHECK_ROUTE, FRONT_DESK_ROUTE, SITE_HOST, SITE_URL, websiteFixHref, WWW_HOST } from "./site";
+import { AI_ROUTE, aiPricesHref, INTRO_CALL_ROUTE, SITE_HOST, SITE_URL, WWW_HOST } from "./site";
 
 const MOVED_PERMANENTLY = 301;
 
 export const RETIRED_ROUTES: Readonly<Record<string, string>> = {
-  "/services": FRONT_DESK_ROUTE,
-  "/services/fix-my-website": FREE_CHECK_ROUTE,
-  "/services/squarespace-wix-help": websiteFixHref(),
-  "/services/new-website": websiteFixHref(),
-  "/services/online-store": websiteFixHref(),
-  "/services/online-booking": FRONT_DESK_ROUTE,
-  "/services/website-care": FRONT_DESK_ROUTE,
-  "/services/monthly-help": FRONT_DESK_ROUTE,
+  "/ai-front-desk": AI_ROUTE,
+  "/services": AI_ROUTE,
+  "/services/fix-my-website": INTRO_CALL_ROUTE,
+  "/services/squarespace-wix-help": aiPricesHref(),
+  "/services/new-website": aiPricesHref(),
+  "/services/online-store": aiPricesHref(),
+  "/services/online-booking": AI_ROUTE,
+  "/services/website-care": AI_ROUTE,
+  "/services/monthly-help": AI_ROUTE,
 };
 
 function needsCanonicalHost(url: URL): boolean {

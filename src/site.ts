@@ -17,47 +17,31 @@ export const PRIVACY_ROUTE = "/privacy";
 export const BOOKING_URL: string | null = null;
 export const MAX_SUBSCRIPTION_CLIENTS: number | null = null;
 
-const INTRO_EMAIL_BODY = ["your business + website:", "", "what's broken or slowing you down:", "", "anything w/ a deadline:", ""].join(
-  "\n",
-);
-
 export function canonicalUrl(route: string): string {
   return route === "/" ? `${SITE_URL}/` : `${SITE_URL}${route}`;
 }
 
-function mailto(subject: string, body = INTRO_EMAIL_BODY): string {
-  return `mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+export const AI_ROUTE = "/ai";
+export const AI_NAME = "ai help for local businesses";
+export const AI_PRICES_ANCHOR = "prices";
+export const AI_TOOLS = "mindbody, jobber, vagaro, square, google, your phone line + your email";
+
+export const INTRO_CALL_ROUTE = "/free-check";
+export const INTRO_CALL_NAME = "free 15-min call";
+export const INTRO_CALL_CTA = "get a free 15-min call";
+export const INTRO_CALL_MINUTES = 15;
+
+export function aiPricesHref(): string {
+  return `${AI_ROUTE}#${AI_PRICES_ANCHOR}`;
 }
 
 export function introCallHref(): string {
-  return BOOKING_URL ?? mailto("quick call");
+  return BOOKING_URL ?? INTRO_CALL_ROUTE;
 }
 
 export function introCallLabel(): string {
-  return BOOKING_URL === null ? "email me to set up a call" : "book a 15-min call";
+  return INTRO_CALL_CTA;
 }
-
-export function planHref(planName: string): string {
-  return mailto(planName);
-}
-
-export const FRONT_DESK_ROUTE = "/ai-front-desk";
-export const FREE_CHECK_ROUTE = "/free-check";
-export const WEBSITE_FIX_ANCHOR = "website";
-
-export function websiteFixHref(): string {
-  return `${FRONT_DESK_ROUTE}#${WEBSITE_FIX_ANCHOR}`;
-}
-
-export function freeCheckHref(): string {
-  return FREE_CHECK_ROUTE;
-}
-
-export const FRONT_DESK_NAME = "ai front desk";
-export const FRONT_DESK_TOOLS = "mindbody, jobber, vagaro, your google profile + your phone line";
-export const FRONT_DESK_CHECK_NAME = "free missed-call check";
-export const FRONT_DESK_CHECK_CTA = "get a free missed-call check";
-export const FRONT_DESK_CHECK_MINUTES = 20;
 
 export const OG_IMAGE_PATH = "/og.png";
 export const OG_IMAGE_SOURCE = "assets/og.png";
