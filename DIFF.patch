@@ -1,0 +1,466 @@
+diff --git a/AGENTS.md b/AGENTS.md
+index 979d7d6..3242a44 100644
+--- a/AGENTS.md
++++ b/AGENTS.md
+@@ -25,9 +25,10 @@ Ryan DiMascio's studio site: a static Lesto 0.2 app on Cloudflare Workers. Every
+ - Site check form: shown on `/services/fix-my-website#check`, posts to `/check` (`src/check.ts`), plain HTML. The only script is the Turnstile widget. The Worker checks the `cf-turnstile-response` token with siteverify (secret: the `TURNSTILE_SECRET_KEY` Worker secret) before it stores anything. A missing or failed token, a hostname outside `TURNSTILE_HOSTNAMES`, or a siteverify error gets a retry page with the form re-filled (escaped) and a fresh widget, with no store and no email. Failures log only an event name and the siteverify error codes (Workers Logs). Local tests use Cloudflare's test keys. Each request is stored in the `REQUESTS` KV namespace under `check:<iso time>:<id>`, then emailed to `ryan@dimasc.io` when an `EMAIL` (`send_email`) binding exists. Per-IP limit: the `CHECK_LIMITER` binding. Never log a request's fields; log only its id.
+ - Google Ads click ids: when the form page is served with `gclid`, `gbraid` or `wbraid` in the query, the Worker fills hidden fields with them (charset `[A-Za-z0-9_-]`, max 200) and the serve time as `clicked_at`. `POST /check` stores them and adds an `ad click:` line to the email. No tracking script, no cookies. `node scripts/export-ad-leads.mjs --days 30` prints an offline-conversion CSV for Google Ads (click id + time only). `/privacy` describes all of this; keep it true when the form changes.
+ - Attribution carry-through: when any page is served with valid utm tags, `ref` or a click id, the Worker adds them (plus `clicked_at`) to every link to the form page (`withParamsCarried` in `src/check.ts`), so they reach the form from any landing page. No cookies. Those responses get `cache-control: private, no-store`; pages without params stay untouched.
+-- Server-side events: the Worker writes Workers Analytics Engine data points (`EVENTS` binding, dataset `dimasc_events`, `src/measure.ts`): `page_view` per HTML page view (bots skipped), `form_view` on the form page, then `form_submit`, `turnstile_fail`, `stored`, `emailed`. Blobs are only: event, path, referrer host (`self` for same-site), utm_source/medium/campaign, a has-click-id flag. Never an IP, a name, an email, a message, a click id value or a full referrer URL. A failed write never changes a response. `/privacy` says this; keep it true.
++- Server-side events: the Worker writes Workers Analytics Engine data points (`EVENTS` binding, dataset `dimasc_events`, `src/measure.ts`): `page_view` per HTML page view (bots skipped), `form_view` on the form page, then `form_submit`, `turnstile_fail`, `stored`, `emailed`; `kit_click` and `teardown_click` from the `/agents` click routes. Blobs are only: event, path, referrer host (`self` for same-site), utm_source/medium/campaign, a has-click-id flag. Never an IP, a name, an email, a message, a click id value or a full referrer URL. A failed write never changes a response. `/privacy` says this; keep it true.
+ - Weekly report: `DIMASC_CF_ACCOUNT_ID=... DIMASC_ANALYTICS_TOKEN=... node scripts/weekly-report.mjs` prints visits, form views, submits, leads + top sources, last 7 days vs the 7 before. The token needs only Account Analytics:Read.
+ - Read stored requests: `bunx wrangler kv key list --binding REQUESTS --remote --prefix check:`, then `bunx wrangler kv key get --binding REQUESTS --remote "<key>"`.
++- `/agents` (`src/ui/agents.tsx`, `src/agents.ts`): the agent guardrails page for eng teams, kept off the home page nav. It uses `FocusLayout` (no offer nav, prices or contact band). Its two links go through `/agents/kit` and `/agents/teardown`, which write an event and 302 to the kit repo or `teardownHref()`. Set `TEARDOWN_BOOKING_URL` in `src/site.ts` to switch the teardown link from email to booking.
+ - Frontmatter schemas live in `lesto.content.ts`. A file that fails its schema fails the build.
+ - CSS is inlined: after `lesto build`, `lesto.build.ts` replaces the `/styles.css` link in every built HTML page with a `<style>` block (`src/inline-css.ts`), so pages need no render-blocking stylesheet request. `/styles.css` is still emitted for the Worker-rendered pages (form retry, 404). Fonts stay external, preloaded via the `Link` header in `_headers`, with size-matched local fallbacks and `font-display: optional`.
+ 
+diff --git a/src/agents.ts b/src/agents.ts
+new file mode 100644
+index 0000000..f0a6e4d
+--- /dev/null
++++ b/src/agents.ts
+@@ -0,0 +1,31 @@
++import { clickContext, type EventEnv, isBot, recordEvent, SITE_EVENT, type SiteEvent } from "./measure";
++import { teardownHref } from "./site";
++
++export const AGENTS_ROUTE = "/agents";
++export const AGENTS_KIT_ROUTE = `${AGENTS_ROUTE}/kit`;
++export const AGENTS_TEARDOWN_ROUTE = `${AGENTS_ROUTE}/teardown`;
++export const KIT_REPO_URL = "https://github.com/rdimascio/agent-guardrails";
++export const TEARDOWN_CTA = "book a free 20-min teardown";
++
++interface ClickRoute {
++  readonly event: SiteEvent;
++  readonly target: () => string;
++}
++
++const CLICK_ROUTES: Readonly<Record<string, ClickRoute>> = {
++  [AGENTS_KIT_ROUTE]: { event: SITE_EVENT.kitClick, target: () => KIT_REPO_URL },
++  [AGENTS_TEARDOWN_ROUTE]: { event: SITE_EVENT.teardownClick, target: teardownHref },
++};
++
++const READ_METHODS = new Set(["GET", "HEAD"]);
++
++export function isAgentsClickRoute(pathname: string): boolean {
++  return Object.hasOwn(CLICK_ROUTES, pathname);
++}
++
++export function handleAgentsClick(request: Request, env: EventEnv): Response {
++  const route = CLICK_ROUTES[new URL(request.url).pathname];
++  if (route === undefined || !READ_METHODS.has(request.method)) return new Response("method not allowed", { status: 405 });
++  if (!isBot(request)) recordEvent(env, route.event, () => clickContext(request));
++  return new Response(null, { status: 302, headers: { location: route.target(), "cache-control": "no-store" } });
++}
+diff --git a/src/app.ts b/src/app.ts
+index dfdd268..8087b32 100644
+--- a/src/app.ts
++++ b/src/app.ts
+@@ -17,7 +17,9 @@ import {
+   SITE_NAME,
+   SITE_URL,
+ } from "./site";
++import { AGENTS_ROUTE } from "./agents";
+ import { makeAbout } from "./ui/about";
++import { AGENTS_DESCRIPTION, AGENTS_TITLE, makeAgents } from "./ui/agents";
+ import { ARTICLES_LEDE, makeArticle, makeArticlesIndex } from "./ui/articles";
+ import { makeHome, startingPricesLine } from "./ui/home";
+ import { ABOUT_ROUTE, makeSiteLayout } from "./ui/layout";
+@@ -121,6 +123,11 @@ export async function buildAppConfig(
+ 
+   let app = lesto()
+     .styles("/styles.css")
++    .page(AGENTS_ROUTE, {
++      static: true,
++      component: makeAgents(),
++      metadata: () => seoMetadata({ title: AGENTS_TITLE, description: AGENTS_DESCRIPTION, route: AGENTS_ROUTE, type: "website" }),
++    })
+     .layout(makeSiteLayout({ work: studies.length > 0, articles: articles.length > 0 }))
+     .page("/", {
+       static: true,
+diff --git a/src/measure.ts b/src/measure.ts
+index 7f0c1ba..6892db8 100644
+--- a/src/measure.ts
++++ b/src/measure.ts
+@@ -9,6 +9,8 @@ export const SITE_EVENT = {
+   turnstileFail: "turnstile_fail",
+   stored: "stored",
+   emailed: "emailed",
++  kitClick: "kit_click",
++  teardownClick: "teardown_click",
+ } as const;
+ export type SiteEvent = (typeof SITE_EVENT)[keyof typeof SITE_EVENT];
+ 
+@@ -96,6 +98,19 @@ function refererSearch(request: Request): string {
+   }
+ }
+ 
++export function clickContext(request: Request): EventContext {
++  const landingQuery = refererSearch(request);
++  return {
++    ...pageContext(request),
++    ...utmFrom(landingQuery),
++    hasGclid: hasClickId(clickIdsFromQuery(new URLSearchParams(landingQuery))),
++  };
++}
++
++export function isBot(request: Request): boolean {
++  return BOT_USER_AGENT.test(request.headers.get("user-agent") ?? "");
++}
++
+ export function eventPoint(event: SiteEvent, context: EventContext): EventPoint {
+   return {
+     indexes: [event],
+@@ -123,8 +138,7 @@ export function recordEvent(env: EventEnv, event: SiteEvent, context: () => Even
+ 
+ export function isCountedPageView(request: Request, response: Response): boolean {
+   const isHtml = (response.headers.get("content-type") ?? "").includes("text/html");
+-  const isBot = BOT_USER_AGENT.test(request.headers.get("user-agent") ?? "");
+-  return request.method === "GET" && response.status === 200 && isHtml && !isBot;
++  return request.method === "GET" && response.status === 200 && isHtml && !isBot(request);
+ }
+ 
+ export function recordPageView(env: EventEnv, request: Request, response: Response, isFormPage: boolean): void {
+diff --git a/src/site.ts b/src/site.ts
+index c4b2138..39f265c 100644
+--- a/src/site.ts
++++ b/src/site.ts
+@@ -17,6 +17,7 @@ export const ABOUT_ROUTE = "/about";
+ export const PRIVACY_ROUTE = "/privacy";
+ 
+ export const BOOKING_URL: string | null = null;
++export const TEARDOWN_BOOKING_URL: string | null = "https://macro.com/app/book/fff6724e-3451-531c-89d4-a4cf94ba2161/agent-teardown";
+ export const MAX_SUBSCRIPTION_CLIENTS: number | null = null;
+ 
+ const INTRO_EMAIL_BODY = ["your business + website:", "", "what's broken or slowing you down:", "", "anything w/ a deadline:", ""].join(
+@@ -39,6 +40,12 @@ export function introCallLabel(): string {
+   return BOOKING_URL === null ? "email me to set up a call" : "book a 15-min call";
+ }
+ 
++const TEARDOWN_EMAIL_BODY = ["your team + how many engineers:", "", "what your agents ship + where it goes wrong:", ""].join("\n");
++
++export function teardownHref(): string {
++  return TEARDOWN_BOOKING_URL ?? mailto("agent setup teardown", TEARDOWN_EMAIL_BODY);
++}
++
+ export function planHref(planName: string): string {
+   return mailto(planName);
+ }
+diff --git a/src/sitemap.ts b/src/sitemap.ts
+index 0722b3d..a14fa46 100644
+--- a/src/sitemap.ts
++++ b/src/sitemap.ts
+@@ -1,3 +1,4 @@
++import { AGENTS_ROUTE } from "./agents";
+ import type { Article, CaseStudy } from "./content";
+ import { CHECK_SENT_ROUTE } from "./check";
+ import { articleRoutes } from "./feed";
+@@ -9,7 +10,7 @@ export const PROCESS_ROUTE = "/process";
+ export const NOINDEX_ROUTES: readonly string[] = [WORK_REQUEST_ROUTE, CHECK_SENT_ROUTE];
+ 
+ export function siteRoutes(studies: readonly CaseStudy[], articles: readonly Article[], previewDrafts: boolean): string[] {
+-  return ["/", ABOUT_ROUTE, PROCESS_ROUTE, ...serviceRoutes(), PRIVACY_ROUTE, CHECK_SENT_ROUTE, ...workRoutes(studies, previewDrafts), ...articleRoutes(articles)];
++  return ["/", ABOUT_ROUTE, PROCESS_ROUTE, ...serviceRoutes(), AGENTS_ROUTE, PRIVACY_ROUTE, CHECK_SENT_ROUTE, ...workRoutes(studies, previewDrafts), ...articleRoutes(articles)];
+ }
+ 
+ export function sitemapRoutes(studies: readonly CaseStudy[], articles: readonly Article[]): string[] {
+diff --git a/src/ui/agents.tsx b/src/ui/agents.tsx
+new file mode 100644
+index 0000000..2d70a38
+--- /dev/null
++++ b/src/ui/agents.tsx
+@@ -0,0 +1,86 @@
++import type { ReactElement } from "react";
++
++import { AGENTS_KIT_ROUTE, AGENTS_TEARDOWN_ROUTE, TEARDOWN_CTA } from "../agents";
++import { SITE_NAME } from "../site";
++import { Eyebrow, FocusLayout, HEADING, LEDE, PAGE, WIDTH } from "./layout";
++
++export const AGENTS_HEADLINE = "the guardrails i use to let coding agents ship real code";
++export const AGENTS_TITLE = `agent guardrails · ${SITE_NAME}`;
++export const AGENTS_DESCRIPTION = "the guardrails i use to let coding agents ship real code. free starter kit + a free 20 min teardown of your agent setup.";
++export const AGENTS_LEDE =
++  "if your team's agents keep shipping stuff you end up cleaning up, i'll go through your setup with you on a free 20 min call and tell you what i'd change.";
++export const KIT_LINE =
++  "3 hooks you drop into your coding agent's settings. plain node, no dependencies, tests included, MIT so do whatever you want w/ it.";
++export const KIT_LINK_LABEL = "get the starter kit on github";
++
++export const KIT_HOOKS = [
++  {
++    name: "force-push guard",
++    line: "stops the agent from force pushing over commits it never saw. the only force push it lets through is a lease pinned to a sha you actually looked at.",
++  },
++  {
++    name: "evidence first",
++    line: "when your prompt says something's broken, failing or rate limited, it tells the agent to go find the real error and the cause before it touches any code",
++  },
++  {
++    name: "claims need receipts",
++    line: "if the agent says tests pass or it merged something and no test or git command ran that turn, it gets sent back to actually check",
++  },
++] as const;
++
++function AgentsPage(): ReactElement {
++  return (
++    <main>
++      <div className={PAGE}>
++        <Eyebrow>for startup eng teams</Eyebrow>
++        <h1 className={`${HEADING} mt-8 max-w-[18ch]`}>{AGENTS_HEADLINE}</h1>
++        <p className={`${LEDE} mt-10`}>{AGENTS_LEDE}</p>
++        <div className="mt-10">
++          <a
++            className="inline-flex items-center rounded-full bg-accent text-on-accent px-7 py-4 font-medium hover:opacity-90 transition-opacity"
++            href={AGENTS_TEARDOWN_ROUTE}
++            rel="nofollow"
++          >
++            {TEARDOWN_CTA}
++          </a>
++        </div>
++      </div>
++      <section aria-labelledby="kit-title" className={`${WIDTH} pt-28 sm:pt-36 pb-28`}>
++        <div className="grid gap-10 md:grid-cols-12 border-t border-ink pt-8">
++          <div className="md:col-span-5">
++            <Eyebrow>free starter kit</Eyebrow>
++            <h2 className="mt-6 mb-0 text-[clamp(1.9rem,3.6vw,3.1rem)] leading-[1.02] tracking-[-0.035em] font-medium" id="kit-title">
++              agent-guardrails
++            </h2>
++            <p className="mt-6 mb-0 text-muted text-[1.1rem] leading-relaxed max-w-[28rem]">{KIT_LINE}</p>
++            <a
++              className="mt-8 inline-flex items-center rounded-full border border-line px-6 py-3 font-medium hover:border-ink transition-colors"
++              href={AGENTS_KIT_ROUTE}
++              rel="nofollow"
++            >
++              {KIT_LINK_LABEL}
++            </a>
++          </div>
++          <ul className="md:col-span-7 m-0 p-0 list-none grid gap-8">
++            {KIT_HOOKS.map((hook) => (
++              <li className="border-t border-line pt-5" key={hook.name}>
++                <h3 className="m-0 font-mono text-[0.95rem] tracking-[0.02em]">{hook.name}</h3>
++                <p className="mt-3 mb-0 text-muted text-[1.05rem] leading-relaxed">{hook.line}</p>
++              </li>
++            ))}
++          </ul>
++        </div>
++      </section>
++    </main>
++  );
++}
++
++export function makeAgents(): () => ReactElement {
++  return function BoundAgents(): ReactElement {
++    return (
++      <FocusLayout>
++        <AgentsPage />
++      </FocusLayout>
++    );
++  };
++}
+diff --git a/src/ui/layout.tsx b/src/ui/layout.tsx
+index 46278c5..cf7f7d3 100644
+--- a/src/ui/layout.tsx
++++ b/src/ui/layout.tsx
+@@ -158,6 +158,14 @@ function Footer({ sections }: { sections: NavSections }): ReactElement {
+           </div>
+         </div>
+       </div>
++      <FooterSignoff />
++    </footer>
++  );
++}
++
++function FooterSignoff(): ReactElement {
++  return (
++    <>
+       <div className="mt-14 sm:mt-20">
+         <PixelWordmark label={SITE_NAME_PROPER} word="dimascio." />
+       </div>
+@@ -167,10 +175,54 @@ function Footer({ sections }: { sections: NavSections }): ReactElement {
+           <span>dimasc.io</span>
+         </div>
+       </div>
++    </>
++  );
++}
++
++const FOCUS_FOOTER_LINKS = [
++  { label: "github", href: GITHUB_URL },
++  { label: "email", href: `mailto:${CONTACT_EMAIL}` },
++  { label: "privacy", href: PRIVACY_ROUTE },
++] as const;
++
++function FocusFooter(): ReactElement {
++  return (
++    <footer className="night">
++      <div className={`${WIDTH} pt-10`}>
++        <ul className="m-0 p-0 border-t border-line pt-8 list-none flex flex-wrap gap-x-8 gap-y-1">
++          {FOCUS_FOOTER_LINKS.map((link) => (
++            <li key={link.label}>
++              <a className="link-underline inline-block py-2 text-ink" href={link.href}>
++                {link.label}
++              </a>
++            </li>
++          ))}
++        </ul>
++      </div>
++      <FooterSignoff />
+     </footer>
+   );
+ }
+ 
++export function FocusLayout({ children }: { children: ReactNode }): ReactElement {
++  return (
++    <>
++      <a className="skip-link" href="#main">
++        skip to content
++      </a>
++      <header className="border-b border-[color-mix(in_srgb,var(--line)_70%,transparent)]">
++        <div className={`${WIDTH} flex items-center h-16`}>
++          <a className="group -my-1 py-1 text-ink" href="/">
++            <Signature className="w-[96px] sm:w-[118px] transition-transform duration-500 group-hover:-rotate-2" />
++          </a>
++        </div>
++      </header>
++      <div id="main">{children}</div>
++      <FocusFooter />
++    </>
++  );
++}
++
+ export function makeSiteLayout(sections: NavSections): (props: { children: ReactNode }) => ReactElement {
+   return function BoundSiteLayout({ children }: { children: ReactNode }): ReactElement {
+     return <SiteLayout sections={sections}>{children}</SiteLayout>;
+diff --git a/src/ui/privacy.tsx b/src/ui/privacy.tsx
+index 79d74c7..b3341db 100644
+--- a/src/ui/privacy.tsx
++++ b/src/ui/privacy.tsx
+@@ -10,7 +10,7 @@ export const PRIVACY_LEDE = "short version: i keep what you send me through the
+ export const PRIVACY_DESCRIPTION = "what the site check form collects, where it goes, how google ad clicks are measured + how to get your info deleted.";
+ 
+ export const NO_SCRIPTS_LINE = "no analytics scripts, no ad tracking scripts + no ad cookies. the site doesn't set any cookies of its own.";
+-export const SERVER_COUNTING_LINE = "i count page views + form use on the server, with no cookies + no personal data.";
++export const SERVER_COUNTING_LINE = "i count page views, form use + clicks on a couple of buttons on the server, with no cookies + no personal data.";
+ 
+ interface PrivacySection {
+   readonly title: string;
+diff --git a/test/agents.test.ts b/test/agents.test.ts
+new file mode 100644
+index 0000000..30219d6
+--- /dev/null
++++ b/test/agents.test.ts
+@@ -0,0 +1,97 @@
++import { beforeAll, describe, expect, it } from "bun:test";
++
++import { createApp } from "@lesto/kernel";
++import type { App } from "@lesto/kernel";
++
++import appConfig from "../lesto.app";
++import worker from "../worker";
++import { AGENTS_KIT_ROUTE, AGENTS_ROUTE, AGENTS_TEARDOWN_ROUTE, KIT_REPO_URL, TEARDOWN_CTA } from "../src/agents";
++import { type EventPoint, type EventSink, SITE_EVENT } from "../src/measure";
++import { CONTACT_EMAIL, SITE_URL, TEARDOWN_BOOKING_URL, teardownHref } from "../src/site";
++import { sitemapRoutes } from "../src/sitemap";
++import { loadAllArticles, loadAllCaseStudies } from "../src/content";
++import { AGENTS_HEADLINE, AGENTS_LEDE, KIT_HOOKS, KIT_LINE } from "../src/ui/agents";
++
++let app: App;
++
++beforeAll(async () => {
++  app = await createApp({ ...appConfig, secure: false });
++});
++
++async function page(route: string): Promise<string> {
++  const response = await app.handle("GET", route);
++  return (await new Response(response.body as BodyInit).text()).replaceAll("&#x27;", "'").replaceAll("&amp;", "&");
++}
++
++function recordingSink(): EventSink & { points: EventPoint[] } {
++  const points: EventPoint[] = [];
++  return { points, writeDataPoint: (point) => points.push(point) };
++}
++
++const ctx = { waitUntil: () => undefined, passThroughOnException: () => undefined };
++
++function click(route: string, events: EventSink, headers: Record<string, string> = {}): Promise<Response> {
++  const request = new Request(`${SITE_URL}${route}`, { headers });
++  return worker.fetch(request, { REQUESTS: { put: async () => undefined }, EVENTS: events } as never, ctx as never);
++}
++
++const AI_TELLS = [/—/, /→/, /#\w/, /\bnot [^.]+, (?:it's|but)\b/i, /\b(?:game changer|deep dive|hot take|let that sink in)\b/i];
++
++describe("agents page", () => {
++  it("renders the hero, the kit, the 3 hooks and one teardown button", async () => {
++    const html = await page(AGENTS_ROUTE);
++    for (const copy of [AGENTS_HEADLINE, AGENTS_LEDE, KIT_LINE, ...KIT_HOOKS.flatMap((hook) => [hook.name, hook.line])]) {
++      expect(html).toContain(copy);
++    }
++    expect(html.split(TEARDOWN_CTA)).toHaveLength(2);
++    expect(html.split(`href="${AGENTS_TEARDOWN_ROUTE}"`)).toHaveLength(2);
++    expect(html).toContain(`href="${AGENTS_KIT_ROUTE}"`);
++  });
++
++  it("shows no prices, no small-business offer and no client logos", async () => {
++    const full = (await page(AGENTS_ROUTE)).toLowerCase();
++    const html = full.slice(full.indexOf("<body"));
++    for (const banned of ["$", "/#pricing", "prices", "15-min", "small business", "logo"]) expect(html).not.toContain(banned);
++  });
++
++  it("keeps the copy free of the banned ai tells", async () => {
++    const copy = [AGENTS_HEADLINE, AGENTS_LEDE, KIT_LINE, ...KIT_HOOKS.map((hook) => hook.line)].join(" ");
++    for (const tell of AI_TELLS) expect(copy).not.toMatch(tell);
++  });
++
++  it("is in the sitemap but not linked from the home page", async () => {
++    expect(sitemapRoutes(await loadAllCaseStudies(), await loadAllArticles())).toContain(AGENTS_ROUTE);
++    expect(await page("/")).not.toContain(`href="${AGENTS_ROUTE}"`);
++  });
++
++  it("falls back to an email when no booking url is set", () => {
++    if (TEARDOWN_BOOKING_URL === null) expect(teardownHref()).toStartWith(`mailto:${CONTACT_EMAIL}?`);
++    else expect(teardownHref()).toBe(TEARDOWN_BOOKING_URL);
++  });
++});
++
++describe("agents click routes", () => {
++  it("redirects the kit click to the repo and writes kit_click w/ the landing utm tags", async () => {
++    const sink = recordingSink();
++    const response = await click(AGENTS_KIT_ROUTE, sink, { referer: `${SITE_URL}${AGENTS_ROUTE}?utm_source=linkedin&utm_medium=social` });
++    expect(response.status).toBe(302);
++    expect(response.headers.get("location")).toBe(KIT_REPO_URL);
++    expect(sink.points).toHaveLength(1);
++    expect(sink.points[0]?.blobs.slice(0, 5)).toEqual([SITE_EVENT.kitClick, AGENTS_KIT_ROUTE, "self", "linkedin", "social"]);
++  });
++
++  it("redirects the teardown click to the booking link and writes teardown_click", async () => {
++    const sink = recordingSink();
++    const response = await click(AGENTS_TEARDOWN_ROUTE, sink);
++    expect(response.status).toBe(302);
++    expect(response.headers.get("location")).toBe(teardownHref());
++    expect(sink.points.map((point) => point.indexes[0])).toEqual([SITE_EVENT.teardownClick]);
++  });
++
++  it("skips the event for bots and still redirects", async () => {
++    const sink = recordingSink();
++    const response = await click(AGENTS_KIT_ROUTE, sink, { "user-agent": "LinkedInBot/1.0" });
++    expect(response.status).toBe(302);
++    expect(sink.points).toHaveLength(0);
++  });
++});
+diff --git a/worker.ts b/worker.ts
+index faaf89d..3866605 100644
+--- a/worker.ts
++++ b/worker.ts
+@@ -1,5 +1,6 @@
+ import { staticAssetsWorker } from "@lesto/cloudflare";
+ 
++import { handleAgentsClick, isAgentsClickRoute } from "./src/agents";
+ import { type CheckEnv, handleCheck, isCheckFormPage, isCheckRoute, withFormFilled, withParamsCarried } from "./src/check";
+ import { recordPageView } from "./src/measure";
+ import { renderNotFound } from "./src/not-found";
+@@ -17,6 +18,7 @@ export default {
+     if (redirect !== null) return redirect;
+     const url = new URL(request.url);
+     if (isCheckRoute(url.pathname)) return handleCheck(request, env, ctx);
++    if (isAgentsClickRoute(url.pathname)) return handleAgentsClick(request, env);
+     const response = await assets.fetch(request, env, ctx);
+     const isFormPage = isCheckFormPage(url.pathname);
+     recordPageView(env, request, response, isFormPage);
