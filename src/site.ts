@@ -42,8 +42,8 @@ export function introCallLabel(): string {
 
 const TEARDOWN_EMAIL_BODY = ["your team + how many engineers:", "", "what your agents ship + where it goes wrong:", ""].join("\n");
 
-export function teardownHref(): string {
-  return TEARDOWN_BOOKING_URL ?? mailto("agent setup teardown", TEARDOWN_EMAIL_BODY);
+export function teardownHref(bookingUrl: string | null = TEARDOWN_BOOKING_URL): string {
+  return bookingUrl ?? mailto("agent setup teardown", TEARDOWN_EMAIL_BODY);
 }
 
 export function planHref(planName: string): string {
