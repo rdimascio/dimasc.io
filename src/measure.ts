@@ -9,6 +9,8 @@ export const SITE_EVENT = {
   turnstileFail: "turnstile_fail",
   stored: "stored",
   emailed: "emailed",
+  kitClick: "kit_click",
+  teardownClick: "teardown_click",
 } as const;
 export type SiteEvent = (typeof SITE_EVENT)[keyof typeof SITE_EVENT];
 
@@ -96,6 +98,19 @@ function refererSearch(request: Request): string {
   }
 }
 
+export function clickContext(request: Request): EventContext {
+  const landingQuery = refererSearch(request);
+  return {
+    ...pageContext(request),
+    ...utmFrom(landingQuery),
+    hasGclid: hasClickId(clickIdsFromQuery(new URLSearchParams(landingQuery))),
+  };
+}
+
+export function isBot(request: Request): boolean {
+  return BOT_USER_AGENT.test(request.headers.get("user-agent") ?? "");
+}
+
 export function eventPoint(event: SiteEvent, context: EventContext): EventPoint {
   return {
     indexes: [event],
@@ -123,8 +138,7 @@ export function recordEvent(env: EventEnv, event: SiteEvent, context: () => Even
 
 export function isCountedPageView(request: Request, response: Response): boolean {
   const isHtml = (response.headers.get("content-type") ?? "").includes("text/html");
-  const isBot = BOT_USER_AGENT.test(request.headers.get("user-agent") ?? "");
-  return request.method === "GET" && response.status === 200 && isHtml && !isBot;
+  return request.method === "GET" && response.status === 200 && isHtml && !isBot(request);
 }
 
 export function recordPageView(env: EventEnv, request: Request, response: Response, isFormPage: boolean): void {

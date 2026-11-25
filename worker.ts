@@ -1,5 +1,6 @@
 import { staticAssetsWorker } from "@lesto/cloudflare";
 
+import { handleAgentsClick, isAgentsClickRoute } from "./src/agents";
 import { type CheckEnv, handleCheck, isCheckFormPage, isCheckRoute, withFormFilled, withParamsCarried } from "./src/check";
 import { recordPageView } from "./src/measure";
 import { renderNotFound } from "./src/not-found";
@@ -17,6 +18,7 @@ export default {
     if (redirect !== null) return redirect;
     const url = new URL(request.url);
     if (isCheckRoute(url.pathname)) return handleCheck(request, env, ctx);
+    if (isAgentsClickRoute(url.pathname)) return handleAgentsClick(request, env);
     const response = await assets.fetch(request, env, ctx);
     const isFormPage = isCheckFormPage(url.pathname);
     recordPageView(env, request, response, isFormPage);

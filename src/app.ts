@@ -17,7 +17,9 @@ import {
   SITE_NAME,
   SITE_URL,
 } from "./site";
+import { AGENTS_ROUTE } from "./agents";
 import { makeAbout } from "./ui/about";
+import { AGENTS_DESCRIPTION, AGENTS_TITLE, makeAgents } from "./ui/agents";
 import { ARTICLES_LEDE, makeArticle, makeArticlesIndex } from "./ui/articles";
 import { makeHome, startingPricesLine } from "./ui/home";
 import { ABOUT_ROUTE, makeSiteLayout } from "./ui/layout";
@@ -121,6 +123,11 @@ export async function buildAppConfig(
 
   let app = lesto()
     .styles("/styles.css")
+    .page(AGENTS_ROUTE, {
+      static: true,
+      component: makeAgents(),
+      metadata: () => seoMetadata({ title: AGENTS_TITLE, description: AGENTS_DESCRIPTION, route: AGENTS_ROUTE, type: "website" }),
+    })
     .layout(makeSiteLayout({ work: studies.length > 0, articles: articles.length > 0 }))
     .page("/", {
       static: true,

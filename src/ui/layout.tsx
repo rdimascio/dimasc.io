@@ -158,6 +158,14 @@ function Footer({ sections }: { sections: NavSections }): ReactElement {
           </div>
         </div>
       </div>
+      <FooterSignoff />
+    </footer>
+  );
+}
+
+function FooterSignoff(): ReactElement {
+  return (
+    <>
       <div className="mt-14 sm:mt-20">
         <PixelWordmark label={SITE_NAME_PROPER} word="dimascio." />
       </div>
@@ -167,7 +175,51 @@ function Footer({ sections }: { sections: NavSections }): ReactElement {
           <span>dimasc.io</span>
         </div>
       </div>
+    </>
+  );
+}
+
+const FOCUS_FOOTER_LINKS = [
+  { label: "github", href: GITHUB_URL },
+  { label: "email", href: `mailto:${CONTACT_EMAIL}` },
+  { label: "privacy", href: PRIVACY_ROUTE },
+] as const;
+
+function FocusFooter(): ReactElement {
+  return (
+    <footer className="night">
+      <div className={`${WIDTH} pt-10`}>
+        <ul className="m-0 p-0 border-t border-line pt-8 list-none flex flex-wrap gap-x-8 gap-y-1">
+          {FOCUS_FOOTER_LINKS.map((link) => (
+            <li key={link.label}>
+              <a className="link-underline inline-block py-2 text-ink" href={link.href}>
+                {link.label}
+              </a>
+            </li>
+          ))}
+        </ul>
+      </div>
+      <FooterSignoff />
     </footer>
+  );
+}
+
+export function FocusLayout({ children }: { children: ReactNode }): ReactElement {
+  return (
+    <>
+      <a className="skip-link" href="#main">
+        skip to content
+      </a>
+      <header className="border-b border-[color-mix(in_srgb,var(--line)_70%,transparent)]">
+        <div className={`${WIDTH} flex items-center h-16`}>
+          <a className="group -my-1 py-1 text-ink" href="/">
+            <Signature className="w-[96px] sm:w-[118px] transition-transform duration-500 group-hover:-rotate-2" />
+          </a>
+        </div>
+      </header>
+      <div id="main">{children}</div>
+      <FocusFooter />
+    </>
   );
 }
 
