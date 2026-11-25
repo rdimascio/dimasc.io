@@ -26,6 +26,7 @@ export function isAgentsClickRoute(pathname: string): boolean {
 export function handleAgentsClick(request: Request, env: EventEnv): Response {
   const route = CLICK_ROUTES[new URL(request.url).pathname];
   if (route === undefined || !READ_METHODS.has(request.method)) return new Response("method not allowed", { status: 405 });
-  if (!isBot(request)) recordEvent(env, route.event, () => clickContext(request));
+  const isRealClick = request.method === "GET" && !isBot(request);
+  if (isRealClick) recordEvent(env, route.event, () => clickContext(request));
   return new Response(null, { status: 302, headers: { location: route.target(), "cache-control": "no-store" } });
 }

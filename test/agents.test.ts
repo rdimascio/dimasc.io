@@ -65,8 +65,15 @@ describe("agents page", () => {
   });
 
   it("falls back to an email when no booking url is set", () => {
-    if (TEARDOWN_BOOKING_URL === null) expect(teardownHref()).toStartWith(`mailto:${CONTACT_EMAIL}?`);
-    else expect(teardownHref()).toBe(TEARDOWN_BOOKING_URL);
+    expect(teardownHref(null)).toStartWith(`mailto:${CONTACT_EMAIL}?subject=`);
+    expect(teardownHref("https://example.com/book")).toBe("https://example.com/book");
+    expect(teardownHref()).toBe(TEARDOWN_BOOKING_URL ?? teardownHref(null));
+  });
+
+  it("shares w/o the small-business social card", async () => {
+    const head = (await page(AGENTS_ROUTE)).toLowerCase();
+    expect(head).not.toContain("small business");
+    expect(head).not.toContain("og:image");
   });
 });
 
@@ -86,6 +93,14 @@ describe("agents click routes", () => {
     expect(response.status).toBe(302);
     expect(response.headers.get("location")).toBe(teardownHref());
     expect(sink.points.map((point) => point.indexes[0])).toEqual([SITE_EVENT.teardownClick]);
+  });
+
+  it("skips the event for a HEAD link check and still redirects", async () => {
+    const sink = recordingSink();
+    const request = new Request(`${SITE_URL}${AGENTS_KIT_ROUTE}`, { method: "HEAD", headers: { "user-agent": "curl/8.7.1" } });
+    const response = await worker.fetch(request, { REQUESTS: { put: async () => undefined }, EVENTS: sink } as never, ctx as never);
+    expect(response.status).toBe(302);
+    expect(sink.points).toHaveLength(0);
   });
 
   it("skips the event for bots and still redirects", async () => {
