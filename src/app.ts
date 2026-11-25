@@ -17,7 +17,9 @@ import {
   SITE_NAME,
   SITE_URL,
 } from "./site";
+import { AGENTS_ROUTE } from "./agents";
 import { makeAbout } from "./ui/about";
+import { AGENTS_DESCRIPTION, AGENTS_TITLE, makeAgents } from "./ui/agents";
 import { ARTICLES_LEDE, makeArticle, makeArticlesIndex } from "./ui/articles";
 import { makeHome, startingPricesLine } from "./ui/home";
 import { ABOUT_ROUTE, makeSiteLayout } from "./ui/layout";
@@ -41,8 +43,21 @@ export function seoMetadata(input: {
   description: string;
   route: string;
   type: "website" | "article";
+  studioImage?: boolean;
 }): PageMetadata {
   const url = canonicalUrl(input.route);
+  const studioImage = input.studioImage ?? true;
+  const imageMeta = studioImage
+    ? [
+        { property: "og:image", content: OG_IMAGE },
+        { property: "og:image:type", content: "image/png" },
+        { property: "og:image:width", content: String(OG_IMAGE_WIDTH) },
+        { property: "og:image:height", content: String(OG_IMAGE_HEIGHT) },
+        { property: "og:image:alt", content: OG_IMAGE_ALT },
+        { name: "twitter:image", content: OG_IMAGE },
+        { name: "twitter:image:alt", content: OG_IMAGE_ALT },
+      ]
+    : [];
   return {
     title: input.title,
     description: input.description,
@@ -51,17 +66,11 @@ export function seoMetadata(input: {
       { property: "og:title", content: input.title },
       { property: "og:type", content: input.type },
       { property: "og:url", content: url },
-      { property: "og:image", content: OG_IMAGE },
-      { property: "og:image:type", content: "image/png" },
-      { property: "og:image:width", content: String(OG_IMAGE_WIDTH) },
-      { property: "og:image:height", content: String(OG_IMAGE_HEIGHT) },
-      { property: "og:image:alt", content: OG_IMAGE_ALT },
       { property: "og:description", content: input.description },
-      { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:card", content: studioImage ? "summary_large_image" : "summary" },
       { name: "twitter:title", content: input.title },
       { name: "twitter:description", content: input.description },
-      { name: "twitter:image", content: OG_IMAGE },
-      { name: "twitter:image:alt", content: OG_IMAGE_ALT },
+      ...imageMeta,
     ],
     links: [
       { rel: "canonical", href: url },
@@ -121,6 +130,12 @@ export async function buildAppConfig(
 
   let app = lesto()
     .styles("/styles.css")
+    .page(AGENTS_ROUTE, {
+      static: true,
+      component: makeAgents(),
+      metadata: () =>
+        seoMetadata({ title: AGENTS_TITLE, description: AGENTS_DESCRIPTION, route: AGENTS_ROUTE, type: "website", studioImage: false }),
+    })
     .layout(makeSiteLayout({ work: studies.length > 0, articles: articles.length > 0 }))
     .page("/", {
       static: true,

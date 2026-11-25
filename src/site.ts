@@ -17,6 +17,7 @@ export const ABOUT_ROUTE = "/about";
 export const PRIVACY_ROUTE = "/privacy";
 
 export const BOOKING_URL: string | null = null;
+export const TEARDOWN_BOOKING_URL: string | null = "https://macro.com/app/book/fff6724e-3451-531c-89d4-a4cf94ba2161/agent-teardown";
 export const MAX_SUBSCRIPTION_CLIENTS: number | null = null;
 
 const INTRO_EMAIL_BODY = ["your business + website:", "", "what's broken or slowing you down:", "", "anything w/ a deadline:", ""].join(
@@ -37,6 +38,12 @@ export function introCallHref(): string {
 
 export function introCallLabel(): string {
   return BOOKING_URL === null ? "email me to set up a call" : "book a 15-min call";
+}
+
+const TEARDOWN_EMAIL_BODY = ["your team + how many engineers:", "", "what your agents ship + where it goes wrong:", ""].join("\n");
+
+export function teardownHref(bookingUrl: string | null = TEARDOWN_BOOKING_URL): string {
+  return bookingUrl ?? mailto("agent setup teardown", TEARDOWN_EMAIL_BODY);
 }
 
 export function planHref(planName: string): string {
