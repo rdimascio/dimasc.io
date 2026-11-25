@@ -16,7 +16,7 @@ export const GITHUB_URL = "https://github.com/rdimascio";
 export const ABOUT_ROUTE = "/about";
 export const PRIVACY_ROUTE = "/privacy";
 
-export const BOOKING_URL: string | null = null;
+export const BOOKING_URL: string | null = "https://macro.com/app/book/fff6724e-3451-531c-89d4-a4cf94ba2161/quick-call";
 export const TEARDOWN_BOOKING_URL: string | null = "https://macro.com/app/book/fff6724e-3451-531c-89d4-a4cf94ba2161/agent-teardown";
 export const MAX_SUBSCRIPTION_CLIENTS: number | null = null;
 
