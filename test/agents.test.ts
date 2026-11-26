@@ -7,7 +7,7 @@ import appConfig from "../lesto.app";
 import worker from "../worker";
 import { AGENTS_KIT_ROUTE, AGENTS_ROUTE, AGENTS_TEARDOWN_ROUTE, KIT_REPO_URL, TEARDOWN_CTA } from "../src/agents";
 import { type EventPoint, type EventSink, SITE_EVENT } from "../src/measure";
-import { AGENTS_OG_IMAGE, CONTACT_EMAIL, OG_IMAGES, SITE_URL, STUDIO_OG_IMAGE, TEARDOWN_BOOKING_URL, teardownHref } from "../src/site";
+import { AGENTS_OG_IMAGE, AGENTS_OG_IMAGE_MAX_BYTES, CONTACT_EMAIL, OG_IMAGES, SITE_URL, STUDIO_OG_IMAGE, TEARDOWN_BOOKING_URL, teardownHref } from "../src/site";
 import { sitemapRoutes } from "../src/sitemap";
 import { loadAllArticles, loadAllCaseStudies } from "../src/content";
 import { AGENTS_HEADLINE, AGENTS_LEDE, KIT_HOOKS, KIT_LINE } from "../src/ui/agents";
@@ -86,9 +86,10 @@ describe("agents page", () => {
     expect(head.toLowerCase()).not.toContain("small business");
   });
 
-  it("ships the agents social card as a png at its declared size, under 300 KB", async () => {
+  it("ships the agents social card as a 2x png at its declared size, under 1 MB", async () => {
+    expect([AGENTS_OG_IMAGE.width, AGENTS_OG_IMAGE.height]).toEqual([2400, 1254]);
     const file = Bun.file(AGENTS_OG_IMAGE.source);
-    expect(file.size).toBeLessThan(300 * 1024);
+    expect(file.size).toBeLessThan(AGENTS_OG_IMAGE_MAX_BYTES);
     const png = new Uint8Array(await file.arrayBuffer());
     const view = new DataView(png.buffer);
     expect([...png.slice(1, 4)].map((byte) => String.fromCharCode(byte)).join("")).toBe("PNG");

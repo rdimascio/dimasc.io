@@ -88,12 +88,15 @@ export const STUDIO_OG_IMAGE: OgImage = {
   alt: OG_IMAGE_ALT,
 };
 
+export const AGENTS_OG_IMAGE_SCALE = 2;
+export const AGENTS_OG_IMAGE_MAX_BYTES = 1024 * 1024;
+
 export const AGENTS_OG_IMAGE: OgImage = {
   path: "/og-agents.png",
   source: "assets/og-agents.png",
-  width: 1200,
-  height: 627,
-  alt: "Agent guardrails. The hooks I use to let coding agents ship real code. dimasc.io/agents",
+  width: 1200 * AGENTS_OG_IMAGE_SCALE,
+  height: 627 * AGENTS_OG_IMAGE_SCALE,
+  alt: "Agent guardrails. Hooks that let coding agents ship real code.",
 };
 
 export const OG_IMAGES: readonly OgImage[] = [STUDIO_OG_IMAGE, AGENTS_OG_IMAGE];
