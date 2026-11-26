@@ -4,35 +4,33 @@ import { AGENTS_KIT_ROUTE, AGENTS_TEARDOWN_ROUTE, TEARDOWN_CTA } from "../agents
 import { SITE_NAME } from "../site";
 import { Eyebrow, FocusLayout, HEADING, LEDE, PAGE, WIDTH } from "./layout";
 
-export const AGENTS_HEADLINE = "the guardrails i use to let coding agents ship real code";
-export const AGENTS_TITLE = `agent guardrails · ${SITE_NAME}`;
-export const AGENTS_DESCRIPTION = "the guardrails i use to let coding agents ship real code. free starter kit + a free 20 min teardown of your agent setup.";
+export const AGENTS_EYEBROW = "for founders with paying users";
+export const AGENTS_HEADLINE = "your app has paying users. now it needs a senior engineer";
+export const AGENTS_TITLE = `senior engineer by subscription · ${SITE_NAME}`;
+export const AGENTS_DESCRIPTION =
+  "a senior engineer for founders whose ai-built app has paying users. reviewed PRs in your repo, $4,995/month, pause anytime. free repo check.";
 export const AGENTS_LEDE =
-  "if your team's agents keep shipping stuff you end up cleaning up, i'll go through your setup with you on a free 20 min call and tell you what i'd change.";
-export const KIT_LINE =
-  "3 hooks you drop into your coding agent's settings. plain node, no dependencies, tests included, MIT so do whatever you want w/ it.";
-export const KIT_LINK_LABEL = "get the starter kit on github";
+  "you built it w/ lovable, bolt, replit or cursor, and now real users are finding the holes. i fix them + ship your requests as reviewed PRs in your repo, about one every 2 days.";
+export const CHECK_LINE = "send me your app + a read-only repo invite. i send back a 10 min video w/ the 3 things that break first. no call.";
 
-export const KIT_HOOKS = [
-  {
-    name: "force-push guard",
-    line: "stops the agent from force pushing over commits it never saw. the only force push it lets through is a lease pinned to a sha you actually looked at.",
-  },
-  {
-    name: "evidence first",
-    line: "when your prompt says something's broken, failing or rate limited, it tells the agent to go find the real error and the cause before it touches any code",
-  },
-  {
-    name: "claims need receipts",
-    line: "if the agent says tests pass or it merged something and no test or git command ran that turn, it gets sent back to actually check",
-  },
+export const PLAN_NAME = "your senior engineer, monthly";
+export const PLAN_PRICE = "$4,995/month. the first 2 founders pay $3,995, locked while they stay. pause or cancel anytime.";
+export const PLAN_CAPACITY = "i take 2 founders at a time.";
+export const PLAN_INCLUDES = [
+  "month 1 starts w/ a safety pass: logins, who can see whose data, leaked keys, double charges. fixed as PRs you can merge.",
+  "after that, unlimited requests, one at a time. big ones get split into 2 day chunks.",
+  "every change is a reviewed PR in your repo, and you own all of it.",
+  "async only: github issues in, a short video when it ships. no standing calls.",
 ] as const;
+export const NOT_COVERED = "not covered: on-call or uptime promises, payment, payroll or other regulated money code, app store releases, rewrites from scratch.";
+export const KIT_LINE = "the guardrails i run my own coding agents with are open source.";
+export const KIT_LINK_LABEL = "see them on github";
 
 function AgentsPage(): ReactElement {
   return (
     <main>
       <div className={PAGE}>
-        <Eyebrow>for startup eng teams</Eyebrow>
+        <Eyebrow>{AGENTS_EYEBROW}</Eyebrow>
         <h1 className={`${HEADING} mt-8 max-w-[18ch]`}>{AGENTS_HEADLINE}</h1>
         <p className={`${LEDE} mt-10`}>{AGENTS_LEDE}</p>
         <div className="mt-10">
@@ -43,32 +41,35 @@ function AgentsPage(): ReactElement {
           >
             {TEARDOWN_CTA}
           </a>
+          <p className="mt-5 mb-0 text-muted max-w-[34rem]">{CHECK_LINE}</p>
         </div>
       </div>
-      <section aria-labelledby="kit-title" className={`${WIDTH} pt-28 sm:pt-36 pb-28`}>
+      <section aria-labelledby="plan-title" className={`${WIDTH} pt-28 sm:pt-36 pb-28`}>
         <div className="grid gap-10 md:grid-cols-12 border-t border-ink pt-8">
           <div className="md:col-span-5">
-            <Eyebrow>free starter kit</Eyebrow>
-            <h2 className="mt-6 mb-0 text-[clamp(1.9rem,3.6vw,3.1rem)] leading-[1.02] tracking-[-0.035em] font-medium" id="kit-title">
-              agent-guardrails
+            <Eyebrow>one plan</Eyebrow>
+            <h2 className="mt-6 mb-0 text-[clamp(1.9rem,3.6vw,3.1rem)] leading-[1.02] tracking-[-0.035em] font-medium" id="plan-title">
+              {PLAN_NAME}
             </h2>
-            <p className="mt-6 mb-0 text-muted text-[1.1rem] leading-relaxed max-w-[28rem]">{KIT_LINE}</p>
-            <a
-              className="mt-8 inline-flex items-center rounded-full border border-line px-6 py-3 font-medium hover:border-ink transition-colors"
-              href={AGENTS_KIT_ROUTE}
-              rel="nofollow"
-            >
-              {KIT_LINK_LABEL}
-            </a>
+            <p className="mt-6 mb-0 text-[1.1rem] leading-relaxed max-w-[28rem]">{PLAN_PRICE}</p>
+            <p className="mt-4 mb-0 text-muted text-[1.05rem] leading-relaxed max-w-[28rem]">{PLAN_CAPACITY}</p>
           </div>
-          <ul className="md:col-span-7 m-0 p-0 list-none grid gap-8">
-            {KIT_HOOKS.map((hook) => (
-              <li className="border-t border-line pt-5" key={hook.name}>
-                <h3 className="m-0 font-mono text-[0.95rem] tracking-[0.02em]">{hook.name}</h3>
-                <p className="mt-3 mb-0 text-muted text-[1.05rem] leading-relaxed">{hook.line}</p>
-              </li>
-            ))}
-          </ul>
+          <div className="md:col-span-7">
+            <ul className="m-0 p-0 list-none grid gap-6">
+              {PLAN_INCLUDES.map((line) => (
+                <li className="border-t border-line pt-5 text-[1.05rem] leading-relaxed" key={line}>
+                  {line}
+                </li>
+              ))}
+            </ul>
+            <p className="mt-8 mb-0 text-muted text-[1.05rem] leading-relaxed">{NOT_COVERED}</p>
+            <p className="mt-8 mb-0 text-muted text-[1.05rem] leading-relaxed">
+              {KIT_LINE}{" "}
+              <a className="underline underline-offset-4 hover:text-ink" href={AGENTS_KIT_ROUTE} rel="nofollow">
+                {KIT_LINK_LABEL}
+              </a>
+            </p>
+          </div>
         </div>
       </section>
     </main>

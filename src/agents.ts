@@ -5,7 +5,7 @@ export const AGENTS_ROUTE = "/agents";
 export const AGENTS_KIT_ROUTE = `${AGENTS_ROUTE}/kit`;
 export const AGENTS_TEARDOWN_ROUTE = `${AGENTS_ROUTE}/teardown`;
 export const KIT_REPO_URL = "https://github.com/rdimascio/agent-guardrails";
-export const TEARDOWN_CTA = "book a free 20-min teardown";
+export const TEARDOWN_CTA = "get a free repo check";
 
 interface ClickRoute {
   readonly event: SiteEvent;
