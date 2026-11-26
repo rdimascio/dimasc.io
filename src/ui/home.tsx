@@ -13,12 +13,12 @@ import { CaseStudyGrid, RequestNote } from "./work";
 
 export const START_HERE_LABEL = "start here";
 export const SINCE_YEAR = 2017;
-export const HERO_LEAD = "i built the platform behind 30k+ websites.";
+export const HERO_LEAD = `i've built websites + software since ${SINCE_YEAR}.`;
 export const HERO_TURN = "now i fix yours";
 export const CREDENTIALS = [
-  "tech lead on holt international + the serhant.com mls home search.",
+  "tech lead on holt international's site.",
   "front-end engineer on blackstone + stanford ecorner.",
-  `software engineer since ${SINCE_YEAR}. by day at every, a y combinator startup.`,
+  `software engineer since ${SINCE_YEAR}, still full-time by day.`,
 ] as const;
 export const SITE_CHECK_LINE = "i look through your whole site + send a plain list of what's broken.";
 export const QUICK_FIX_LINE = `fixes under ${QUICK_FIX_MINUTES} min: free.`;

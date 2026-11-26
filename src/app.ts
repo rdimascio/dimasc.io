@@ -159,7 +159,7 @@ export async function buildAppConfig(
         seoMetadata({
           title: `about · web developer in ${SERVICE_AREA_SHORT} · ${SITE_NAME}`,
           description:
-            "senior software engineer since 2017. i built the platform behind 30k+ websites + was tech lead on serhant.com's mls search. now i help small businesses.",
+            "senior software engineer since 2017. now i help small businesses.",
           route: ABOUT_ROUTE,
           type: "website",
         }),
@@ -225,7 +225,7 @@ export async function buildAppConfig(
         metadata: () =>
           seoMetadata({
             title: `past work · ${SITE_NAME}`,
-            description: "websites i've worked on, for stanford, blackstone, holt international and serhant.",
+            description: "websites i've worked on, for stanford, blackstone and holt international.",
             route: WORK_ROUTE,
             type: "website",
           }),

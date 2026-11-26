@@ -32,12 +32,12 @@ import { ArrowLink, Eyebrow, HEADING, LEDE, PAGE, SectionHead } from "./layout";
 export const SERVICES_CRUMB = { name: "services", route: SERVICES_ROUTE } as const;
 export const ORANGE_COUNTY_CRUMB = { name: SERVICE_AREA_SHORT, route: ORANGE_COUNTY_ROUTE } as const;
 export const PAST_WORK_LINE =
-  "i was tech lead on holt international's site + the mls home search behind serhant.com, which ran every luxury presence customer's listing search. i was a front-end engineer on blackstone + stanford ecorner. your site gets the same engineer.";
+  "i was tech lead on holt international's site. i was a front-end engineer on blackstone + stanford ecorner. your site gets the same engineer.";
 export const AREA_LINE = `i'm a senior software engineer based in ${SERVICE_AREA_COPY}. i fix + look after websites for small businesses here + nearby, like in tustin + corona. happy to meet in person around oc. anywhere else in the us works too, over email + video.`;
 export const SERVICES_LEDE =
   "website help from a senior software engineer, not an agency: a free site check, a new site, booking, a store, or me keeping an eye on it all.";
 export const WHY_ME_LINE =
-  "a lot of local web help is an agency selling seo, or someone who updates plugins. i'm neither. i've been a software engineer since 2017. i built + scaled the platform behind 30k+ websites, and was tech lead on the mls home search behind serhant.com. now i do it for businesses down the street.";
+  "a lot of local web help is an agency selling seo, or someone who updates plugins. i'm neither. i've been a software engineer since 2017. now i do it for businesses down the street.";
 export const DEFAULT_STEPS_LABEL = "how it works";
 export const PROJECT_PRICE_COPY = "quoted up front, paid step by step";
 export const STAY_LABEL = "stay on your platform if";
