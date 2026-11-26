@@ -1,7 +1,21 @@
 import type { ReactElement } from "react";
 
-import { AGENTS_KIT_ROUTE, AGENTS_TEARDOWN_ROUTE, TEARDOWN_CTA } from "../agents";
-import { SITE_NAME } from "../site";
+import { AGENTS_FORM_ANCHOR, AGENTS_FORM_SOURCE, AGENTS_KIT_ROUTE, AGENTS_TEARDOWN_ROUTE, TEARDOWN_CTA } from "../agents";
+import {
+  CHECK_FIELD,
+  CHECK_INPUT_CLASS,
+  CHECK_LABEL_CLASS,
+  CHECK_LIMIT,
+  CHECK_PRIVACY_LINE,
+  CHECK_PRIVACY_LINK,
+  CHECK_ROUTE,
+  CLICK_ID_PARAMS,
+  TURNSTILE_ACTION,
+  TURNSTILE_APPEARANCE,
+  TURNSTILE_SCRIPT_SRC,
+  TURNSTILE_SITEKEY,
+} from "../check";
+import { CONTACT_EMAIL, PRIVACY_ROUTE, SITE_NAME } from "../site";
 import { Eyebrow, FocusLayout, HEADING, LEDE, PAGE, WIDTH } from "./layout";
 
 export const AGENTS_EYEBROW = "for founders with paying users";
@@ -11,7 +25,74 @@ export const AGENTS_DESCRIPTION =
   "a senior engineer for founders whose ai-built app has paying users. reviewed PRs in your repo, $4,995/month, pause anytime. free repo check.";
 export const AGENTS_LEDE =
   "you built it w/ lovable, bolt, replit or cursor, and now real users are finding the holes. i fix them + ship your requests as reviewed PRs in your repo, about one every 2 days.";
-export const CHECK_LINE = "send me your app + a read-only repo invite. i send back a 10 min video w/ the 3 things that break first. no call.";
+export const CHECK_LINE = "tell me about your app below. i send back a 10 min video w/ the 3 things that break first. no call.";
+export const REPO_CHECK_TITLE = "free repo check";
+export const REPO_CHECK_APP_LABEL = "your app (link)";
+export const REPO_CHECK_MESSAGE_LABEL = "what's it built with, do customers pay you today, and what broke last?";
+export const REPO_CHECK_SUBMIT = "send it";
+export const REPO_CHECK_NEXT = "i reply within 1 business day w/ my github username so you can add me read-only.";
+export const AGENTS_SENT_HEADLINE = "got it. i'll reply within 1 business day w/ my github username so you can add me to the repo read-only.";
+
+function RepoCheckForm(): ReactElement {
+  return (
+    <section aria-labelledby="repo-check-title" className="max-w-[40rem] scroll-mt-24" id={AGENTS_FORM_ANCHOR}>
+      <Eyebrow>{REPO_CHECK_TITLE}</Eyebrow>
+      <form action={CHECK_ROUTE} className="mt-8 grid gap-5" method="post">
+        <label className={CHECK_LABEL_CLASS}>
+          your name
+          <input autoComplete="name" className={CHECK_INPUT_CLASS} maxLength={CHECK_LIMIT.name} name={CHECK_FIELD.name} required type="text" />
+        </label>
+        <label className={CHECK_LABEL_CLASS}>
+          your email
+          <input autoComplete="email" className={CHECK_INPUT_CLASS} maxLength={CHECK_LIMIT.email} name={CHECK_FIELD.email} required type="email" />
+        </label>
+        <label className={CHECK_LABEL_CLASS}>
+          {REPO_CHECK_APP_LABEL}
+          <input
+            autoComplete="url"
+            className={CHECK_INPUT_CLASS}
+            inputMode="url"
+            maxLength={CHECK_LIMIT.website}
+            name={CHECK_FIELD.website}
+            placeholder="yourapp.com"
+            type="text"
+          />
+        </label>
+        <label className={CHECK_LABEL_CLASS}>
+          {REPO_CHECK_MESSAGE_LABEL}
+          <textarea className={`${CHECK_INPUT_CLASS} min-h-[9rem]`} maxLength={CHECK_LIMIT.message} name={CHECK_FIELD.message} required rows={5} />
+        </label>
+        <input defaultValue={AGENTS_FORM_SOURCE} name={CHECK_FIELD.source} type="hidden" />
+        {CLICK_ID_PARAMS.map((name) => (
+          <input defaultValue="" key={name} name={CHECK_FIELD[name]} type="hidden" />
+        ))}
+        <input defaultValue="" name={CHECK_FIELD.clickedAt} type="hidden" />
+        <div aria-hidden="true" className="absolute -left-[9999px] w-px h-px overflow-hidden">
+          <label>
+            leave this empty
+            <input autoComplete="off" name={CHECK_FIELD.trap} tabIndex={-1} type="text" />
+          </label>
+        </div>
+        <script async defer src={TURNSTILE_SCRIPT_SRC} />
+        <div className="cf-turnstile" data-action={TURNSTILE_ACTION} data-appearance={TURNSTILE_APPEARANCE} data-sitekey={TURNSTILE_SITEKEY} />
+        <div>
+          <button className="rounded-full bg-accent px-7 py-3 font-medium text-on-accent hover:opacity-90" type="submit">
+            {REPO_CHECK_SUBMIT}
+          </button>
+        </div>
+        <p className="m-0 text-muted">
+          {REPO_CHECK_NEXT} rather email? <span className="text-ink select-all">{CONTACT_EMAIL}</span>
+        </p>
+        <p className="m-0 text-muted text-[0.92rem]">
+          {CHECK_PRIVACY_LINE}{" "}
+          <a className="link-underline text-ink" href={PRIVACY_ROUTE}>
+            {CHECK_PRIVACY_LINK}
+          </a>
+        </p>
+      </form>
+    </section>
+  );
+}
 
 export const PLAN_NAME = "your senior engineer, monthly";
 export const PLAN_PRICE = "$4,995/month. the first 2 founders pay $3,995, locked while they stay. pause or cancel anytime.";
@@ -72,8 +153,34 @@ function AgentsPage(): ReactElement {
           </div>
         </div>
       </section>
+      <div className={`${WIDTH} pb-28`}>
+        <RepoCheckForm />
+      </div>
     </main>
   );
+}
+
+function AgentsSent(): ReactElement {
+  return (
+    <main className={`${PAGE} pb-28`}>
+      <Eyebrow>{REPO_CHECK_TITLE}</Eyebrow>
+      <h1 className={`${HEADING} mt-8`}>got it.</h1>
+      <p className={`${LEDE} mt-8`}>{AGENTS_SENT_HEADLINE}</p>
+      <p className="mt-10 m-0 text-muted">
+        didn't hear back? email me at <span className="text-ink select-all">{CONTACT_EMAIL}</span>
+      </p>
+    </main>
+  );
+}
+
+export function makeAgentsSent(): () => ReactElement {
+  return function BoundAgentsSent(): ReactElement {
+    return (
+      <FocusLayout>
+        <AgentsSent />
+      </FocusLayout>
+    );
+  };
 }
 
 export function makeAgents(): () => ReactElement {

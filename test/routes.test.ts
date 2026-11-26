@@ -27,6 +27,7 @@ import {
   TURNSTILE_SITEKEY,
   TURNSTILE_VERIFY_URL,
   withFormFilled,
+  isCheckFormPage,
 } from "../src/check";
 import { PRIVACY_DESCRIPTION, PRIVACY_LEDE, PRIVACY_SECTIONS } from "../src/ui/privacy";
 import { clickIdOf, conversionsCsv, CSV_HEADER, googleAdsTime, keysSince, parseArgs } from "../scripts/export-ad-leads.mjs";
@@ -141,7 +142,7 @@ const TURNSTILE_SCRIPT_TAG = `<script async="" defer="" src="${TURNSTILE_SCRIPT_
 
 function withoutAllowedScripts(route: string, html: string): string {
   const withoutData = withoutJsonLd(html);
-  return route === SITE_CHECK_PAGE ? withoutData.replace(TURNSTILE_SCRIPT_TAG, "") : withoutData;
+  return isCheckFormPage(route) ? withoutData.replace(TURNSTILE_SCRIPT_TAG, "") : withoutData;
 }
 
 function ldNodes(html: string): LdNode[] {
@@ -1196,7 +1197,7 @@ describe("site check form", () => {
     for (const route of routes) {
       const html = await text(await app.handle("GET", route));
       expect(`${route}: ${withoutAllowedScripts(route, html)}`).not.toContain("<script");
-      if (route !== SITE_CHECK_PAGE) expect(html).not.toContain("challenges.cloudflare.com");
+      if (!isCheckFormPage(route)) expect(html).not.toContain("challenges.cloudflare.com");
     }
     expect(renderCheckProblem({ title: "x", detail: "y" })).not.toContain("<script");
   });

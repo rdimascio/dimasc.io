@@ -16,9 +16,9 @@ import {
   SITE_URL,
   STUDIO_OG_IMAGE,
 } from "./site";
-import { AGENTS_ROUTE } from "./agents";
+import { AGENTS_ROUTE, AGENTS_SENT_ROUTE } from "./agents";
 import { makeAbout } from "./ui/about";
-import { AGENTS_DESCRIPTION, AGENTS_TITLE, makeAgents } from "./ui/agents";
+import { AGENTS_DESCRIPTION, AGENTS_SENT_HEADLINE, AGENTS_TITLE, makeAgents, makeAgentsSent } from "./ui/agents";
 import { ARTICLES_LEDE, makeArticle, makeArticlesIndex } from "./ui/articles";
 import { makeHome, startingPricesLine } from "./ui/home";
 import { ABOUT_ROUTE, makeSiteLayout } from "./ui/layout";
@@ -134,6 +134,11 @@ export async function buildAppConfig(
       component: makeAgents(),
       metadata: () =>
         seoMetadata({ title: AGENTS_TITLE, description: AGENTS_DESCRIPTION, route: AGENTS_ROUTE, type: "website", image: AGENTS_OG_IMAGE }),
+    })
+    .page(AGENTS_SENT_ROUTE, {
+      static: true,
+      component: makeAgentsSent(),
+      metadata: () => routeMetadata({ title: `got it · ${SITE_NAME}`, description: AGENTS_SENT_HEADLINE, route: AGENTS_SENT_ROUTE, type: "website" }),
     })
     .layout(makeSiteLayout({ work: studies.length > 0, articles: articles.length > 0 }))
     .page("/", {
