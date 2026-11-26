@@ -10,7 +10,9 @@ import { type EventPoint, type EventSink, SITE_EVENT } from "../src/measure";
 import { AGENTS_OG_IMAGE, AGENTS_OG_IMAGE_MAX_BYTES, CONTACT_EMAIL, OG_IMAGES, SITE_URL, STUDIO_OG_IMAGE, TEARDOWN_BOOKING_URL, teardownHref } from "../src/site";
 import { sitemapRoutes } from "../src/sitemap";
 import { loadAllArticles, loadAllCaseStudies } from "../src/content";
-import { AGENTS_HEADLINE, AGENTS_LEDE, KIT_HOOKS, KIT_LINE } from "../src/ui/agents";
+import { AGENTS_EYEBROW, AGENTS_HEADLINE, AGENTS_LEDE, CHECK_LINE, KIT_LINE, NOT_COVERED, PLAN_CAPACITY, PLAN_INCLUDES, PLAN_NAME, PLAN_PRICE } from "../src/ui/agents";
+
+const PAGE_COPY = [AGENTS_EYEBROW, AGENTS_HEADLINE, AGENTS_LEDE, CHECK_LINE, PLAN_NAME, PLAN_PRICE, PLAN_CAPACITY, ...PLAN_INCLUDES, NOT_COVERED, KIT_LINE];
 
 let app: App;
 
@@ -38,24 +40,23 @@ function click(route: string, events: EventSink, headers: Record<string, string>
 const AI_TELLS = [/—/, /→/, /#\w/, /\bnot [^.]+, (?:it's|but)\b/i, /\b(?:game changer|deep dive|hot take|let that sink in)\b/i];
 
 describe("agents page", () => {
-  it("renders the hero, the kit, the 3 hooks and one teardown button", async () => {
+  it("renders the offer, the plan, one repo check button and the kit link", async () => {
     const html = await page(AGENTS_ROUTE);
-    for (const copy of [AGENTS_HEADLINE, AGENTS_LEDE, KIT_LINE, ...KIT_HOOKS.flatMap((hook) => [hook.name, hook.line])]) {
-      expect(html).toContain(copy);
-    }
+    for (const copy of PAGE_COPY) expect(html).toContain(copy);
     expect(html.split(TEARDOWN_CTA)).toHaveLength(2);
     expect(html.split(`href="${AGENTS_TEARDOWN_ROUTE}"`)).toHaveLength(2);
     expect(html).toContain(`href="${AGENTS_KIT_ROUTE}"`);
   });
 
-  it("shows no prices, no small-business offer and no client logos", async () => {
+  it("shows only the subscription price, w/o the small-business offer or client logos", async () => {
     const full = (await page(AGENTS_ROUTE)).toLowerCase();
     const html = full.slice(full.indexOf("<body"));
-    for (const banned of ["$", "/#pricing", "prices", "15-min", "small business", "logo"]) expect(html).not.toContain(banned);
+    for (const banned of ["$750", "$3,000", "$900", "/#pricing", "15-min", "small business", "logo"]) expect(html).not.toContain(banned);
+    expect(html).toContain("$4,995/month");
   });
 
   it("keeps the copy free of the banned ai tells", async () => {
-    const copy = [AGENTS_HEADLINE, AGENTS_LEDE, KIT_LINE, ...KIT_HOOKS.map((hook) => hook.line)].join(" ");
+    const copy = PAGE_COPY.join(" ");
     for (const tell of AI_TELLS) expect(copy).not.toMatch(tell);
   });
 
@@ -108,7 +109,7 @@ describe("agents click routes", () => {
     expect(sink.points[0]?.blobs.slice(0, 5)).toEqual([SITE_EVENT.kitClick, AGENTS_KIT_ROUTE, "self", "linkedin", "social"]);
   });
 
-  it("redirects the teardown click to the booking link and writes teardown_click", async () => {
+  it("redirects the repo check click to its email and writes teardown_click", async () => {
     const sink = recordingSink();
     const response = await click(AGENTS_TEARDOWN_ROUTE, sink);
     expect(response.status).toBe(302);
