@@ -58,7 +58,7 @@ export const PRIVACY_SECTIONS: readonly PrivacySection[] = [
     title: "bot checks",
     body: (
       <>
-        the form uses cloudflare turnstile to check you're a person and not a bot. it's the only script on the site, and it only loads on the form page.
+        the forms use cloudflare turnstile to check you're a person and not a bot. it's the only script on the site, and it only loads on the two form pages (fix my website + agents).
       </>
     ),
   },

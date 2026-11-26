@@ -5,12 +5,37 @@ import type { App } from "@lesto/kernel";
 
 import appConfig from "../lesto.app";
 import worker from "../worker";
-import { AGENTS_KIT_ROUTE, AGENTS_ROUTE, AGENTS_TEARDOWN_ROUTE, KIT_REPO_URL, TEARDOWN_CTA } from "../src/agents";
+import {
+  AGENTS_FORM_ANCHOR,
+  AGENTS_FORM_HREF,
+  AGENTS_FORM_SOURCE,
+  AGENTS_KIT_ROUTE,
+  AGENTS_ROUTE,
+  AGENTS_SENT_ROUTE,
+  AGENTS_TEARDOWN_ROUTE,
+  KIT_REPO_URL,
+  TEARDOWN_CTA,
+} from "../src/agents";
+import { CHECK_FIELD, CHECK_ROUTE, CHECK_SENT_ROUTE, checkEmail, REPO_CHECK_NAME, sentRouteFor, TURNSTILE_SCRIPT_SRC } from "../src/check";
 import { type EventPoint, type EventSink, SITE_EVENT } from "../src/measure";
-import { AGENTS_OG_IMAGE, AGENTS_OG_IMAGE_MAX_BYTES, CONTACT_EMAIL, OG_IMAGES, SITE_URL, STUDIO_OG_IMAGE, TEARDOWN_BOOKING_URL, teardownHref } from "../src/site";
-import { sitemapRoutes } from "../src/sitemap";
+import { AGENTS_OG_IMAGE, AGENTS_OG_IMAGE_MAX_BYTES, OG_IMAGES, SITE_URL, STUDIO_OG_IMAGE } from "../src/site";
+import { NOINDEX_ROUTES, sitemapRoutes } from "../src/sitemap";
 import { loadAllArticles, loadAllCaseStudies } from "../src/content";
-import { AGENTS_EYEBROW, AGENTS_HEADLINE, AGENTS_LEDE, CHECK_LINE, KIT_LINE, NOT_COVERED, PLAN_CAPACITY, PLAN_INCLUDES, PLAN_NAME, PLAN_PRICE } from "../src/ui/agents";
+import {
+  AGENTS_EYEBROW,
+  AGENTS_HEADLINE,
+  AGENTS_LEDE,
+  AGENTS_SENT_HEADLINE,
+  CHECK_LINE,
+  KIT_LINE,
+  NOT_COVERED,
+  PLAN_CAPACITY,
+  PLAN_INCLUDES,
+  PLAN_NAME,
+  PLAN_PRICE,
+  REPO_CHECK_APP_LABEL,
+  REPO_CHECK_MESSAGE_LABEL,
+} from "../src/ui/agents";
 
 const PAGE_COPY = [AGENTS_EYEBROW, AGENTS_HEADLINE, AGENTS_LEDE, CHECK_LINE, PLAN_NAME, PLAN_PRICE, PLAN_CAPACITY, ...PLAN_INCLUDES, NOT_COVERED, KIT_LINE];
 
@@ -65,10 +90,26 @@ describe("agents page", () => {
     expect(await page("/")).not.toContain(`href="${AGENTS_ROUTE}"`);
   });
 
-  it("falls back to an email when no booking url is set", () => {
-    expect(teardownHref(null)).toStartWith(`mailto:${CONTACT_EMAIL}?subject=`);
-    expect(teardownHref("https://example.com/book")).toBe("https://example.com/book");
-    expect(teardownHref()).toBe(TEARDOWN_BOOKING_URL ?? teardownHref(null));
+  it("renders the repo check form posting to the site check endpoint, w/ its source and the Turnstile widget", async () => {
+    const html = await page(AGENTS_ROUTE);
+    expect(html).toContain(`id="${AGENTS_FORM_ANCHOR}"`);
+    expect(html).toContain(`action="${CHECK_ROUTE}"`);
+    expect(html).toMatch(new RegExp(`<input(?=[^>]*name="${CHECK_FIELD.source}")(?=[^>]*value="${AGENTS_FORM_SOURCE}")[^>]*>`));
+    for (const label of [REPO_CHECK_APP_LABEL, REPO_CHECK_MESSAGE_LABEL]) expect(html).toContain(label);
+    expect(html).toContain(TURNSTILE_SCRIPT_SRC);
+    expect(html).not.toContain("subject=free%20repo%20check");
+  });
+
+  it("sends agents form posts to their own sent page and labels the email as a repo check", () => {
+    expect(sentRouteFor(AGENTS_ROUTE)).toBe(AGENTS_SENT_ROUTE);
+    expect(sentRouteFor("/services/fix-my-website")).toBe(CHECK_SENT_ROUTE);
+    expect(NOINDEX_ROUTES).toContain(AGENTS_SENT_ROUTE);
+    const record = { id: "x", receivedAt: "2026-11-26T00:00:00Z", name: "Sam", email: "s@x.co", website: "", message: "m", source: "", page: AGENTS_ROUTE, gclid: "", gbraid: "", wbraid: "", clickedAt: "" };
+    expect(checkEmail(record).subject).toBe(`${REPO_CHECK_NAME}: Sam`);
+  });
+
+  it("renders the agents sent page", async () => {
+    expect(await page(AGENTS_SENT_ROUTE)).toContain(AGENTS_SENT_HEADLINE);
   });
 
   it("shares its own large social card, w/o the small-business one", async () => {
@@ -109,11 +150,11 @@ describe("agents click routes", () => {
     expect(sink.points[0]?.blobs.slice(0, 5)).toEqual([SITE_EVENT.kitClick, AGENTS_KIT_ROUTE, "self", "linkedin", "social"]);
   });
 
-  it("redirects the repo check click to its email and writes teardown_click", async () => {
+  it("redirects the repo check click to the form on the page and writes teardown_click", async () => {
     const sink = recordingSink();
     const response = await click(AGENTS_TEARDOWN_ROUTE, sink);
     expect(response.status).toBe(302);
-    expect(response.headers.get("location")).toBe(teardownHref());
+    expect(response.headers.get("location")).toBe(AGENTS_FORM_HREF);
     expect(sink.points.map((point) => point.indexes[0])).toEqual([SITE_EVENT.teardownClick]);
   });
 
