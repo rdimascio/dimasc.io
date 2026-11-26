@@ -5,7 +5,7 @@ import type { BuildHook } from "@lesto/cli";
 import { defineStaticSite } from "@lesto/sites";
 
 import { SITE_URL } from "./src/app";
-import { HEADERS_FILE, OG_IMAGE_PATH, OG_IMAGE_SOURCE } from "./src/site";
+import { HEADERS_FILE, OG_IMAGES } from "./src/site";
 import { outputPathFor, PERSONAL_PAGES, personalPageHtml } from "./src/personal";
 import { loadAllCaseStudies, loadArticles } from "./src/content";
 import { articlesFeed, FEED_ROUTE } from "./src/feed";
@@ -64,7 +64,9 @@ const onBuilt: BuildHook = async ({ outDir, sites }) => {
     favicon: faviconSvg(),
   }).emit(site.sink);
 
-  await site.sink(OG_IMAGE_PATH.slice(1), new Uint8Array(await Bun.file(OG_IMAGE_SOURCE).arrayBuffer()));
+  for (const image of OG_IMAGES) {
+    await site.sink(image.path.slice(1), new Uint8Array(await Bun.file(image.source).arrayBuffer()));
+  }
   await site.sink("_headers", HEADERS_FILE);
 
   if (publishedArticles.length > 0) await site.sink(FEED_ROUTE.slice(1), articlesFeed(publishedArticles));

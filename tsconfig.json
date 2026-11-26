@@ -13,5 +13,5 @@
     "skipLibCheck": true,
     "noEmit": true
   },
-  "include": ["src", "test", "lesto.app.ts", "lesto.sites.ts", "lesto.content.ts", "lesto.build.ts", "worker.ts"]
+  "include": ["src", "test", "lesto.app.ts", "lesto.sites.ts", "lesto.content.ts", "lesto.build.ts", "worker.ts", "scripts/og-agents.ts"]
 }
