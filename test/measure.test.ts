@@ -16,6 +16,7 @@ import {
   TURNSTILE_RESPONSE_FIELD,
   TURNSTILE_SCRIPT_SRC,
   TURNSTILE_VERIFY_URL,
+  isCheckFormPage,
 } from "../src/check";
 import { EVENT_BLOBS, type EventPoint, type EventSink, SITE_EVENT } from "../src/measure";
 import { PRIVACY_ROUTE, SITE_CHECK_PAGE, SITE_URL, siteCheckHref } from "../src/site";
@@ -246,7 +247,7 @@ describe("privacy + scripts", () => {
     for (const route of HOME_ROUTES) {
       const html = await (await visit(`${route}?gclid=${GCLID}&utm_source=gbp`, recordingSink())).text();
       const scripts = [...html.matchAll(/<script\b[^>]*>/g)].map((match) => match[0]).filter((tag) => !tag.includes('type="application/ld+json"'));
-      const allowed = route === SITE_CHECK_PAGE ? scripts.filter((tag) => !tag.includes(TURNSTILE_SCRIPT_SRC)) : scripts;
+      const allowed = isCheckFormPage(route) ? scripts.filter((tag) => !tag.includes(TURNSTILE_SCRIPT_SRC)) : scripts;
       expect(`${route}: ${allowed.join(" ")}`).toBe(`${route}: `);
       expect(html).not.toMatch(/<img[^>]*(pixel|\/e\/)/);
     }

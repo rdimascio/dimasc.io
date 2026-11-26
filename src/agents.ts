@@ -1,9 +1,12 @@
+import { AGENTS_ROUTE } from "./agents-routes";
 import { clickContext, type EventEnv, isBot, recordEvent, SITE_EVENT, type SiteEvent } from "./measure";
-import { teardownHref } from "./site";
 
-export const AGENTS_ROUTE = "/agents";
+export { AGENTS_ROUTE, AGENTS_SENT_ROUTE } from "./agents-routes";
 export const AGENTS_KIT_ROUTE = `${AGENTS_ROUTE}/kit`;
 export const AGENTS_TEARDOWN_ROUTE = `${AGENTS_ROUTE}/teardown`;
+export const AGENTS_FORM_ANCHOR = "repo-check";
+export const AGENTS_FORM_HREF = `${AGENTS_ROUTE}#${AGENTS_FORM_ANCHOR}`;
+export const AGENTS_FORM_SOURCE = "agents";
 export const KIT_REPO_URL = "https://github.com/rdimascio/agent-guardrails";
 export const TEARDOWN_CTA = "get a free repo check";
 
@@ -14,7 +17,7 @@ interface ClickRoute {
 
 const CLICK_ROUTES: Readonly<Record<string, ClickRoute>> = {
   [AGENTS_KIT_ROUTE]: { event: SITE_EVENT.kitClick, target: () => KIT_REPO_URL },
-  [AGENTS_TEARDOWN_ROUTE]: { event: SITE_EVENT.teardownClick, target: teardownHref },
+  [AGENTS_TEARDOWN_ROUTE]: { event: SITE_EVENT.teardownClick, target: () => AGENTS_FORM_HREF },
 };
 
 const READ_METHODS = new Set(["GET", "HEAD"]);

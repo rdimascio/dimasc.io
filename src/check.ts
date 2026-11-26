@@ -1,3 +1,4 @@
+import { AGENTS_ROUTE, AGENTS_SENT_ROUTE } from "./agents-routes";
 import { type EventEnv, formContext, recordEvent, SITE_EVENT, type SiteEvent } from "./measure";
 import { CONTACT_EMAIL, PRIVACY_ROUTE, SITE_CHECK_NAME, SITE_CHECK_PAGE, SITE_HOST, SITE_NAME, SITE_URL, siteCheckHref } from "./site";
 
@@ -5,6 +6,7 @@ export const CHECK_ROUTE = "/check";
 export const CHECK_SENT_ROUTE = "/check/sent";
 export const CHECK_PRIVACY_LINE = "what i do w/ what you send:";
 export const CHECK_PRIVACY_LINK = "privacy";
+export const REPO_CHECK_NAME = "repo check";
 
 export const CHECK_FIELD = {
   name: "name",
@@ -281,7 +283,7 @@ export function checkEmail(record: CheckRequest): CheckEmail {
     to: CONTACT_EMAIL,
     from: { email: CHECK_SENDER, name: SITE_NAME },
     replyTo: record.email,
-    subject: `${SITE_CHECK_NAME}: ${record.name}`,
+    subject: `${record.page === AGENTS_ROUTE ? REPO_CHECK_NAME : SITE_CHECK_NAME}: ${record.name}`,
     text: lines.join("\n"),
   };
 }
@@ -466,15 +468,21 @@ export async function handleCheck(request: Request, env: CheckEnv, ctx?: CheckCo
     else ctx.waitUntil(delivery);
   }
 
-  return seeOther(CHECK_SENT_ROUTE);
+  return seeOther(sentRouteFor(parsed.page));
+}
+
+export function sentRouteFor(page: string): string {
+  return page === AGENTS_ROUTE ? AGENTS_SENT_ROUTE : CHECK_SENT_ROUTE;
 }
 
 export function isCheckRoute(pathname: string): boolean {
   return pathname === CHECK_ROUTE;
 }
 
+export const CHECK_FORM_PAGES: readonly string[] = [SITE_CHECK_PAGE, AGENTS_ROUTE];
+
 export function isCheckFormPage(pathname: string): boolean {
-  return pathname === SITE_CHECK_PAGE;
+  return CHECK_FORM_PAGES.includes(pathname);
 }
 
 export function formFills(url: URL, now: Date = new Date()): Record<string, string> {
