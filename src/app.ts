@@ -6,16 +6,15 @@ import { lesto } from "@lesto/web";
 import { ARTICLES_ROUTE, loadAllCaseStudies, loadArticles, loadExperience, loadFaq, loadPlans, loadProcess, type Plan } from "./content";
 import { FEED_ROUTE } from "./feed";
 import {
+  AGENTS_OG_IMAGE,
   canonicalUrl,
-  OG_IMAGE_ALT,
-  OG_IMAGE_HEIGHT,
-  OG_IMAGE_PATH,
-  OG_IMAGE_WIDTH,
+  type OgImage,
   PRIVACY_ROUTE,
   SERVICE_AREA_COPY,
   SERVICE_AREA_SHORT,
   SITE_NAME,
   SITE_URL,
+  STUDIO_OG_IMAGE,
 } from "./site";
 import { AGENTS_ROUTE } from "./agents";
 import { makeAbout } from "./ui/about";
@@ -36,28 +35,28 @@ import { WORK_REQUEST_ROUTE, WORK_ROUTE } from "./work";
 
 export { canonicalUrl, SITE_URL };
 
-const OG_IMAGE = `${SITE_URL}${OG_IMAGE_PATH}`;
+function imageMeta(image: OgImage): NonNullable<PageMetadata["meta"]> {
+  const url = `${SITE_URL}${image.path}`;
+  return [
+    { property: "og:image", content: url },
+    { property: "og:image:type", content: "image/png" },
+    { property: "og:image:width", content: String(image.width) },
+    { property: "og:image:height", content: String(image.height) },
+    { property: "og:image:alt", content: image.alt },
+    { name: "twitter:image", content: url },
+    { name: "twitter:image:alt", content: image.alt },
+  ];
+}
 
 export function seoMetadata(input: {
   title: string;
   description: string;
   route: string;
   type: "website" | "article";
-  studioImage?: boolean;
+  image?: OgImage;
 }): PageMetadata {
   const url = canonicalUrl(input.route);
-  const studioImage = input.studioImage ?? true;
-  const imageMeta = studioImage
-    ? [
-        { property: "og:image", content: OG_IMAGE },
-        { property: "og:image:type", content: "image/png" },
-        { property: "og:image:width", content: String(OG_IMAGE_WIDTH) },
-        { property: "og:image:height", content: String(OG_IMAGE_HEIGHT) },
-        { property: "og:image:alt", content: OG_IMAGE_ALT },
-        { name: "twitter:image", content: OG_IMAGE },
-        { name: "twitter:image:alt", content: OG_IMAGE_ALT },
-      ]
-    : [];
+  const image = input.image ?? STUDIO_OG_IMAGE;
   return {
     title: input.title,
     description: input.description,
@@ -67,10 +66,10 @@ export function seoMetadata(input: {
       { property: "og:type", content: input.type },
       { property: "og:url", content: url },
       { property: "og:description", content: input.description },
-      { name: "twitter:card", content: studioImage ? "summary_large_image" : "summary" },
+      { name: "twitter:card", content: "summary_large_image" },
       { name: "twitter:title", content: input.title },
       { name: "twitter:description", content: input.description },
-      ...imageMeta,
+      ...imageMeta(image),
     ],
     links: [
       { rel: "canonical", href: url },
@@ -134,7 +133,7 @@ export async function buildAppConfig(
       static: true,
       component: makeAgents(),
       metadata: () =>
-        seoMetadata({ title: AGENTS_TITLE, description: AGENTS_DESCRIPTION, route: AGENTS_ROUTE, type: "website", studioImage: false }),
+        seoMetadata({ title: AGENTS_TITLE, description: AGENTS_DESCRIPTION, route: AGENTS_ROUTE, type: "website", image: AGENTS_OG_IMAGE }),
     })
     .layout(makeSiteLayout({ work: studies.length > 0, articles: articles.length > 0 }))
     .page("/", {

@@ -72,6 +72,32 @@ export const OG_IMAGE_WIDTH = 1200;
 export const OG_IMAGE_HEIGHT = 630;
 export const OG_IMAGE_ALT = "Ryan DiMascio. Website help for small businesses.";
 
+export interface OgImage {
+  readonly path: string;
+  readonly source: string;
+  readonly width: number;
+  readonly height: number;
+  readonly alt: string;
+}
+
+export const STUDIO_OG_IMAGE: OgImage = {
+  path: OG_IMAGE_PATH,
+  source: OG_IMAGE_SOURCE,
+  width: OG_IMAGE_WIDTH,
+  height: OG_IMAGE_HEIGHT,
+  alt: OG_IMAGE_ALT,
+};
+
+export const AGENTS_OG_IMAGE: OgImage = {
+  path: "/og-agents.png",
+  source: "assets/og-agents.png",
+  width: 1200,
+  height: 627,
+  alt: "Agent guardrails. The hooks I use to let coding agents ship real code. dimasc.io/agents",
+};
+
+export const OG_IMAGES: readonly OgImage[] = [STUDIO_OG_IMAGE, AGENTS_OG_IMAGE];
+
 const PRELOADED_FONTS = ["/fonts/Geist-Variable.woff2", "/fonts/InstrumentSerif-Italic.woff2"] as const;
 const IMMUTABLE_PATHS = ["/fonts/*", "/media/*"] as const;
 const ONE_YEAR_SECONDS = 31_536_000;

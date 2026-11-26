@@ -7,7 +7,7 @@ import appConfig from "../lesto.app";
 import worker from "../worker";
 import { AGENTS_KIT_ROUTE, AGENTS_ROUTE, AGENTS_TEARDOWN_ROUTE, KIT_REPO_URL, TEARDOWN_CTA } from "../src/agents";
 import { type EventPoint, type EventSink, SITE_EVENT } from "../src/measure";
-import { CONTACT_EMAIL, SITE_URL, TEARDOWN_BOOKING_URL, teardownHref } from "../src/site";
+import { AGENTS_OG_IMAGE, CONTACT_EMAIL, OG_IMAGES, SITE_URL, STUDIO_OG_IMAGE, TEARDOWN_BOOKING_URL, teardownHref } from "../src/site";
 import { sitemapRoutes } from "../src/sitemap";
 import { loadAllArticles, loadAllCaseStudies } from "../src/content";
 import { AGENTS_HEADLINE, AGENTS_LEDE, KIT_HOOKS, KIT_LINE } from "../src/ui/agents";
@@ -70,10 +70,30 @@ describe("agents page", () => {
     expect(teardownHref()).toBe(TEARDOWN_BOOKING_URL ?? teardownHref(null));
   });
 
-  it("shares w/o the small-business social card", async () => {
-    const head = (await page(AGENTS_ROUTE)).toLowerCase();
-    expect(head).not.toContain("small business");
-    expect(head).not.toContain("og:image");
+  it("shares its own large social card, w/o the small-business one", async () => {
+    const full = await page(AGENTS_ROUTE);
+    const head = full.slice(0, full.indexOf("</head>"));
+    const imageUrl = `${SITE_URL}${AGENTS_OG_IMAGE.path}`;
+    expect(head).toContain(`<meta property="og:image" content="${imageUrl}"`);
+    expect(head).toContain(`<meta name="twitter:image" content="${imageUrl}"`);
+    expect(head).toContain(`<meta property="og:image:width" content="${AGENTS_OG_IMAGE.width}"`);
+    expect(head).toContain(`<meta property="og:image:height" content="${AGENTS_OG_IMAGE.height}"`);
+    expect(head).toContain(`<meta property="og:image:type" content="image/png"`);
+    expect(head).toContain(`<meta property="og:image:alt" content="${AGENTS_OG_IMAGE.alt}"`);
+    expect(head).toContain(`<meta name="twitter:image:alt" content="${AGENTS_OG_IMAGE.alt}"`);
+    expect(head).toContain(`<meta name="twitter:card" content="summary_large_image"`);
+    expect(head).not.toContain(`${SITE_URL}${STUDIO_OG_IMAGE.path}"`);
+    expect(head.toLowerCase()).not.toContain("small business");
+  });
+
+  it("ships the agents social card as a png at its declared size, under 300 KB", async () => {
+    const file = Bun.file(AGENTS_OG_IMAGE.source);
+    expect(file.size).toBeLessThan(300 * 1024);
+    const png = new Uint8Array(await file.arrayBuffer());
+    const view = new DataView(png.buffer);
+    expect([...png.slice(1, 4)].map((byte) => String.fromCharCode(byte)).join("")).toBe("PNG");
+    expect([view.getUint32(16), view.getUint32(20)]).toEqual([AGENTS_OG_IMAGE.width, AGENTS_OG_IMAGE.height]);
+    expect(OG_IMAGES).toContain(AGENTS_OG_IMAGE);
   });
 });
 
