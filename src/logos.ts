@@ -13,10 +13,7 @@ export const BRAND_LOGOS: readonly BrandLogo[] = [
   { slug: "stanford", name: "Stanford", ratio: 4.772 },
   { slug: "blackstone", name: "Blackstone", ratio: 2.519, weightCompensation: 1.15 },
   { slug: "holt-international", name: "Holt International", ratio: 5.935, weightCompensation: 1.15 },
-  { slug: "serhant", name: "SERHANT.", ratio: 6.077 },
-  { slug: "luxury-presence", name: "Luxury Presence", ratio: 2.833, weightCompensation: 1.2 },
   { slug: "10up", name: "10up", ratio: 0.874, weightCompensation: 0.85 },
-  { slug: "every", name: "Every", ratio: 3.929 },
 ];
 
 export function logoSrc(logo: Pick<BrandLogo, "slug">): string {

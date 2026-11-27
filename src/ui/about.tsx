@@ -9,7 +9,7 @@ import { Signature } from "./signature";
 import { ArrowLink, Eyebrow, HEADING, PAGE, SectionHead, WIDTH } from "./layout";
 
 export const ABOUT_PARAGRAPHS = [
-  "at luxury presence i built + scaled the platform that runs 30k+ real estate websites and 10 million+ requests a day. i cut load time on its property pages by 87% and cut how often it broke by 60%. i was also tech lead on the mls home search behind serhant.com, which ran every luxury presence customer's listing search. before that, at 10up, i was tech lead on holt international's site. i was also a front-end engineer on blackstone + stanford ecorner.",
+  "at luxury presence i worked on its website platform, its developer tools and its mls home search. before that, at 10up, i was tech lead on holt international's site. i was also a front-end engineer on blackstone + stanford ecorner.",
   "a lot of website care is someone logging in once a month to click update on plugins. that works till something breaks. finding out why it broke is my actual job.",
   "i still have a full-time job as a software engineer, so i only take a few clients. i reply within 1 business day, monday to friday. you always deal w/ me.",
 ] as const;
@@ -29,7 +29,7 @@ function AboutPage({ experience }: { experience: readonly Experience[] }): React
           </div>
           <div className="md:col-span-8 max-w-[42rem]">
             <p className="m-0 text-[clamp(1.35rem,2.4vw,1.9rem)] leading-[1.3] tracking-[-0.025em] [text-wrap:pretty]">
-              {`i'm ryan, a senior software engineer in ${SERVICE_AREA_COPY}. i've been building websites + software since 2017, at agencies and software companies. my day job is senior engineer at every, a y combinator startup.`}
+              {`i'm ryan, a senior software engineer in ${SERVICE_AREA_COPY}. i've been building websites + software since 2017, at agencies and software companies. i still have a full-time engineering job.`}
             </p>
             {ABOUT_PARAGRAPHS.map((paragraph) => (
               <p className="mt-6 mb-0 text-muted text-[1.1rem] leading-relaxed" key={paragraph}>

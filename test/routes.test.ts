@@ -94,7 +94,9 @@ import {
   workRoutes,
 } from "../src/work";
 
-const CASE_STUDY_SLUGS = ["stanford-ecorner", "blackstone", "holt-international", "serhant"];
+const CASE_STUDY_SLUGS = ["stanford-ecorner", "blackstone", "holt-international"];
+const EMPLOYER_SALES_TERMS = ["serhant", "flagg", "umansky", "30k+", "10 million", "87%", "60%", "y combinator", "engineer at every"];
+const EMPLOYER_LOGO_SLUGS = ["serhant", "luxury-presence", "every"];
 const MAX_SCREENSHOT_BYTES = 300 * 1024;
 const PHONE_NUMBER = /\(?\d{3}\)?[\s.-]\d{3}[\s.-]\d{4}/;
 const MAX_CLIP_BYTES = 4 * 1024 * 1024;const MAX_WORKER_ASSET_BYTES = 25 * 1024 * 1024;
@@ -337,21 +339,27 @@ describe("site routes", () => {
     }
   });
 
-  it("shows the work history on the about page, with the demos under luxury presence", async () => {
+  it("shows the work history on the about page, with luxury presence as a plain resume entry", async () => {
     const experience = await loadExperience();
     expect(experience.map((item) => item.company)).toEqual(["every", "luxury presence", "10up", "channel bakers", "lender homepage"]);
     expect(luxuryPresenceRoles(experience)).toHaveLength(4);
     const luxuryPresence = experience.find((item) => item.company === "luxury presence");
-    expect(luxuryPresence?.demos.map((demo) => demo.slug)).toEqual(["natural-language-search", "local-dev-app"]);
+    expect(luxuryPresence?.demos).toEqual([]);
 
     const response = await app.handle("GET", ABOUT_ROUTE);
     const html = decodeEntities(await text(response));
     expect(response.status).toBe(200);
     for (const item of experience) expect(html).toContain(item.company);
-    for (const demo of luxuryPresence?.demos ?? []) {
-      expect(html).toContain(`src="${demoSrc(demo.clip)}"`);
-      expect(html).toContain(`poster="${demoSrc(demo.poster)}"`);
+  });
+
+  it("never sells an employer's customers, metrics or name as studio work", async () => {
+    const routes = sitemapRoutes(await loadAllCaseStudies(), await loadAllArticles());
+    for (const route of routes) {
+      const html = decodeEntities(await text(await app.handle("GET", route))).toLowerCase();
+      for (const term of EMPLOYER_SALES_TERMS) expect(html.includes(term), `${route} contains "${term}"`).toBe(false);
     }
+    const logoSlugs = BRAND_LOGOS.map((logo) => logo.slug);
+    for (const slug of EMPLOYER_LOGO_SLUGS) expect(logoSlugs).not.toContain(slug);
   });
 
   it("puts the proof + credentials in the hero once, linked to the about page", async () => {
@@ -361,10 +369,9 @@ describe("site routes", () => {
     expect(hero).toContain(`href="${ABOUT_ROUTE}"`);
     expect(hero).toContain(HERO_LEAD);
     for (const line of CREDENTIALS) expect(hero).toContain(line);
-    for (const fact of ["holt international", "serhant.com mls home search", "blackstone", "stanford ecorner", "y combinator", `since ${SINCE_YEAR}`]) {
+    for (const fact of ["holt international", "blackstone", "stanford ecorner", `since ${SINCE_YEAR}`]) {
       expect(hero).toContain(fact);
     }
-    expect(htmlToText(main.slice(main.indexOf("things i can help with"))).toLowerCase()).not.toContain("y combinator");
     expect(home).not.toContain("<video");
   });
 
